@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import api from '@/lib/axios';
+import JobSeekerProfileModal from '@/components/modals/JobSeekerProfileModal';
+import ProfileModal from '@/components/modals/ProfileModal';
 
 export default function VerifyOtpPage() {
     const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
@@ -11,6 +13,8 @@ export default function VerifyOtpPage() {
     const [resending, setResending] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [verifiedEmail, setVerifiedEmail] = useState('');
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -60,8 +64,17 @@ export default function VerifyOtpPage() {
             const otpCode = otp.join('');
             const response = await api.post('/auth/verify-otp', { email, otp: otpCode });
             setSuccess(response.data.message || 'Email verified successfully!');
+            setVerifiedEmail(email);
+            
+            // Store token if returned
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                // Update axios default headers
+                api.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+            }
+            
             setTimeout(() => {
-                router.push('/user/signin');
+                setShowProfileModal(true);
             }, 1500);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Verification failed. Please try again.');
@@ -85,6 +98,94 @@ export default function VerifyOtpPage() {
         } finally {
             setResending(false);
         }
+    };
+
+    const handleJobSeekerSubmit = async (profileData: any) => {
+        try {
+            // Create FormData for file upload
+            const formData = new FormData();
+            
+            // Add basic profile fields
+            if (profileData.phoneNumber) {
+                formData.append('phone', profileData.phoneNumber);
+            }
+            if (profileData.location) {
+                formData.append('location', profileData.location);
+            }
+            
+            // Add profile image if exists
+            if (profileData.profileImage) {
+                formData.append('profile_image', profileData.profileImage);
+            }
+            
+            // Add skills as JSON string
+            if (profileData.skills && profileData.skills.length > 0) {
+                formData.append('skills', JSON.stringify(profileData.skills));
+            }
+            
+            // Set role
+            formData.append('role', 'jobseeker');
+
+            // Save profile data to backend
+            const response = await api.put('/auth/profile', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            
+            setShowProfileModal(false);
+            router.push('/user/dashboard');
+        } catch (error: any) {
+            console.error('Error saving profile:', error);
+            setError(error.response?.data?.error || 'Failed to save profile. Please try again.');
+        }
+    };
+
+    const handleRecruiterSubmit = async (profileData: any) => {
+        try {
+            // Create FormData for file upload
+            const formData = new FormData();
+            
+            // Add recruiter profile fields
+            if (profileData.companyName) {
+                formData.append('company_name', profileData.companyName);
+            }
+            if (profileData.companyNumber) {
+                formData.append('company_number', profileData.companyNumber);
+            }
+            if (profileData.companyLocation) {
+                formData.append('company_location', profileData.companyLocation);
+            }
+            if (profileData.position) {
+                formData.append('position', profileData.position);
+            }
+            
+            // Add profile image if exists
+            if (profileData.profileImage) {
+                formData.append('profile_image', profileData.profileImage);
+            }
+            
+            // Set role
+            formData.append('role', 'recruiter');
+
+            // Save profile data to backend
+            const response = await api.put('/auth/profile', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            
+            setShowProfileModal(false);
+            router.push('/hr/dashboard');
+        } catch (error: any) {
+            console.error('Error saving profile:', error);
+            setError(error.response?.data?.error || 'Failed to save profile. Please try again.');
+        }
+    };
+
+    const handleReturnToLogin = () => {
+        setShowProfileModal(false);
+        router.push('/user/signin');
     };
 
     return (
@@ -169,6 +270,15 @@ export default function VerifyOtpPage() {
                     </button>
                 </p>
             </div>
+            
+            {/* Profile Modal */}
+            <ProfileModal
+                isOpen={showProfileModal}
+                onClose={() => setShowProfileModal(false)}
+                onJobSeekerSubmit={handleJobSeekerSubmit}
+                onRecruiterSubmit={handleRecruiterSubmit}
+                onReturnToLogin={handleReturnToLogin}
+            />
         </div>
     );
 }
