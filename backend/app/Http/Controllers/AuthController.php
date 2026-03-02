@@ -121,8 +121,15 @@ class AuthController extends Controller
         // Delete all OTPs for this email
         OtpCode::where('email', $request->email)->delete();
 
+        // Auto-login user and generate token
+        if (!$token = auth()->guard('api')->login($user)) {
+            return response()->json(['error' => 'Failed to generate token.'], 500);
+        }
+
         return response()->json([
-            'message' => 'Email verified successfully! You can now sign in.',
+            'message' => 'Email verified successfully!',
+            'token' => $token,
+            'user' => $user,
         ], 200);
     }
 
@@ -174,6 +181,13 @@ class AuthController extends Controller
             'phone' => 'sometimes|nullable|string|max:30',
             'location' => 'sometimes|nullable|string|max:100',
             'bio' => 'sometimes|nullable|string|max:500',
+            'profile_image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'skills' => 'sometimes|nullable|string',
+            'role' => 'sometimes|string|in:jobseeker,recruiter',
+            'company_name' => 'sometimes|nullable|string|max:255',
+            'company_number' => 'sometimes|nullable|string|max:30',
+            'company_location' => 'sometimes|nullable|string|max:255',
+            'position' => 'sometimes|nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -181,8 +195,32 @@ class AuthController extends Controller
         }
 
         $user = auth()->guard('api')->user();
-        $user->fill($validator->validated());
-        $user->save();
+        
+        // Update basic fields
+        $updateData = $request->only(['name', 'phone', 'location', 'bio', 'role', 'company_name', 'company_number', 'company_location', 'position']);
+        
+        // Handle profile image upload
+        if ($request->hasFile('profile_image')) {
+            $image = $request->file('profile_image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('profile_images'), $imageName);
+            $updateData['profile_image'] = 'profile_images/' . $imageName;
+            
+            // Delete old image if exists
+            if ($user->profile_image && file_exists(public_path($user->profile_image))) {
+                unlink(public_path($user->profile_image));
+            }
+        }
+        
+        // Handle skills (only for job seekers)
+        if ($request->has('skills') && $request->role !== 'recruiter') {
+            $skills = json_decode($request->skills, true);
+            if (is_array($skills)) {
+                $updateData['skills'] = $skills;
+            }
+        }
+        
+        $user->update($updateData);
 
         return response()->json($user);
     }
