@@ -1094,6 +1094,7 @@ export default function UserDashboardPage() {
       .join("")
       .toUpperCase() || "U";
   const userEmail = user?.email || "";
+  const profileImageUrl = user?.profile_image_url || null;
   const [visibleIds, setVisibleIds] = useState<number[]>([]);
   const prevFilteredIds = useRef<number[]>([]);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -1134,7 +1135,7 @@ export default function UserDashboardPage() {
       try {
         setLoading(true);
         // 1. Use the full Laravel URL (Port 8000)
-        const response = await fetch("http://127.0.0.1:8000/api/jobs");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend.test'}/api/jobs`);
         const result = await response.json();
 
         // 2. Check result.success and result.data (the array)
@@ -1453,8 +1454,9 @@ export default function UserDashboardPage() {
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="w-10 h-10 rounded-full flex items-center justify-center border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] hover:border-[#7EB0AB] transition-all ml-1 bg-[#e6f7f2] font-bold text-[#7EB0AB]"
+                    style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
                   >
-                    {userInitials}
+                    {!profileImageUrl && userInitials}
                   </button>
 
                   {/* Dropdown Menu */}
@@ -1462,8 +1464,11 @@ export default function UserDashboardPage() {
                     <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-[#e5e7eb] overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
                       {/* User Info Header */}
                       <div className="p-4 border-b border-[#e5e7eb] flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg">
-                          {userInitials}
+                        <div
+                          className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg"
+                          style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+                        >
+                          {!profileImageUrl && userInitials}
                         </div>
                         <div className="flex flex-col overflow-hidden">
                           <span className="text-[14px] font-bold text-[#1a1a1a] truncate">

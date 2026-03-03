@@ -60,9 +60,27 @@ export default function VerifyOtpPage() {
             const otpCode = otp.join('');
             const response = await api.post('/auth/verify-otp', { email, otp: otpCode });
             setSuccess(response.data.message || 'Email verified successfully!');
-            setTimeout(() => {
-                router.push('/user/signin');
-            }, 1500);
+            setTimeout(async () => {
+                // Try to auto-login with pending creds (set during signup) to go straight to type selection.
+                const pendingEmail = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pendingSignupEmail') : null;
+                const pendingPassword = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pendingSignupPassword') : null;
+
+                if (pendingEmail && pendingPassword) {
+                    try {
+                        const loginResponse = await api.post('/auth/login', { email: pendingEmail, password: pendingPassword });
+                        localStorage.setItem('token', loginResponse.data.access_token);
+                        sessionStorage.removeItem('pendingSignupEmail');
+                        sessionStorage.removeItem('pendingSignupPassword');
+                        router.replace('/register');
+                        return;
+                    } catch (loginErr) {
+                        // fall through to signin redirect
+                    }
+                }
+
+                // If auto-login fails, send to signin with redirect to selection
+                router.push('/user/signin?redirect=/register');
+            }, 1200);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Verification failed. Please try again.');
         } finally {

@@ -6,6 +6,9 @@ import {
   CheckCircle2, AlertCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import api from '@/lib/axios';
+import { useAuth } from '@/lib/useAuth';
 
 // --- MODAL COMPONENT ---
 const StatusModal = ({ 
@@ -52,6 +55,8 @@ export default function RegistrationPage() {
   const [role, setRole] = useState<'job-seeker' | 'recruiter'>('job-seeker');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { setUser } = useAuth({ redirect: false });
+  const router = useRouter();
   
   // Modal States
   const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'success' | 'error', message: string}>({
@@ -59,6 +64,7 @@ export default function RegistrationPage() {
     type: 'success',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     phoneNumber: '',
@@ -88,13 +94,14 @@ export default function RegistrationPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation Logic
     const isJobSeeker = role === 'job-seeker';
+    const trimmedSkills = skills.map((s) => s.trim()).filter(Boolean);
     const commonValid = isJobSeeker 
-      ? formData.phoneNumber && formData.location && selectedFile && skills.every(s => s.trim() !== '')
+      ? formData.phoneNumber && formData.location && selectedFile && trimmedSkills.length === skills.length
       : formData.companyName && formData.companyNumber && formData.companyLocation && formData.position;
 
     if (!commonValid) {
@@ -106,12 +113,66 @@ export default function RegistrationPage() {
       return;
     }
 
-    // Success Logic
-    setModalConfig({
-      isOpen: true,
-      type: 'success',
-      message: 'Your profile has been successfully updated!'
-    });
+    // For recruiters, store the selection and proceed to dashboard directly.
+    if (role !== 'job-seeker') {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accountType', role);
+      }
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        message: 'Your profile has been successfully updated!'
+      });
+      router.replace('/user/dashboard');
+      return;
+    }
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      setModalConfig({
+        isOpen: true,
+        type: 'error',
+        message: 'Please sign in as a job seeker to update your profile.'
+      });
+      return;
+    }
+
+    const payload = new FormData();
+    payload.append('_method', 'PUT');
+    payload.append('phone', formData.phoneNumber);
+    payload.append('location', formData.location);
+    payload.append('skills', JSON.stringify(trimmedSkills));
+    if (selectedFile) {
+      payload.append('profile_image', selectedFile);
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await api.post('/auth/profile', payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setUser(response.data);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('accountType', role);
+      }
+      setModalConfig({
+        isOpen: true,
+        type: 'success',
+        message: 'Your profile has been successfully updated!'
+      });
+      router.replace('/user/dashboard');
+    } catch (err: any) {
+      const message = err.response?.data?.error || 'Unable to save your profile right now.';
+      setModalConfig({
+        isOpen: true,
+        type: 'error',
+        message,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const addSkillField = () => setSkills([...skills, '']);
@@ -271,8 +332,8 @@ export default function RegistrationPage() {
           )}
 
           <div className="pt-10 flex flex-col items-center">
-            <button type="submit" className="w-full md:w-2/3 bg-[#84b2ac] hover:bg-[#6e9691] text-white py-5 rounded-xl font-black text-2xl transition-all shadow-lg active:translate-y-1">
-              Submit Information
+            <button type="submit" disabled={isSubmitting} className="w-full md:w-2/3 bg-[#84b2ac] hover:bg-[#6e9691] text-white py-5 rounded-xl font-black text-2xl transition-all shadow-lg active:translate-y-1 disabled:opacity-60 disabled:cursor-not-allowed">
+              {isSubmitting ? 'Saving...' : 'Submit Information'}
             </button>
             <Link href="/" className="mt-6 flex items-center justify-center gap-2 text-slate-500 font-bold hover:text-black underline decoration-2">
               <ArrowLeft size={20} strokeWidth={3} /> Return to login
