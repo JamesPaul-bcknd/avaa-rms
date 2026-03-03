@@ -17,20 +17,24 @@ export default function ProfilePage() {
     const [newSkill, setNewSkill] = useState('');
     const [isDragging, setIsDragging] = useState(false);
     const [resumeFile, setResumeFile] = useState<string | null>(null);
+    const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+    const [profileImagePreview, setProfileImagePreview] = useState<string | null>(null);
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const avatarInputRef = useRef<HTMLInputElement>(null);
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
-    const { isLoading, user, logout } = useAuth();
+    const { isLoading, user, logout, setUser } = useAuth();
 
     const userName = user?.name || 'User';
     const userInitials = userName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U';
     const userEmail = user?.email || '';
+    const navProfileImage = profileImagePreview || user?.profile_image_url || null;
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -44,6 +48,14 @@ export default function ProfilePage() {
 
     useEffect(() => { document.title = 'Profile | AVAA'; }, []);
 
+    useEffect(() => {
+        return () => {
+            if (profileImagePreview && profileImagePreview.startsWith('blob:')) {
+                URL.revokeObjectURL(profileImagePreview);
+            }
+        };
+    }, [profileImagePreview]);
+
     // Populate fields once auth user data is ready
     useEffect(() => {
         if (user) {
@@ -52,6 +64,9 @@ export default function ProfilePage() {
             setPhone(user.phone ?? '');
             setLocation(user.location ?? '');
             setBio(user.bio ?? '');
+            setSkills(Array.isArray(user.skills) ? user.skills : []);
+            setProfileImagePreview(user.profile_image_url ?? null);
+            setProfileImageFile(null);
         }
     }, [user]);
 
@@ -64,7 +79,10 @@ export default function ProfilePage() {
             setPhone(user.phone ?? '');
             setLocation(user.location ?? '');
             setBio(user.bio ?? '');
+            setSkills(Array.isArray(user.skills) ? user.skills : []);
+            setProfileImagePreview(user.profile_image_url ?? null);
         }
+        setProfileImageFile(null);
         setIsEditing(false);
         setSaveError('');
     };
@@ -74,12 +92,27 @@ export default function ProfilePage() {
         setSaveError('');
         setSaveSuccess(false);
         try {
-            await api.put('/auth/profile', {
-                name: fullName,
-                phone: phone || null,
-                location: location || null,
-                bio: bio || null,
+            const cleanSkills = skills.map((s) => s.trim()).filter(Boolean);
+            const formData = new FormData();
+            formData.append('_method', 'PUT');
+            formData.append('name', fullName);
+            formData.append('phone', phone || '');
+            formData.append('location', location || '');
+            formData.append('bio', bio || '');
+            formData.append('skills', JSON.stringify(cleanSkills));
+
+            if (profileImageFile) {
+                formData.append('profile_image', profileImageFile);
+            }
+
+            const response = await api.post('/auth/profile', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
+
+            setUser(response.data);
+            setSkills(Array.isArray(response.data.skills) ? response.data.skills : cleanSkills);
+            setProfileImagePreview(response.data.profile_image_url ?? null);
+            setProfileImageFile(null);
             setSaveSuccess(true);
             setIsEditing(false);
             setTimeout(() => setSaveSuccess(false), 3000);
@@ -119,6 +152,18 @@ export default function ProfilePage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) setResumeFile(file.name);
+    };
+
+    const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (profileImagePreview && profileImagePreview.startsWith('blob:')) {
+            URL.revokeObjectURL(profileImagePreview);
+        }
+
+        setProfileImageFile(file);
+        setProfileImagePreview(URL.createObjectURL(file));
     };
 
     // Generate initials avatar from name
@@ -183,8 +228,9 @@ export default function ProfilePage() {
                                 <button
                                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                                     className="w-10 h-10 rounded-full flex items-center justify-center border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] hover:border-[#7EB0AB] transition-all ml-1 bg-[#e6f7f2] font-bold text-[#7EB0AB]"
+                                    style={navProfileImage ? { backgroundImage: `url(${navProfileImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
                                 >
-                                    {userInitials}
+                                    {!navProfileImage && userInitials}
                                 </button>
 
                                 {/* Dropdown Menu */}
@@ -192,8 +238,11 @@ export default function ProfilePage() {
                                     <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-[#e5e7eb] overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
                                         {/* User Info Header */}
                                         <div className="p-4 border-b border-[#e5e7eb] flex items-center gap-3">
-                                            <div className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg">
-                                                {userInitials}
+                                            <div
+                                                className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg"
+                                                style={navProfileImage ? { backgroundImage: `url(${navProfileImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+                                            >
+                                                {!navProfileImage && userInitials}
                                             </div>
                                             <div className="flex flex-col overflow-hidden">
                                                 <span className="text-[14px] font-bold text-[#1a1a1a] truncate">{userName}</span>
@@ -264,14 +313,26 @@ export default function ProfilePage() {
                 {/* ─── Avatar Card ─── */}
                 <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-6 flex items-center gap-5">
                     {/* Avatar — shows initials if name exists */}
-                    <div className="w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-white text-2xl font-bold"
-                        style={{ background: initials ? 'linear-gradient(135deg, #1e3a4f, #2a5a6e)' : '#d1d5db' }}>
-                        {initials || (
+                    <div
+                        className={`w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 text-white text-2xl font-bold ${isEditing ? 'cursor-pointer' : ''}`}
+                        style={profileImagePreview
+                            ? { backgroundImage: `url(${profileImagePreview})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+                            : { background: initials ? 'linear-gradient(135deg, #1e3a4f, #2a5a6e)' : '#d1d5db' }}
+                        onClick={() => isEditing && avatarInputRef.current?.click()}
+                    >
+                        {!profileImagePreview && (initials || (
                             <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
                             </svg>
-                        )}
+                        ))}
                     </div>
+                    <input
+                        ref={avatarInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleAvatarChange}
+                    />
                     <div>
                         <h2 className="text-lg font-bold text-[#1a1a1a]">{fullName || 'Your Name'}</h2>
                         <p className="text-sm text-[#5a6a75] mb-1">{email}</p>

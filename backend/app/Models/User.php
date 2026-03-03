@@ -26,6 +26,17 @@ class User extends Authenticatable implements JWTSubject
         'phone',
         'location',
         'bio',
+        'profile_image',
+        'skills',
+    ];
+
+    /**
+     * Appended attributes for JSON responses.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'profile_image_url',
     ];
 
     /**
@@ -56,8 +67,18 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'skills' => 'array',
         ];
     }
+
+    /**
+     * Resolve the public URL for the stored profile image.
+     */
+    public function getProfileImageUrlAttribute(): ?string
+    {
+        return $this->profile_image ? asset('storage/'.$this->profile_image) : null;
+    }
+
     /**
      * Get the identifier that will be stored in the subject claim of the JWT.
      *

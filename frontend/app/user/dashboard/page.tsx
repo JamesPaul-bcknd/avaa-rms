@@ -192,13 +192,12 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
                 {/* Circle */}
                 <div className="flex flex-col items-center">
                   <div
-                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-                      step > s.id
-                        ? "bg-[#7EB0AB] text-white shadow-md shadow-[#7EB0AB]/30"
-                        : step === s.id
-                          ? "bg-[#1e3a4f] text-white shadow-md shadow-[#1e3a4f]/30"
-                          : "bg-[#f0f2f5] text-[#9ca3af]"
-                    }`}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${step > s.id
+                      ? "bg-[#7EB0AB] text-white shadow-md shadow-[#7EB0AB]/30"
+                      : step === s.id
+                        ? "bg-[#1e3a4f] text-white shadow-md shadow-[#1e3a4f]/30"
+                        : "bg-[#f0f2f5] text-[#9ca3af]"
+                      }`}
                   >
                     {step > s.id ? (
                       <svg
@@ -218,9 +217,8 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
                     )}
                   </div>
                   <span
-                    className={`text-[10px] font-semibold mt-1.5 ${
-                      step >= s.id ? "text-[#1a1a1a]" : "text-[#9ca3af]"
-                    }`}
+                    className={`text-[10px] font-semibold mt-1.5 ${step >= s.id ? "text-[#1a1a1a]" : "text-[#9ca3af]"
+                      }`}
                   >
                     {s.label}
                   </span>
@@ -353,13 +351,12 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleFileDrop}
                 onClick={() => fileInputRef.current?.click()}
-                className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-                  dragOver
-                    ? "border-[#7EB0AB] bg-[#e6faf0]"
-                    : selectedFile
-                      ? "border-[#7EB0AB] bg-[#f0fdf7]"
-                      : "border-[#d1d5db] bg-[#f9fafb] hover:border-[#7EB0AB] hover:bg-[#fafffe]"
-                }`}
+                className={`relative border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${dragOver
+                  ? "border-[#7EB0AB] bg-[#e6faf0]"
+                  : selectedFile
+                    ? "border-[#7EB0AB] bg-[#f0fdf7]"
+                    : "border-[#d1d5db] bg-[#f9fafb] hover:border-[#7EB0AB] hover:bg-[#fafffe]"
+                  }`}
               >
                 <input
                   ref={fileInputRef}
@@ -672,11 +669,10 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
             <button
               onClick={handleNext}
               disabled={!canGoNext()}
-              className={`flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all ${
-                canGoNext()
-                  ? "hover:opacity-90 hover:shadow-lg shadow-md"
-                  : "opacity-50 cursor-not-allowed"
-              }`}
+              className={`flex items-center gap-1.5 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all ${canGoNext()
+                ? "hover:opacity-90 hover:shadow-lg shadow-md"
+                : "opacity-50 cursor-not-allowed"
+                }`}
               style={{
                 background: canGoNext()
                   ? "linear-gradient(135deg, #7EB0AB, #6A9994)"
@@ -752,6 +748,163 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
   );
 }
 
+// ─── Messaging Modal ─────────────────────────────────────────
+interface Recruiter {
+  name: string;
+  role: string;
+  initials: string;
+  color: string;
+}
+
+function MessagingModal({
+  recruiter,
+  onClose,
+}: {
+  recruiter: Recruiter;
+  onClose: () => void;
+}) {
+  const [messages, setMessages] = useState<
+    { id: number; text: string; from: "user" | "recruiter"; time: string }[]
+  >([
+    {
+      id: 1,
+      text: `Hi! I'm ${recruiter.name}. I saw your interest in the position. How can I help you today?`,
+      from: "recruiter",
+      time: "Just now",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const sendMessage = () => {
+    const text = input.trim();
+    if (!text) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const newMsg = { id: Date.now(), text, from: "user" as const, time: timeStr };
+    setMessages((prev) => [...prev, newMsg]);
+    setInput("");
+    // Simulate recruiter reply
+    setTimeout(() => {
+      const replies = [
+        "That's a great question! I'll follow up with the hiring team.",
+        "Sure, feel free to share your resume and I'll pass it along.",
+        "Thanks for reaching out! We'll get back to you shortly.",
+        "I appreciate your interest. Let me check and get back to you!",
+      ];
+      const reply = replies[Math.floor(Math.random() * replies.length)];
+      const replyTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      setMessages((prev) => [
+        ...prev,
+        { id: Date.now() + 1, text: reply, from: "recruiter", time: replyTime },
+      ]);
+    }, 1200);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") sendMessage();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
+      <div
+        className="bg-white w-full sm:w-[420px] sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col"
+        style={{ height: "560px", animation: "fadeInScale 0.25s ease-out" }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center gap-3 px-4 py-3.5 flex-shrink-0"
+          style={{ background: "linear-gradient(135deg, #1e3a4f, #2d5570)" }}
+        >
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 border-2 border-white/30"
+            style={{ backgroundColor: recruiter.color }}
+          >
+            {recruiter.initials}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-white truncate">{recruiter.name}</p>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
+              <p className="text-xs text-white/70 truncate">{recruiter.role}</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#f5f7fa]">
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`flex items-end gap-2 ${msg.from === "user" ? "flex-row-reverse" : "flex-row"
+                }`}
+            >
+              {msg.from === "recruiter" && (
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mb-1"
+                  style={{ backgroundColor: recruiter.color }}
+                >
+                  {recruiter.initials}
+                </div>
+              )}
+              <div className={`max-w-[75%] ${msg.from === "user" ? "items-end" : "items-start"} flex flex-col gap-1`}>
+                <div
+                  className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.from === "user"
+                    ? "bg-[#1e3a4f] text-white rounded-br-sm"
+                    : "bg-white text-[#1a1a1a] border border-[#e5e7eb] rounded-bl-sm shadow-sm"
+                    }`}
+                >
+                  {msg.text}
+                </div>
+                <span className="text-[10px] text-[#9ca3af] px-1">{msg.time}</span>
+              </div>
+            </div>
+          ))}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="px-4 py-3 border-t border-[#e5e7eb] bg-white flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message..."
+              className="flex-1 px-3.5 py-2.5 bg-[#f5f7fa] border border-[#e5e7eb] rounded-xl text-sm text-[#1a1a1a] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all"
+            />
+            <button
+              onClick={sendMessage}
+              disabled={!input.trim()}
+              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{ background: "linear-gradient(135deg, #7EB0AB, #6A9994)" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13" />
+                <polygon points="22 2 15 22 11 13 2 9 22 2" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Animated job card wrapper
 function JobCard({
   job,
@@ -780,11 +933,10 @@ function JobCard({
         transition:
           "opacity 0.35s ease, transform 0.35s ease, box-shadow 0.2s ease, border-color 0.2s ease",
       }}
-      className={`bg-white rounded-2xl border p-5 hover:shadow-lg group cursor-pointer ${
-        isSelected
-          ? "border-[#7EB0AB] shadow-md"
-          : "border-[#e5e7eb] hover:border-[#c5ccd3]"
-      }`}
+      className={`bg-white rounded-2xl border p-5 hover:shadow-lg group cursor-pointer ${isSelected
+        ? "border-[#7EB0AB] shadow-md"
+        : "border-[#e5e7eb] hover:border-[#c5ccd3]"
+        }`}
     >
       {/* Top Row: Avatar + Bookmark */}
       <div className="flex items-start justify-between mb-4">
@@ -857,11 +1009,10 @@ function JobCard({
           {job.timeAgo}
         </span>
         <span
-          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-            job.type === "Full-time"
-              ? "bg-[#e6f7f2] text-[#7EB0AB]"
-              : "bg-[#fef3e2] text-[#b8860b]"
-          }`}
+          className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${job.type === "Full-time"
+            ? "bg-[#e6f7f2] text-[#7EB0AB]"
+            : "bg-[#fef3e2] text-[#b8860b]"
+            }`}
         >
           {job.type}
         </span>
@@ -902,7 +1053,8 @@ function JobCard({
           className="flex justify-center flex-1 ml-4 py-2 rounded-lg text-[13px] font-semibold text-white transition-all shadow-sm"
           style={{ background: "#7EB0AB" }}
         >
-          Apply Now
+          {/* Apply Now */}
+          View Details
         </button>
       </div>
     </div>
@@ -930,6 +1082,7 @@ export default function UserDashboardPage() {
   const [bookmarked, setBookmarked] = useState<number[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
+  const [showMessagingModal, setShowMessagingModal] = useState(false);
   const router = useRouter();
 
   const userName = user?.name || "User";
@@ -941,6 +1094,7 @@ export default function UserDashboardPage() {
       .join("")
       .toUpperCase() || "U";
   const userEmail = user?.email || "";
+  const profileImageUrl = user?.profile_image_url || null;
   const [visibleIds, setVisibleIds] = useState<number[]>([]);
   const prevFilteredIds = useRef<number[]>([]);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -981,7 +1135,7 @@ export default function UserDashboardPage() {
       try {
         setLoading(true);
         // 1. Use the full Laravel URL (Port 8000)
-        const response = await fetch("http://127.0.0.1:8000/api/jobs");
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend.test'}/api/jobs`);
         const result = await response.json();
 
         // 2. Check result.success and result.data (the array)
@@ -1182,37 +1336,37 @@ export default function UserDashboardPage() {
   };
 
   const toggleBookmark = async (jobId: number) => {
-  const numericId = Number(jobId);
+    const numericId = Number(jobId);
 
-  try {
-    // 1. OPTIMISTIC UPDATE: Change the heart color immediately
-    setBookmarked((prev) => {
-      const isCurrentlySaved = prev.map(Number).includes(numericId);
-      if (isCurrentlySaved) {
-        return prev.filter((id) => Number(id) !== numericId);
-      } else {
-        return [...prev, numericId];
-      }
-    });
+    try {
+      // 1. OPTIMISTIC UPDATE: Change the heart color immediately
+      setBookmarked((prev) => {
+        const isCurrentlySaved = prev.map(Number).includes(numericId);
+        if (isCurrentlySaved) {
+          return prev.filter((id) => Number(id) !== numericId);
+        } else {
+          return [...prev, numericId];
+        }
+      });
 
-    // 2. Call Laravel
-    const response = await api.post(`/jobs/${numericId}/bookmark`);
-    
-    // 3. Sync with Server: Ensure state matches Laravel's final word
-    const isSavedOnServer = response.data.saved;
-    setBookmarked((prev) => {
-      const exists = prev.map(Number).includes(numericId);
-      if (isSavedOnServer && !exists) return [...prev, numericId];
-      if (!isSavedOnServer && exists) return prev.filter((id) => Number(id) !== numericId);
-      return prev;
-    });
+      // 2. Call Laravel
+      const response = await api.post(`/jobs/${numericId}/bookmark`);
 
-  } catch (error) {
-    console.error("Failed to toggle bookmark:", error);
-    // Rollback on error
-    setBookmarked((prev) => prev.filter((id) => Number(id) !== numericId));
-  }
-};
+      // 3. Sync with Server: Ensure state matches Laravel's final word
+      const isSavedOnServer = response.data.saved;
+      setBookmarked((prev) => {
+        const exists = prev.map(Number).includes(numericId);
+        if (isSavedOnServer && !exists) return [...prev, numericId];
+        if (!isSavedOnServer && exists) return prev.filter((id) => Number(id) !== numericId);
+        return prev;
+      });
+
+    } catch (error) {
+      console.error("Failed to toggle bookmark:", error);
+      // Rollback on error
+      setBookmarked((prev) => prev.filter((id) => Number(id) !== numericId));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f7fa] page-enter overflow-x-hidden pt-20">
@@ -1322,8 +1476,9 @@ export default function UserDashboardPage() {
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className="w-10 h-10 rounded-full flex items-center justify-center border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] hover:border-[#7EB0AB] transition-all ml-1 bg-[#e6f7f2] font-bold text-[#7EB0AB]"
+                    style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
                   >
-                    {userInitials}
+                    {!profileImageUrl && userInitials}
                   </button>
 
                   {/* Dropdown Menu */}
@@ -1331,8 +1486,11 @@ export default function UserDashboardPage() {
                     <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-[#e5e7eb] overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
                       {/* User Info Header */}
                       <div className="p-4 border-b border-[#e5e7eb] flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg">
-                          {userInitials}
+                        <div
+                          className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg"
+                          style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+                        >
+                          {!profileImageUrl && userInitials}
                         </div>
                         <div className="flex flex-col overflow-hidden">
                           <span className="text-[14px] font-bold text-[#1a1a1a] truncate">
@@ -1582,11 +1740,10 @@ export default function UserDashboardPage() {
                               ? "0 2px 8px rgba(30,58,79,0.18)"
                               : "none",
                         }}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                          activeDateFilter === filter
-                            ? "bg-[#1e3a4f] text-white"
-                            : "bg-white border border-[#d1d5db] text-[#5a6a75] hover:bg-[#f0f2f5]"
-                        }`}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium ${activeDateFilter === filter
+                          ? "bg-[#1e3a4f] text-white"
+                          : "bg-white border border-[#d1d5db] text-[#5a6a75] hover:bg-[#f0f2f5]"
+                          }`}
                       >
                         {filter}
                       </button>
@@ -1616,11 +1773,10 @@ export default function UserDashboardPage() {
                               ? "0 2px 8px rgba(126,176,171,0.25)"
                               : "none",
                           }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                            selectedSkills.includes(skill)
-                              ? "bg-[#7EB0AB] text-white"
-                              : "bg-white border border-[#d1d5db] text-[#5a6a75] hover:bg-[#f0f2f5]"
-                          }`}
+                          className={`px-3 py-1.5 rounded-full text-xs font-medium ${selectedSkills.includes(skill)
+                            ? "bg-[#7EB0AB] text-white"
+                            : "bg-white border border-[#d1d5db] text-[#5a6a75] hover:bg-[#f0f2f5]"
+                            }`}
                         >
                           {skill}
                         </button>
@@ -1685,33 +1841,33 @@ export default function UserDashboardPage() {
                 {(selectedSkills.length > 0 ||
                   selectedCompanies.length > 0 ||
                   searchQuery.trim()) && (
-                  <button
-                    onClick={() => {
-                      setSelectedSkills([]);
-                      setSelectedCompanies([]);
-                      setSearchQuery("");
-                    }}
-                    style={{
-                      transition: "opacity 0.3s ease, transform 0.3s ease",
-                    }}
-                    className="mt-5 w-full px-3 py-2 rounded-lg text-xs font-semibold text-[#5a6a75] border border-[#d1d5db] hover:bg-[#f0f2f5] hover:text-[#1a1a1a] transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                    <button
+                      onClick={() => {
+                        setSelectedSkills([]);
+                        setSelectedCompanies([]);
+                        setSearchQuery("");
+                      }}
+                      style={{
+                        transition: "opacity 0.3s ease, transform 0.3s ease",
+                      }}
+                      className="mt-5 w-full px-3 py-2 rounded-lg text-xs font-semibold text-[#5a6a75] border border-[#d1d5db] hover:bg-[#f0f2f5] hover:text-[#1a1a1a] transition-colors flex items-center justify-center gap-1.5"
                     >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                    Clear Filters
-                  </button>
-                )}
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                      Clear Filters
+                    </button>
+                  )}
               </aside>
 
               {/* ─── Job Cards Grid ─── */}
@@ -1722,7 +1878,7 @@ export default function UserDashboardPage() {
                       key={job.id}
                       job={job}
                       isSelected={selectedJob?.id === job.id}
-                     isBookmarked={bookmarked.map(Number).includes(Number(job.id))}
+                      isBookmarked={bookmarked.map(Number).includes(Number(job.id))}
                       onSelect={() => handleSelectJob(job)}
                       // Rename this prop to onBookmark
                       onBookmark={(e) => {
@@ -1754,16 +1910,7 @@ export default function UserDashboardPage() {
                   >
                     Home
                   </button>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                   <span className="font-semibold text-[#1e3a4f]">
@@ -1771,114 +1918,224 @@ export default function UserDashboardPage() {
                   </span>
                 </div>
 
+                {/* Two-column layout */}
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
-                  {/* Left Column */}
-                  <div className="flex-1 w-full bg-white rounded-2xl border border-[#e5e7eb] p-6 lg:p-8 relative">
-                    <div className="flex flex-col sm:flex-row gap-5 items-start mb-6">
-                      <div
-                        className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 shadow-sm"
-                        style={{
-                          backgroundColor: lastSelectedJob?.color || "#7EB0AB",
-                        }} // Added Fallback
-                      >
-                        {lastSelectedJob?.initials || "J"}
-                      </div>
-                      <div className="flex-1">
-                        <h1 className="text-2xl md:text-[28px] font-bold text-[#1a1a1a] mb-2">
-                          {lastSelectedJob?.title}
-                        </h1>
-                        <div className="flex flex-wrap items-center gap-3 text-sm text-[#5a6a75]">
-                          <span className="font-medium text-[#1e3a4f]">
-                            {lastSelectedJob?.company}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            {lastSelectedJob?.location}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            {lastSelectedJob?.timeAgo}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3 mt-4">
-                          <span className="px-3 py-1 bg-[#f0f2f5] text-[#1a1a1a] text-xs font-semibold rounded-full border border-[#e5e7eb]">
-                            {lastSelectedJob?.type}
-                          </span>
-                          <span className="px-3 py-1 bg-[#f0f2f5] text-[#1a1a1a] text-xs font-semibold rounded-full border border-[#e5e7eb]">
-                            {lastSelectedJob?.salary}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Tags Section - CRITICAL FIX */}
-                    <div className="flex flex-wrap gap-2 mb-8">
-                      {(lastSelectedJob?.tags || []).map((tag) => (
-                        <span
-                          key={tag}
-                          className="px-4 py-1.5 rounded-full text-[13px] font-medium bg-[#e6f7f2] text-[#7EB0AB] border border-[#7EB0AB]/20"
+                  {/* ── Left Column: Main Job Card ── */}
+                  <div className="flex-1 w-full min-w-0">
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 lg:p-8">
+
+                      {/* Job Header */}
+                      <div className="flex flex-col sm:flex-row gap-5 items-start mb-5">
+                        <div
+                          className="w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0 shadow-sm"
+                          style={{ backgroundColor: lastSelectedJob?.color || "#7EB0AB" }}
                         >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
+                          {lastSelectedJob?.initials || "J"}
+                        </div>
+                        <div className="flex-1">
+                          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-1.5">
+                            {lastSelectedJob?.title}
+                          </h1>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#5a6a75]">
+                            <span className="font-semibold text-[#1e3a4f]">{lastSelectedJob?.company}</span>
+                            <span className="flex items-center gap-1">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              {lastSelectedJob?.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              {lastSelectedJob?.timeAgo}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-3">
+                            <span className="px-3 py-1 bg-[#f0f2f5] text-[#5a6a75] text-xs font-semibold rounded-full border border-[#e5e7eb]">
+                              {lastSelectedJob?.type}
+                            </span>
+                            <span className="px-3 py-1 bg-[#e6f7f2] text-[#7EB0AB] text-xs font-semibold rounded-full border border-[#7EB0AB]/20">
+                              {lastSelectedJob?.salary}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-                    <div className="space-y-8">
-                      <section>
-                        <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-3">
-                          Job Description
-                        </h3>
-                        <p className="text-[15px] text-[#5a6a75] leading-relaxed">
-                          {lastSelectedJob?.description}
-                        </p>
-                      </section>
+                      {/* Apply + Save Buttons */}
+                      <div className="flex gap-3 mb-6">
+                        <button
+                          onClick={() => {
+                            if (isAuthenticated) {
+                              setShowApplyModal(true);
+                            } else {
+                              setShowAuthPrompt(true);
+                            }
+                          }}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 hover:shadow-lg shadow-md"
+                          style={{ background: "linear-gradient(135deg, #7EB0AB, #6A9994)" }}
+                        >
+                          Apply Now
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isAuthenticated) {
+                              toggleBookmark(lastSelectedJob.id);
+                            } else {
+                              setShowAuthPrompt(true);
+                            }
+                          }}
+                          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${bookmarked.map(Number).includes(Number(lastSelectedJob?.id))
+                            ? "bg-[#1e3a4f] text-white border-[#1e3a4f]"
+                            : "bg-white text-[#1a1a1a] border-[#e5e7eb] hover:bg-[#f5f7fa]"
+                            }`}
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill={bookmarked.map(Number).includes(Number(lastSelectedJob?.id)) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                          </svg>
+                          Save Job
+                        </button>
+                      </div>
 
-                      <section>
-                        <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-3">
-                          Responsibilities
-                        </h3>
-                        <ul className="space-y-2.5">
-                          {(lastSelectedJob?.whatYoullDo || []).map(
-                            (
-                              item,
-                              i, // Added Fallback
-                            ) => (
-                              <li
-                                key={i}
-                                className="flex gap-3 text-[15px] text-[#5a6a75] leading-relaxed"
-                              >
-                                <span className="text-[#5a6a75] font-bold mt-0.5">
-                                  •
-                                </span>
+                      {/* Tags */}
+                      <div className="flex flex-wrap gap-2 mb-7">
+                        {(lastSelectedJob?.tags || []).map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-[#f0f2f5] text-[#5a6a75] border border-[#e5e7eb]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      {/* Body Sections */}
+                      <div className="space-y-7">
+                        <section>
+                          <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-2.5">Job Description</h3>
+                          <p className="text-[14.5px] text-[#5a6a75] leading-relaxed">{lastSelectedJob?.description}</p>
+                        </section>
+
+                        <section>
+                          <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-2.5">Responsibilities</h3>
+                          <ul className="space-y-2">
+                            {(lastSelectedJob?.whatYoullDo || []).map((item, i) => (
+                              <li key={i} className="flex gap-2.5 text-[14.5px] text-[#5a6a75] leading-relaxed">
+                                <span className="text-[#7EB0AB] font-bold mt-0.5 flex-shrink-0">•</span>
                                 <span>{item}</span>
                               </li>
-                            ),
-                          )}
-                        </ul>
-                      </section>
+                            ))}
+                          </ul>
+                        </section>
 
-                      <section>
-                        <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-3">
-                          Qualifications
-                        </h3>
-                        <ul className="space-y-2.5">
-                          {(lastSelectedJob?.whyCompany || []).map(
-                            (
-                              item,
-                              i, // Added Fallback
-                            ) => (
-                              <li
-                                key={i}
-                                className="flex gap-3 text-[15px] text-[#5a6a75] leading-relaxed"
-                              >
-                                <span className="text-[#5a6a75] font-bold mt-0.5">
-                                  •
-                                </span>
+                        <section>
+                          <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-2.5">Qualifications</h3>
+                          <ul className="space-y-2">
+                            {(lastSelectedJob?.whyCompany || []).map((item, i) => (
+                              <li key={i} className="flex gap-2.5 text-[14.5px] text-[#5a6a75] leading-relaxed">
+                                <span className="text-[#7EB0AB] font-bold mt-0.5 flex-shrink-0">•</span>
                                 <span>{item}</span>
                               </li>
-                            ),
-                          )}
-                        </ul>
-                      </section>
+                            ))}
+                          </ul>
+                        </section>
+                      </div>
+
+                      {/* Report Footer */}
+                      <div className="mt-8 pt-4 border-t border-[#f0f2f5] flex items-center justify-between">
+                        <span className="text-xs text-[#9ca3af]">Report this job posting</span>
+                        <div className="flex items-center gap-2">
+                          <button className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#5a6a75] hover:bg-[#f0f2f5] transition-colors">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
+                              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                            </svg>
+                          </button>
+                          <button className="p-1.5 rounded-lg text-[#9ca3af] hover:text-red-400 hover:bg-red-50 transition-colors">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                              <line x1="4" y1="22" x2="4" y2="15" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+
                     </div>
+                  </div>
+
+                  {/* ── Right Column: Sidebar Panels ── */}
+                  <div className="w-full lg:w-[272px] flex-shrink-0 space-y-4">
+
+                    {/* Meet the Recruiter */}
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
+                      <h3 className="text-[15px] font-bold text-[#1a1a1a] mb-4">Meet the Recruiter</h3>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div
+                          className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 border-2"
+                          style={{
+                            backgroundColor: lastSelectedJob?.color || "#7EB0AB",
+                            borderColor: (lastSelectedJob?.color || "#7EB0AB") + "40",
+                          }}
+                        >
+                          JD
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-bold text-[#1a1a1a]">Jane Doe</p>
+                          <p className="text-[12px] text-[#5a6a75]">Senior Tech Talent Partner</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setShowMessagingModal(true)}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#e5e7eb] text-sm font-semibold text-[#1a1a1a] hover:bg-[#f5f7fa] hover:border-[#7EB0AB] hover:text-[#7EB0AB] transition-all group"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:stroke-[#7EB0AB] transition-colors">
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
+                        Message Jane
+                      </button>
+                    </div>
+
+                    {/* Similar Jobs */}
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
+                      <h3 className="text-[15px] font-bold text-[#1a1a1a] mb-4">Similar Jobs</h3>
+                      <div className="space-y-3">
+                        {filteredJobs
+                          .filter((j) => j.id !== lastSelectedJob?.id)
+                          .slice(0, 3)
+                          .map((sj) => (
+                            <button
+                              key={sj.id}
+                              onClick={() => handleSelectJob(sj)}
+                              className="w-full text-left p-3 rounded-xl border border-[#f0f2f5] hover:border-[#7EB0AB]/40 hover:bg-[#f8fffe] transition-all group"
+                            >
+                              <p className="text-[13px] font-bold text-[#1a1a1a] group-hover:text-[#1e3a4f] leading-snug mb-0.5">
+                                {sj.title}
+                              </p>
+                              <p className="text-[11px] text-[#9ca3af] mb-1.5">
+                                {sj.company} • {sj.location}
+                              </p>
+                              <p className="text-[12px] font-semibold text-[#7EB0AB]">{sj.salary}</p>
+                            </button>
+                          ))}
+                        {filteredJobs.filter((j) => j.id !== lastSelectedJob?.id).length === 0 && (
+                          <p className="text-xs text-[#9ca3af] text-center py-2">No similar jobs found</p>
+                        )}
+                      </div>
+                      {filteredJobs.filter((j) => j.id !== lastSelectedJob?.id).length > 3 && (
+                        <button
+                          onClick={handleClearSelection}
+                          className="mt-3 w-full py-2 rounded-xl border border-[#e5e7eb] text-sm font-semibold text-[#5a6a75] hover:bg-[#f5f7fa] hover:text-[#1a1a1a] transition-all"
+                        >
+                          View All
+                        </button>
+                      )}
+                    </div>
+
                   </div>
                 </div>
               </div>
@@ -1893,6 +2150,19 @@ export default function UserDashboardPage() {
         <ApplyModal
           job={selectedJob}
           onClose={() => setShowApplyModal(false)}
+        />
+      )}
+
+      {/* ─── Messaging Modal ─── */}
+      {showMessagingModal && lastSelectedJob && (
+        <MessagingModal
+          recruiter={{
+            name: "Jane Doe",
+            role: "Senior Tech Talent Partner",
+            initials: "JD",
+            color: lastSelectedJob.color || "#7EB0AB",
+          }}
+          onClose={() => setShowMessagingModal(false)}
         />
       )}
 
