@@ -1215,9 +1215,9 @@ export default function UserDashboardPage() {
 };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] page-enter overflow-x-hidden">
+    <div className="min-h-screen bg-[#f5f7fa] page-enter overflow-x-hidden pt-20">
       {/* ─── Navbar ─── */}
-      <nav className="sticky top-0 z-30 bg-white border-b border-[#e5e7eb] px-6 lg:px-10">
+      <nav className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-[#e5e7eb] px-6 lg:px-10">
         <div className="flex items-center justify-between h-20 max-w-[1400px] mx-auto">
           {/* Logo */}
           <Link href="/user/dashboard" className="flex items-center">
@@ -1232,7 +1232,8 @@ export default function UserDashboardPage() {
 
           {/* Nav Links */}
           <div className="flex items-center gap-3">
-            <button
+            <Link
+              href="/user/dashboard"
               className="flex items-center gap-1.5 px-3 lg:px-5 py-2.5 rounded-lg text-[15px] font-semibold text-white shadow-sm"
               style={{ background: "#7EB0AB" }}
             >
@@ -1250,7 +1251,7 @@ export default function UserDashboardPage() {
                 <path d="M16 3H8l-2 4h12l-2-4z" />
               </svg>
               Jobs
-            </button>
+            </Link>
 
             {/* Saved Jobs Link */}
             <Link
@@ -1270,6 +1271,27 @@ export default function UserDashboardPage() {
                 <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
               </svg>
               <span className="hidden sm:inline">Saved Jobs</span>
+            </Link>
+
+            {/* Messages Link */}
+            <Link
+              href="/user/messages"
+              className="flex items-center gap-2 px-3 lg:px-5 py-2.5 rounded-lg border border-[#e5e7eb] text-[15px] font-semibold text-[#1a1a1a] bg-white hover:bg-[#f9fafb] shadow-sm transition-colors"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                <polyline points="3 7 12 13 21 7" />
+              </svg>
+              <span className="hidden sm:inline">Messages</span>
             </Link>
 
             {isAuthenticated && (
