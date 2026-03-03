@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import api from '@/lib/axios';
@@ -14,6 +14,7 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
     const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
     const [sliding, setSliding] = useState(false);
     const [slideDirection, setSlideDirection] = useState<'left' | 'right'>('right');
+    const searchParams = useSearchParams();
 
     // Sign-in state
     const [loginEmail, setLoginEmail] = useState('');
@@ -108,7 +109,7 @@ const handleSignIn = async (e: React.FormEvent) => {
     // ─── Social Login handlers ───
     // These redirect the user to the Laravel backend to start the OAuth flow
     const handleGoogleLogin = () => {
-        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/google`;
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://backend.test'}/api/auth/google`;
     };
 
 
@@ -127,8 +128,30 @@ const handleSignIn = async (e: React.FormEvent) => {
 
         setRegLoading(true);
         try {
+            if (typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem('pendingSignupEmail', regEmail);
+                sessionStorage.setItem('pendingSignupPassword', regPassword);
+            }
             await api.post('/auth/register', { name, email: regEmail, phone: digits, location, password: regPassword });
-            router.push(`/user/verify-otp?email=${encodeURIComponent(regEmail)}`);
+
+            // Try to log in immediately so we can send the user to profile completion with a token.
+            try {
+                const loginResponse = await api.post('/auth/login', { email: regEmail, password: regPassword });
+                localStorage.setItem('token', loginResponse.data.access_token);
+                if (typeof sessionStorage !== 'undefined') {
+                    sessionStorage.removeItem('pendingSignupEmail');
+                    sessionStorage.removeItem('pendingSignupPassword');
+                }
+                router.replace('/register');
+                return;
+            } catch (loginErr: any) {
+                if (loginErr?.response?.data?.email_not_verified) {
+                    router.push(`/user/verify-otp?email=${encodeURIComponent(regEmail)}`);
+                    return;
+                }
+                // Fall through to show registration error if login fails for another reason.
+                throw loginErr;
+            }
         } catch (err: any) {
             const errors = err.response?.data;
             if (typeof errors === 'string') {

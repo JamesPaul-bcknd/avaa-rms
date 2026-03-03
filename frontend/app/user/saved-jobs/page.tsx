@@ -1022,6 +1022,7 @@ export default function UserDashboardPage() {
       .join("")
       .toUpperCase() || "U";
   const userEmail = user?.email || "";
+  const profileImageUrl = user?.profile_image_url || null;
   const [visibleIds, setVisibleIds] = useState<number[]>([]);
   const prevFilteredIds = useRef<number[]>([]);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -1135,9 +1136,9 @@ export default function UserDashboardPage() {
   if (isLoading) return null;
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] page-enter overflow-x-hidden">
+    <div className="min-h-screen bg-[#f5f7fa] page-enter overflow-x-hidden pt-20">
       {/* ─── Navbar ─── */}
-      <nav className="sticky top-0 z-30 bg-white border-b border-[#e5e7eb] px-6 lg:px-10">
+      <nav className="fixed top-0 left-0 right-0 z-30 bg-white border-b border-[#e5e7eb] px-6 lg:px-10">
         <div className="flex items-center justify-between h-20 max-w-[1400px] mx-auto">
           {/* Logo */}
           <Link href="/user/dashboard" className="flex items-center">
@@ -1199,6 +1200,34 @@ export default function UserDashboardPage() {
               <span className="hidden sm:inline">Saved Jobs</span>
             </Link>
 
+            {/* Messages Link */}
+            <Link
+              href="/user/messages"
+              className={`flex items-center gap-2 px-3 lg:px-5 py-2.5 rounded-lg text-[15px] font-semibold transition-all ${
+                pathname === "/user/messages"
+                  ? "text-white shadow-sm"
+                  : "text-[#1a1a1a] bg-white border border-[#e5e7eb] hover:bg-[#f9fafb]"
+              }`}
+              style={
+                pathname === "/user/messages" ? { background: "#7EB0AB" } : {}
+              }
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
+                <polyline points="3 7 12 13 21 7" />
+              </svg>
+              <span className="hidden sm:inline">Messages</span>
+            </Link>
+
             <>
               {isAuthenticated && (
                 <>
@@ -1228,8 +1257,9 @@ export default function UserDashboardPage() {
                     <button
                       onClick={() => setShowProfileMenu(!showProfileMenu)}
                       className="w-10 h-10 rounded-full flex items-center justify-center border border-[#e5e7eb] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] hover:border-[#7EB0AB] transition-all ml-1 bg-[#e6f7f2] font-bold text-[#7EB0AB]"
+                      style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
                     >
-                      {userInitials}
+                      {!profileImageUrl && userInitials}
                     </button>
 
                     {/* Dropdown Menu */}
@@ -1237,8 +1267,11 @@ export default function UserDashboardPage() {
                       <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.15)] border border-[#e5e7eb] overflow-hidden z-50 animate-in slide-in-from-top-2 duration-200">
                         {/* User Info Header */}
                         <div className="p-4 border-b border-[#e5e7eb] flex items-center gap-3">
-                          <div className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg">
-                            {userInitials}
+                          <div
+                            className="w-11 h-11 rounded-full flex items-center justify-center border border-[#7EB0AB] bg-[#e6f7f2] text-[#7EB0AB] font-bold text-lg"
+                            style={profileImageUrl ? { backgroundImage: `url(${profileImageUrl})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
+                          >
+                            {!profileImageUrl && userInitials}
                           </div>
                           <div className="flex flex-col overflow-hidden">
                             <span className="text-[14px] font-bold text-[#1a1a1a] truncate">

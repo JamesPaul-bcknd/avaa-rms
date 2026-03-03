@@ -11,6 +11,14 @@ export function useAuth(options?: { redirect?: boolean }) {
     const [user, setUser] = useState<any>(null);
     const router = useRouter();
 
+    const setUserState = (nextUser: any, broadcast = false) => {
+        setUser(nextUser);
+        setIsAuthenticated(!!nextUser);
+        if (broadcast && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:user-updated', { detail: nextUser }));
+        }
+    };
+
     useEffect(() => {
         let cancelled = false;
 
@@ -28,8 +36,7 @@ export function useAuth(options?: { redirect?: boolean }) {
             try {
                 const response = await api.post('/auth/me');
                 if (!cancelled) {
-                    setUser(response.data);
-                    setIsAuthenticated(true);
+                    setUserState(response.data, true);
                     setIsLoading(false);
                 }
             } catch (err) {
@@ -44,11 +51,26 @@ export function useAuth(options?: { redirect?: boolean }) {
 
         checkAuth();
 
+        const handleUserUpdated = (event: Event) => {
+            const detail = (event as CustomEvent).detail;
+            setUser(detail);
+            setIsAuthenticated(!!detail);
+        };
+
+        window.addEventListener('auth:user-updated', handleUserUpdated as EventListener);
+
         return () => {
             cancelled = true;
+            window.removeEventListener('auth:user-updated', handleUserUpdated as EventListener);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const refreshUser = async () => {
+        const response = await api.post('/auth/me');
+        setUserState(response.data, true);
+        return response.data;
+    };
 
     const logout = async () => {
         try {
@@ -57,9 +79,10 @@ export function useAuth(options?: { redirect?: boolean }) {
             // Ignore errors during logout
         } finally {
             localStorage.removeItem('token');
+            setUserState(null, true);
             router.replace('/user/signin');
         }
     };
 
-    return { isAuthenticated, isLoading, user, logout };
+    return { isAuthenticated, isLoading, user, logout, refreshUser, setUser: (nextUser: any) => setUserState(nextUser, true) };
 }

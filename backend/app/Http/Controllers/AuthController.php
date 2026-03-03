@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -169,20 +170,50 @@ class AuthController extends Controller
      */
     public function updateProfile(Request $request)
     {
+        if ($request->has('skills') && is_string($request->input('skills'))) {
+            $decoded = json_decode($request->input('skills'), true);
+            if (is_array($decoded)) {
+                $request->merge(['skills' => $decoded]);
+            }
+        }
+
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|between:2,100',
             'phone' => 'sometimes|nullable|string|max:30',
             'location' => 'sometimes|nullable|string|max:100',
             'bio' => 'sometimes|nullable|string|max:500',
+            'skills' => 'sometimes|array',
+            'skills.*' => 'nullable|string|max:50',
+            'profile_image' => 'sometimes|file|image|max:2048',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['error' => $validator->errors()->first()], 400);
         }
 
+        /** @var User $user */
         $user = auth()->guard('api')->user();
         $user->fill($validator->validated());
+
+        if ($request->hasFile('profile_image')) {
+            if ($user->profile_image && Storage::disk('public')->exists($user->profile_image)) {
+                Storage::disk('public')->delete($user->profile_image);
+            }
+
+            $path = $request->file('profile_image')->store('profile-images', 'public');
+            $user->profile_image = $path;
+        }
+
+        if ($request->has('skills')) {
+            $cleanSkills = array_values(array_filter(
+                $request->input('skills', []),
+                fn ($skill) => is_string($skill) && trim($skill) !== ''
+            ));
+            $user->skills = $cleanSkills;
+        }
+
         $user->save();
+        $user->refresh();
 
         return response()->json($user);
     }
@@ -201,6 +232,7 @@ class AuthController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 400);
         }
 
+        /** @var User $user */
         $user = auth()->guard('api')->user();
 
         if (!Hash::check($request->current_password, $user->password)) {
@@ -228,7 +260,10 @@ class AuthController extends Controller
      */
     public function refresh()
     {
-        return $this->respondWithToken(auth()->guard('api')->refresh());
+        /** @var \Tymon\JWTAuth\JWTGuard $guard */
+        $guard = auth()->guard('api');
+
+        return $this->respondWithToken($guard->refresh());
     }
 
     /**
