@@ -1182,37 +1182,37 @@ export default function UserDashboardPage() {
   };
 
   const toggleBookmark = async (jobId: number) => {
-  const numericId = Number(jobId);
+    const numericId = Number(jobId);
 
-  try {
-    // 1. OPTIMISTIC UPDATE: Change the heart color immediately
-    setBookmarked((prev) => {
-      const isCurrentlySaved = prev.map(Number).includes(numericId);
-      if (isCurrentlySaved) {
-        return prev.filter((id) => Number(id) !== numericId);
-      } else {
-        return [...prev, numericId];
-      }
-    });
+    try {
+      // 1. OPTIMISTIC UPDATE: Change the heart color immediately
+      setBookmarked((prev) => {
+        const isCurrentlySaved = prev.map(Number).includes(numericId);
+        if (isCurrentlySaved) {
+          return prev.filter((id) => Number(id) !== numericId);
+        } else {
+          return [...prev, numericId];
+        }
+      });
 
-    // 2. Call Laravel
-    const response = await api.post(`/jobs/${numericId}/bookmark`);
-    
-    // 3. Sync with Server: Ensure state matches Laravel's final word
-    const isSavedOnServer = response.data.saved;
-    setBookmarked((prev) => {
-      const exists = prev.map(Number).includes(numericId);
-      if (isSavedOnServer && !exists) return [...prev, numericId];
-      if (!isSavedOnServer && exists) return prev.filter((id) => Number(id) !== numericId);
-      return prev;
-    });
+      // 2. Call Laravel
+      const response = await api.post(`/jobs/${numericId}/bookmark`);
 
-  } catch (error) {
-    console.error("Failed to toggle bookmark:", error);
-    // Rollback on error
-    setBookmarked((prev) => prev.filter((id) => Number(id) !== numericId));
-  }
-};
+      // 3. Sync with Server: Ensure state matches Laravel's final word
+      const isSavedOnServer = response.data.saved;
+      setBookmarked((prev) => {
+        const exists = prev.map(Number).includes(numericId);
+        if (isSavedOnServer && !exists) return [...prev, numericId];
+        if (!isSavedOnServer && exists)
+          return prev.filter((id) => Number(id) !== numericId);
+        return prev;
+      });
+    } catch (error) {
+      console.error("Failed to toggle bookmark:", error);
+      // Rollback on error
+      setBookmarked((prev) => prev.filter((id) => Number(id) !== numericId));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#f5f7fa] page-enter overflow-x-hidden">
@@ -1700,7 +1700,9 @@ export default function UserDashboardPage() {
                       key={job.id}
                       job={job}
                       isSelected={selectedJob?.id === job.id}
-                     isBookmarked={bookmarked.map(Number).includes(Number(job.id))}
+                      isBookmarked={bookmarked
+                        .map(Number)
+                        .includes(Number(job.id))}
                       onSelect={() => handleSelectJob(job)}
                       // Rename this prop to onBookmark
                       onBookmark={(e) => {
@@ -1745,51 +1747,123 @@ export default function UserDashboardPage() {
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                   <span className="font-semibold text-[#1e3a4f]">
-                    {lastSelectedJob?.position || lastSelectedJob?.title}
+                    {lastSelectedJob.position || lastSelectedJob.title}
                   </span>
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-6 items-start">
-                  {/* Left Column */}
+                  {/* Left Column: Main Job Content */}
                   <div className="flex-1 w-full bg-white rounded-2xl border border-[#e5e7eb] p-6 lg:p-8 relative">
+                    {/* Avatar & Title */}
                     <div className="flex flex-col sm:flex-row gap-5 items-start mb-6">
                       <div
                         className="w-20 h-20 rounded-2xl flex items-center justify-center text-white font-bold text-2xl flex-shrink-0 shadow-sm"
                         style={{
-                          backgroundColor: lastSelectedJob?.color || "#7EB0AB",
-                        }} // Added Fallback
+                          backgroundColor: lastSelectedJob.color || "#7EB0AB",
+                        }}
                       >
-                        {lastSelectedJob?.initials || "J"}
+                        {lastSelectedJob.initials || "J"}
                       </div>
                       <div className="flex-1">
                         <h1 className="text-2xl md:text-[28px] font-bold text-[#1a1a1a] mb-2">
-                          {lastSelectedJob?.title}
+                          {lastSelectedJob.title}
                         </h1>
                         <div className="flex flex-wrap items-center gap-3 text-sm text-[#5a6a75]">
                           <span className="font-medium text-[#1e3a4f]">
-                            {lastSelectedJob?.company}
+                            {lastSelectedJob.company}
                           </span>
                           <span className="flex items-center gap-1.5">
-                            {lastSelectedJob?.location}
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            {lastSelectedJob.location}
                           </span>
                           <span className="flex items-center gap-1.5">
-                            {lastSelectedJob?.timeAgo}
+                            <svg
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            {lastSelectedJob.timeAgo}
                           </span>
                         </div>
                         <div className="flex items-center gap-3 mt-4">
                           <span className="px-3 py-1 bg-[#f0f2f5] text-[#1a1a1a] text-xs font-semibold rounded-full border border-[#e5e7eb]">
-                            {lastSelectedJob?.type}
+                            {lastSelectedJob.type}
                           </span>
                           <span className="px-3 py-1 bg-[#f0f2f5] text-[#1a1a1a] text-xs font-semibold rounded-full border border-[#e5e7eb]">
-                            {lastSelectedJob?.salary}
+                            {lastSelectedJob.salary}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Tags Section - CRITICAL FIX */}
+                    {/* Actions Row (Apply & Save) */}
+                    <div className="flex flex-col sm:flex-row gap-3 w-full mb-8">
+                      <button
+                        onClick={() =>
+                          isAuthenticated
+                            ? setShowApplyModal(true)
+                            : setShowAuthPrompt(true)
+                        }
+                        className="flex-1 py-3.5 rounded-xl text-white font-bold text-[15px] transition-all hover:opacity-90 shadow-md flex justify-center items-center"
+                        style={{ background: "#7EB0AB" }}
+                      >
+                        Apply Now
+                      </button>
+                      <button
+                        onClick={() =>
+                          isAuthenticated
+                            ? toggleBookmark(lastSelectedJob.id)
+                            : setShowAuthPrompt(true)
+                        }
+                        className="flex-1 py-3.5 rounded-xl bg-white border border-[#e5e7eb] text-[#1a1a1a] font-semibold text-[15px] transition-all hover:bg-[#f9fafb] flex justify-center items-center gap-2 shadow-sm"
+                      >
+                        <svg
+                          width="18"
+                          height="18"
+                          viewBox="0 0 24 24"
+                          fill={
+                            bookmarked.includes(lastSelectedJob.id)
+                              ? "#1a1a1a"
+                              : "none"
+                          }
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                        </svg>
+                        {bookmarked.includes(lastSelectedJob.id)
+                          ? "Saved"
+                          : "Save Job"}
+                      </button>
+                    </div>
+
+                    <hr className="border-[#e5e7eb] mb-8" />
+
+                    {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-8">
-                      {(lastSelectedJob?.tags || []).map((tag) => (
+                      {(lastSelectedJob.tags || []).map((tag) => (
                         <span
                           key={tag}
                           className="px-4 py-1.5 rounded-full text-[13px] font-medium bg-[#e6f7f2] text-[#7EB0AB] border border-[#7EB0AB]/20"
@@ -1799,26 +1873,23 @@ export default function UserDashboardPage() {
                       ))}
                     </div>
 
+                    {/* Job Content Sections */}
                     <div className="space-y-8">
                       <section>
                         <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-3">
                           Job Description
                         </h3>
                         <p className="text-[15px] text-[#5a6a75] leading-relaxed">
-                          {lastSelectedJob?.description}
+                          {lastSelectedJob.description}
                         </p>
                       </section>
-
                       <section>
                         <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-3">
                           Responsibilities
                         </h3>
                         <ul className="space-y-2.5">
-                          {(lastSelectedJob?.whatYoullDo || []).map(
-                            (
-                              item,
-                              i, // Added Fallback
-                            ) => (
+                          {(lastSelectedJob.whatYoullDo || []).map(
+                            (item, i) => (
                               <li
                                 key={i}
                                 className="flex gap-3 text-[15px] text-[#5a6a75] leading-relaxed"
@@ -1832,30 +1903,146 @@ export default function UserDashboardPage() {
                           )}
                         </ul>
                       </section>
-
                       <section>
                         <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-3">
                           Qualifications
                         </h3>
                         <ul className="space-y-2.5">
-                          {(lastSelectedJob?.whyCompany || []).map(
-                            (
-                              item,
-                              i, // Added Fallback
-                            ) => (
-                              <li
-                                key={i}
-                                className="flex gap-3 text-[15px] text-[#5a6a75] leading-relaxed"
-                              >
-                                <span className="text-[#5a6a75] font-bold mt-0.5">
-                                  •
-                                </span>
-                                <span>{item}</span>
-                              </li>
-                            ),
-                          )}
+                          {(lastSelectedJob.whyCompany || []).map((item, i) => (
+                            <li
+                              key={i}
+                              className="flex gap-3 text-[15px] text-[#5a6a75] leading-relaxed"
+                            >
+                              <span className="text-[#5a6a75] font-bold mt-0.5">
+                                •
+                              </span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
                         </ul>
                       </section>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="mt-8 pt-6 border-t border-[#e5e7eb] flex items-center justify-between bg-[#fcfcfc] -mx-6 lg:-mx-8 -mb-6 lg:-mb-8 px-6 lg:px-8 py-4 rounded-b-2xl">
+                      <button className="text-sm font-medium text-[#5a6a75] hover:text-[#1a1a1a]">
+                        Report this job posting
+                      </button>
+                      <div className="flex gap-3 text-[#9ca3af]">
+                        <button className="hover:text-[#1a1a1a] transition-colors">
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <circle cx="18" cy="5" r="3" />
+                            <circle cx="6" cy="12" r="3" />
+                            <circle cx="18" cy="19" r="3" />
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                          </svg>
+                        </button>
+                        <button className="hover:text-[#1a1a1a] transition-colors">
+                          <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                            <line x1="4" y1="22" x2="4" y2="15" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Sidebar (Meet the Recruiter & Similar Jobs) */}
+                  <div className="w-full lg:w-[360px] flex flex-col gap-6 flex-shrink-0">
+                    {/* Meet the Recruiter */}
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 lg:p-8">
+                      <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-5">
+                        Meet the Recruiter
+                      </h3>
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-[#f0f2f5] border border-[#e5e7eb]">
+                          <img
+                            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop"
+                            alt="Jane Doe"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div>
+                          <h4 className="text-[15px] font-bold text-[#1a1a1a]">
+                            Jane Doe
+                          </h4>
+                          <p className="text-[13px] text-[#5a6a75]">
+                            Senior Tech Talent Partner
+                          </p>
+                        </div>
+                      </div>
+                      <button className="w-full py-2.5 rounded-xl bg-white border border-[#e5e7eb] text-[#1a1a1a] font-semibold text-[14px] transition-all hover:bg-[#f9fafb] flex justify-center items-center gap-2 shadow-sm">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Message Jane
+                      </button>
+                    </div>
+
+                    {/* Similar Jobs */}
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 lg:p-8">
+                      <h3 className="text-[17px] font-bold text-[#1a1a1a] mb-5">
+                        Similar Jobs
+                      </h3>
+                      <div className="flex flex-col gap-5 mb-6">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="text-[14px] font-bold text-[#1a1a1a]">
+                              Fullstack Engineer
+                            </h4>
+                            <p className="text-[13px] text-[#5a6a75] mt-0.5">
+                              DataFlow • Remote
+                            </p>
+                          </div>
+                          <span className="text-[13px] font-semibold text-[#1a1a1a]">
+                            $130k-170k
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="text-[14px] font-bold text-[#1a1a1a]">
+                              UX Engineer
+                            </h4>
+                            <p className="text-[13px] text-[#5a6a75] mt-0.5">
+                              Streamline • NY
+                            </p>
+                          </div>
+                          <span className="text-[13px] font-semibold text-[#1a1a1a]">
+                            $110k-145k
+                          </span>
+                        </div>
+                      </div>
+                      <button className="w-full py-2.5 rounded-xl bg-white border border-[#e5e7eb] text-[#1a1a1a] font-bold text-[14px] transition-all hover:bg-[#f9fafb] flex justify-center items-center shadow-sm">
+                        View All
+                      </button>
                     </div>
                   </div>
                 </div>

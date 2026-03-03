@@ -19,7 +19,7 @@ function AuthSuccessHandler() {
             router.replace('/user/dashboard');
         } else {
             // If no token, send back to login
-            router.replace('/login');
+            router.replace('/signin');
         }
     }, [searchParams, router]);
 

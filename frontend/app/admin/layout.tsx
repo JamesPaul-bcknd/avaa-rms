@@ -55,7 +55,7 @@ export default function AdminLayout({
     const sidebarWidth = sidebarCollapsed ? 68 : 220;
 
     // Don't show sidebar on login page
-    const isLoginPage = pathname === '/admin/login';
+    const isLoginPage = pathname === '/signin';
 
     useEffect(() => {
         if (isLoginPage) {
@@ -63,9 +63,9 @@ export default function AdminLayout({
             return;
         }
 
-        const token = localStorage.getItem('admin_token');
+        const token = localStorage.getItem('token');
         if (!token) {
-            router.replace('/admin/login');
+            router.replace('/signin');
             return;
         }
 
@@ -75,16 +75,16 @@ export default function AdminLayout({
         })
             .then((res) => {
                 if (res.data.role !== 'admin') {
-                    localStorage.removeItem('admin_token');
-                    router.replace('/admin/login');
+                    localStorage.removeItem('token');
+                    router.replace('/signin');
                 } else {
                     setAdminUser({ name: res.data.name || 'Admin', email: res.data.email || '' });
                     setAuthChecked(true);
                 }
             })
             .catch(() => {
-                localStorage.removeItem('admin_token');
-                router.replace('/admin/login');
+                localStorage.removeItem('token');
+                router.replace('/signin');
             });
     }, [isLoginPage, router]);
 
@@ -114,7 +114,7 @@ export default function AdminLayout({
     const handleLogout = async () => {
         if (logoutLoading) return;
         setLogoutLoading(true);
-        const token = localStorage.getItem('admin_token');
+        const token = localStorage.getItem('token');
         try {
             await api.post('/admin/logout', {}, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -122,10 +122,10 @@ export default function AdminLayout({
         } catch {
             // Continue with local cleanup even if API fails
         } finally {
-            localStorage.removeItem('admin_token');
+            localStorage.removeItem('token');
             setShowLogoutModal(false);
             setLogoutLoading(false);
-            router.push('/admin/login');
+            router.push('/signin');
         }
     };
 
