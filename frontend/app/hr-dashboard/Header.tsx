@@ -1,4 +1,5 @@
-"use client";
+'use client';
+import Link from 'next/link';
 import { Search, MessageSquare, Bell } from 'lucide-react';
 
 // 1. Define an interface for the Header props
@@ -26,10 +27,13 @@ const Header = ({ title = "Job Applicants" }: HeaderProps) => {
           />
         </div>
 
-        <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-slate-700 font-medium hover:bg-gray-50 whitespace-nowrap">
+        <Link
+          href="/user/messages"
+          className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-slate-700 font-medium hover:bg-gray-50 whitespace-nowrap"
+        >
           <MessageSquare size={18} />
           <span className="hidden sm:inline">Messages</span>
-        </button>
+        </Link>
 
         <div className="relative p-2 text-slate-600 cursor-pointer">
           <Bell size={22} />
