@@ -1914,7 +1914,7 @@ export default function UserDashboardPage() {
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
                   <span className="font-semibold text-[#1e3a4f]">
-                    {lastSelectedJob?.position || lastSelectedJob?.title}
+                    {lastSelectedJob.position || lastSelectedJob.title}
                   </span>
                 </div>
 

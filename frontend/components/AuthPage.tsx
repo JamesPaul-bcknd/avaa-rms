@@ -42,61 +42,70 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
 
     // Redirect if already logged in
     useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            api.post('/auth/me').then(() => {
-                router.replace('/user/dashboard');
-            }).catch(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+        api.post('/auth/me')
+            .then((response) => {
+                const user = response.data;
+                if (user.role === 'admin') {
+                    router.replace('/admin/dashboard');
+                } else {
+                    router.replace('/user/dashboard');
+                }
+            })
+            .catch(() => {
                 localStorage.removeItem('token');
             });
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }
+}, [router]);
 
     const switchMode = (target: 'signin' | 'signup') => {
-        if (target === mode || sliding) return;
-        setSlideDirection(target === 'signup' ? 'left' : 'right');
-        setSliding(true);
-        setTimeout(() => {
-            setMode(target);
-            // Update URL without full navigation
-            window.history.replaceState(null, '', `/user/${target}`);
-            setTimeout(() => setSliding(false), 50);
-        }, 300);
-    };
+    if (target === mode || sliding) return;
+    setSlideDirection(target === 'signup' ? 'left' : 'right');
+    setSliding(true);
+    setTimeout(() => {
+        setMode(target);
+        // Updated: Clean URL path since files are now in the root app folder
+        window.history.replaceState(null, '', `/${target}`);
+        setTimeout(() => setSliding(false), 50);
+    }, 300);
+};
 
     // ─── Sign-in handler ───
-    const handleSignIn = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoginError('');
-        setLoginLoading(true);
-        try {
-            const response = await api.post('/auth/login', { email: loginEmail, password: loginPassword });
-            localStorage.setItem('token', response.data.access_token);
-            // Clear any temp signup creds
-            if (typeof sessionStorage !== 'undefined') {
-                sessionStorage.removeItem('pendingSignupEmail');
-                sessionStorage.removeItem('pendingSignupPassword');
-            }
-            const redirect = searchParams?.get('redirect');
-            router.replace(redirect || '/user/dashboard');
-        } catch (err: any) {
-            if (err.response?.data?.email_not_verified) {
-                const unverifiedEmail = err.response?.data?.email || loginEmail;
-                router.push(`/user/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`);
-                return;
-            }
-            const isAuthError = err.response?.status === 401 || err.response?.data?.error === 'Unauthorized';
-            setLoginError(
-                isAuthError
-                    ? 'Invalid credentials. Please check your email or password and try again.'
-                    : err.response?.data?.error || 'Invalid credentials. Please check your email or password and try again.'
-            );
-        } finally {
-            setLoginLoading(false);
-        }
-    };
+const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError('');
+    setLoginLoading(true);
+    
+    try {
+        const response = await api.post('/auth/login', { 
+            email: loginEmail, 
+            password: loginPassword 
+        });
 
+        const { access_token, user } = response.data;
+        localStorage.setItem('token', access_token);
+
+        // Conditional redirect based on role
+        if (user && user.role === 'admin') {
+            router.replace('/admin/dashboard');
+        } else {
+            router.replace('/user/dashboard');
+        }
+
+    } catch (err: any) {
+        if (err.response?.data?.email_not_verified) {
+            const unverifiedEmail = err.response?.data?.email || loginEmail;
+            // Updated: Redirect to the top-level verify-otp page
+            router.push(`/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`);
+            return;
+        }
+
+        setLoginError(err.response?.data?.error || 'Invalid credentials. Please try again.');
+    } finally {
+        setLoginLoading(false);
+    }
+};
     // ─── Social Login handlers ───
     // These redirect the user to the Laravel backend to start the OAuth flow
     const handleGoogleLogin = () => {

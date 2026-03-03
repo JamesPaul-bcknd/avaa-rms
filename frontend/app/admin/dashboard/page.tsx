@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
     useEffect(() => {
         document.title = 'Admin Dashboard | AVAA';
 
-        const token = localStorage.getItem('admin_token');
+        const token = localStorage.getItem('token');
         api.get('/admin/dashboard', {
             headers: { Authorization: `Bearer ${token}` },
         })

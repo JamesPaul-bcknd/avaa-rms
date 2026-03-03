@@ -270,16 +270,23 @@ class AuthController extends Controller
      * Get the token array structure.
      */
     protected function respondWithToken($token)
-    {
-        /** @var \Tymon\JWTAuth\JWTGuard $guard */
-        $guard = auth()->guard('api');
+{
+    // Get the authenticated user
+    $user = auth()->guard('api')->user();
 
-        return response()->json([
-            'access_token' => $token,
-            'token_type' => 'bearer',
-            'expires_in' => $guard->factory()->getTTL() * 60
-        ]);
-    }
+    return response()->json([
+        'access_token' => $token,
+        'token_type' => 'bearer',
+        'expires_in' => auth()->guard('api')->factory()->getTTL() * 60,
+        // ADD THIS:
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->role, // Make sure your 'users' table has a 'role' column!
+        ]
+    ]);
+}
 
     /**
      * Generate a 6-digit OTP and send it via email.
