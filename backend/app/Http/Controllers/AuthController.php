@@ -185,6 +185,12 @@ class AuthController extends Controller
             'skills' => 'sometimes|array',
             'skills.*' => 'nullable|string|max:50',
             'profile_image' => 'sometimes|file|image|max:2048',
+            // Recruiter fields
+            'company_name' => 'sometimes|nullable|string|max:150',
+            'company_number' => 'sometimes|nullable|string|max:50',
+            'company_location' => 'sometimes|nullable|string|max:150',
+            'position' => 'sometimes|nullable|string|max:150',
+            'role' => 'sometimes|string|in:user,recruiter,admin',
         ]);
 
         if ($validator->fails()) {
@@ -272,18 +278,22 @@ class AuthController extends Controller
     protected function respondWithToken($token)
 {
     // Get the authenticated user
-    $user = auth()->guard('api')->user();
+    /** @var \Tymon\JWTAuth\JWTGuard $jwtGuard */
+    $jwtGuard = auth()->guard('api');
+    $user = $jwtGuard->user();
+
+    // Intelephense fix: call factory() on typed $jwtGuard
+    $expiresIn = method_exists($jwtGuard, 'factory') ? $jwtGuard->factory()->getTTL() * 60 : (60 * 60);
 
     return response()->json([
         'access_token' => $token,
         'token_type' => 'bearer',
-        'expires_in' => auth()->guard('api')->factory()->getTTL() * 60,
-        // ADD THIS:
+        'expires_in' => $expiresIn,
         'user' => [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
-            'role' => $user->role, // Make sure your 'users' table has a 'role' column!
+            'role' => $user->role,
         ]
     ]);
 }

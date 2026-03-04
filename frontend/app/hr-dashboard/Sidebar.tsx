@@ -1,26 +1,27 @@
 "use client";
 import { useState } from 'react';
 import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X } from 'lucide-react';
+import { useAuth } from '@/lib/useAuth';
 
-// 1. Define the interface to fix the TS errors
+// Added "users" to the allowed views
 interface SidebarProps {
-  setView: (view: "list" | "details" | "interviews") => void;
-  currentView: "list" | "details" | "interviews";
+  setView: (view: "list" | "details" | "interviews" | "jobs" | "users") => void;
+  currentView: "list" | "details" | "interviews" | "jobs" | "users";
 }
 
 const Sidebar = ({ setView, currentView }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { logout } = useAuth();
 
-  // 2. Add 'view' property to map names to your page logic
+  // Updated 'view' properties: Users now has its own 'users' view
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, view: 'list' as const },
-    { name: 'Users', icon: Users, view: 'list' as const }, // Keep 'list' if page not built yet
-    { name: 'Manage Jobs', icon: Briefcase, view: 'list' as const },
+    { name: 'Users', icon: Users, view: 'users' as const }, 
+    { name: 'Manage Jobs', icon: Briefcase, view: 'jobs' as const },
     { name: 'Interviews', icon: Calendar, view: 'interviews' as const },
   ];
 
-  // Helper to handle navigation
-  const handleNav = (view: "list" | "details" | "interviews") => {
+  const handleNav = (view: "list" | "details" | "interviews" | "jobs" | "users") => {
     setView(view);
     setMobileOpen(false);
   };
@@ -40,10 +41,7 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
 
       {/* ── Mobile drawer overlay ── */}
       {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-30 bg-black/50"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="lg:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* ── Mobile drawer ── */}
@@ -62,10 +60,6 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
             </div>
           ))}
         </nav>
-        <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:text-white mt-auto">
-          <LogOut size={20} />
-          <span>Sign Out</span>
-        </div>
       </div>
 
       {/* ── Desktop sidebar ── */}
@@ -81,7 +75,6 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
               key={item.name}
               onClick={() => handleNav(item.view)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
-                // Details view should still highlight Dashboard since it's a sub-page of the job list
                 (currentView === item.view || (item.view === 'list' && currentView === 'details')) 
                 ? 'bg-slate-800 text-green-400' 
                 : 'hover:bg-slate-800 hover:text-white'
@@ -93,7 +86,10 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:text-white mt-auto">
+        <div
+          className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:text-white mt-auto"
+          onClick={() => logout('/')}
+        >
           <LogOut size={20} />
           <span>Sign Out</span>
         </div>

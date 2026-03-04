@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useAuth } from "@/lib/useAuth";
 
 export default function MessagesPage() {
   const [showConversationMenu, setShowConversationMenu] = useState(false);
@@ -18,6 +19,17 @@ export default function MessagesPage() {
   >("inappropriate");
   const [reportDetails, setReportDetails] = useState("");
   const [reportSubmitted, setReportSubmitted] = useState(false);
+  const { user } = useAuth({ redirect: false });
+
+  const userName = user?.name || "AA";
+  const userInitials =
+    userName
+      .split(" ")
+      .map((segment: string) => segment[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "AA";
+  const profileImageUrl = user?.profile_image_url || user?.profileImageUrl || null;
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
@@ -143,8 +155,20 @@ export default function MessagesPage() {
             </button>
 
             {/* Avatar */}
-            <div className="w-10 h-10 rounded-full flex items-center justify-center border border-[#e5e7eb] bg-[#e6f7f2] font-bold text-[#7EB0AB]">
-              AA
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center border border-[#e5e7eb] bg-[#e6f7f2] font-bold text-[#7EB0AB]"
+              style={
+                profileImageUrl
+                  ? {
+                      backgroundImage: `url(${profileImageUrl})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                      color: "transparent",
+                    }
+                  : undefined
+              }
+            >
+              {!profileImageUrl && userInitials}
             </div>
           </div>
         </div>

@@ -78,12 +78,21 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = () => {
-    console.log("Application submitted:", {
-      ...form,
-      file: selectedFile?.name,
-    });
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    try {
+      await api.post(`/jobs/${job.id}/apply`, {
+        full_name: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        linkedin: form.linkedin,
+        cover_letter: form.coverLetter,
+        why_interested: form.whyInterested,
+        experience: form.experience,
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Failed to submit application', error);
+    }
   };
 
   const handleFileDrop = (e: React.DragEvent) => {
@@ -1274,17 +1283,19 @@ export default function UserDashboardPage() {
     selectedCompanies,
     activeDateFilter,
     filteredJobs,
+    selectedJob,
   ]);
 
   // Initial load animation
   useEffect(() => {
+    setVisibleIds([]);
     jobs.forEach((job, i) => {
       setTimeout(() => {
         setVisibleIds((prev) => [...prev, job.id]);
       }, i * 80);
     });
     prevFilteredIds.current = jobs.map((j) => j.id);
-  }, []);
+  }, [jobs]);
 
   if (isLoading) return null;
 
@@ -1304,7 +1315,7 @@ export default function UserDashboardPage() {
             No jobs found
           </h3>
           <p className="text-[#5a6a75] mb-6">
-            We couldn't find any job listings in the database right now.
+            We couldn&apos;t find any job listings in the database right now.
           </p>
         </div>
       </div>
@@ -1598,7 +1609,7 @@ export default function UserDashboardPage() {
             )}
             {!isAuthenticated && !isLoading && (
               <Link
-                href="/user/signin"
+                href="/signin"
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90"
                 style={{ background: "#7EB0AB" }}
               >
@@ -2207,10 +2218,7 @@ export default function UserDashboardPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    localStorage.removeItem("token");
-                    router.push("/user/signin");
-                  }}
+                  onClick={() => logout('/user/landing')}
                   className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-md"
                   style={{ background: "#7EB0AB" }}
                 >

@@ -49,6 +49,8 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
                 const user = response.data;
                 if (user.role === 'admin') {
                     router.replace('/admin/dashboard');
+                } else if (user.role === 'recruiter') {
+                    router.replace('/hr-dashboard');
                 } else {
                     router.replace('/user/dashboard');
                 }
@@ -89,6 +91,8 @@ const handleSignIn = async (e: React.FormEvent) => {
         // Conditional redirect based on role
         if (user && user.role === 'admin') {
             router.replace('/admin/dashboard');
+        } else if (user && user.role === 'recruiter') {
+            router.replace('/hr-dashboard');
         } else {
             router.replace('/user/dashboard');
         }

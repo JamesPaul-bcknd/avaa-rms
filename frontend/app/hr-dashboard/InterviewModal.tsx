@@ -4,18 +4,18 @@ import { Calendar, Clock, CheckCircle, X, User, ChevronDown } from 'lucide-react
 
 interface InterviewModalProps {
   applicantName: string;
-  jobTitle: string; 
+  jobTitle: string;
   isOpen: boolean;
   onClose: () => void;
   onSchedule: (interviewData: any) => void;
 }
 
-const InterviewModal = ({ 
-  applicantName, 
-  jobTitle, 
-  isOpen, 
-  onClose, 
-  onSchedule 
+const InterviewModal = ({
+  applicantName,
+  jobTitle,
+  isOpen,
+  onClose,
+  onSchedule
 }: InterviewModalProps) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [interviewType, setInterviewType] = useState("Online Interview");
@@ -51,7 +51,7 @@ const InterviewModal = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
       <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden relative border border-gray-100">
-        
+
         {!isSuccess ? (
           <div className="animate-in fade-in zoom-in duration-200">
             {/* Header Area */}
@@ -69,7 +69,7 @@ const InterviewModal = ({
                   <User size={40} />
                 </div>
                 <div>
-                  <h3 className="text-4xl font-semibold text-[#2d3748] tracking-tight">{applicantName}</h3>
+                  <h3 className="text-2xl sm:text-4xl font-semibold text-[#2d3748] tracking-tight">{applicantName}</h3>
                   <p className="text-gray-400 text-lg font-medium">alice@example.com</p>
                 </div>
               </div>
@@ -77,13 +77,13 @@ const InterviewModal = ({
               {/* Form Grid */}
               <div className="space-y-6">
                 {/* Date & Time Row */}
-                <div className="flex items-center">
-                  <label className="w-1/3 text-lg font-bold text-[#2d3748]">Interview Date:</label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="sm:w-1/3 text-base sm:text-lg font-bold text-[#2d3748]">Interview Date:</label>
                   <div className="flex-1 flex gap-3">
                     <div className="flex-1 relative">
                       <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
@@ -91,8 +91,8 @@ const InterviewModal = ({
                     </div>
                     <div className="flex-1 relative">
                       <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
@@ -102,10 +102,10 @@ const InterviewModal = ({
                 </div>
 
                 {/* Interview Type Row with "v" icon */}
-                <div className="flex items-center">
-                  <label className="w-1/3 text-lg font-bold text-[#2d3748]">Interview Type:</label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="sm:w-1/3 text-base sm:text-lg font-bold text-[#2d3748]">Interview Type:</label>
                   <div className="flex-1 relative">
-                    <select 
+                    <select
                       value={interviewType}
                       onChange={(e) => setInterviewType(e.target.value)}
                       className="w-full px-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center appearance-none outline-none cursor-pointer focus:ring-2 focus:ring-emerald-100 transition-all pr-10"
@@ -118,10 +118,10 @@ const InterviewModal = ({
                 </div>
 
                 {/* Interviewer Row with "v" icon */}
-                <div className="flex items-center">
-                  <label className="w-1/3 text-lg font-bold text-[#2d3748]">Interviewer:</label>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="sm:w-1/3 text-base sm:text-lg font-bold text-[#2d3748]">Interviewer:</label>
                   <div className="flex-1 relative">
-                    <select 
+                    <select
                       value={interviewer}
                       onChange={(e) => setInterviewer(e.target.value)}
                       className="w-full px-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center appearance-none outline-none cursor-pointer focus:ring-2 focus:ring-emerald-100 transition-all pr-10"
@@ -137,7 +137,7 @@ const InterviewModal = ({
 
               {/* Footer Button */}
               <div className="flex justify-end pt-4">
-                <button 
+                <button
                   onClick={handleSchedule}
                   className="px-8 py-3 bg-[#a7f3d0] text-[#065f46] rounded-2xl font-extrabold text-lg hover:bg-[#6ee7b7] transition-all shadow-sm active:scale-95"
                 >
@@ -158,7 +158,7 @@ const InterviewModal = ({
             <p className="text-slate-500 mb-8 text-lg">
               Interview scheduled for <span className="font-bold text-slate-700">{applicantName}</span>.
             </p>
-            <button 
+            <button
               onClick={handleFullClose}
               className="w-full py-4 bg-[#6ee7b7] text-[#065f46] rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-md"
             >

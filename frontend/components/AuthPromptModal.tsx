@@ -45,13 +45,13 @@ export default function AuthPromptModal({ isOpen, onClose }: AuthPromptModalProp
 
                 <div className="flex items-center gap-3">
                     <Link
-                        href="/user/signin"
+                        href="/signin"
                         className="flex-1 py-3 rounded-xl text-sm font-semibold text-[#1e3a4f] border border-[#d1d5db] hover:bg-[#f0f2f5] transition-colors text-center"
                     >
                         Sign In
                     </Link>
                     <Link
-                        href="/user/signup"
+                        href="/signup"
                         className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 text-center"
                         style={{ background: '#3CD894' }}
                     >

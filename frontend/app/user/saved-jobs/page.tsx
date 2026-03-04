@@ -7,85 +7,69 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import AuthPromptModal from "@/components/AuthPromptModal";
 import { usePathname } from "next/navigation";
+import api from "@/lib/axios";
 
-const JOBS = [
-  {
-    id: 1,
-    initials: "TN",
-    color: "#1e3a4f",
-    title: "Senior Frontend Developer",
-    company: "TechNova",
-    location: "San Francisco, CA",
-    timeAgo: "2d ago",
-    type: "Full-time",
-    tags: ["React", "TypeScript", "Tailwind CSS"],
-    salary: "$120k-$160k",
-    position: "Senior Frontend Developer",
-    description: `The Mission: Join TechNova to lead the frontend architecture of our next-gen data platform. We're looking for a Senior React Developer who obsesses over clean code, performance, and building beautiful user experiences with TypeScript and Tailwind CSS.`,
-    whatYoullDo: [
-      "Build & Scale: Architect reusable React components for high-traffic dashboards.",
-      "Lead: Set the standard for frontend best practices and mentor the engineering team.",
-      "Innovate: Work directly with Design to bridge the gap between Figma and production.",
-    ],
-    whyCompany: [
-      "High Growth: Join a fast-paced team with zero legacy code.",
-      "Flexibility: 100% remote-first culture with flexible hours.",
-      "Top Tier Pay: $120k–$160k + Equity and full benefits.",
-    ],
-  },
-  {
-    id: 2,
-    initials: "DS",
-    color: "#7EB0AB",
-    title: "Backend Engineer",
-    company: "DataStream",
-    location: "New York, NY",
-    timeAgo: "3d ago",
-    type: "Full-time",
-    tags: ["Node.js", "PostgreSQL", "AWS"],
-    salary: "$130k-$170k",
-    position: "Backend Engineer",
-    description: `DataStream is looking for a Backend Engineer to build robust, scalable APIs that power real-time data pipelines. You'll work with Node.js, PostgreSQL, and AWS to deliver reliable infrastructure for millions of users.`,
-    whatYoullDo: [
-      "Design and implement RESTful and GraphQL APIs for data ingestion.",
-      "Optimize database queries and ensure high-availability services.",
-      "Collaborate with DevOps to deploy and monitor production systems on AWS.",
-    ],
-    whyCompany: [
-      "Impact: Your code will process millions of events per second.",
-      "Growth: Dedicated learning budget and conference attendance.",
-      "Compensation: $130k–$170k + equity and comprehensive benefits.",
-    ],
-  },
-  {
-    id: 3,
-    initials: "CH",
-    color: "#1e3a4f",
-    title: "UX/UI Designer",
-    company: "CreativeHub",
-    location: "Remote",
-    timeAgo: "4d ago",
-    type: "Contract",
-    tags: ["Figma", "User Research", "Prototyping"],
-    salary: "$90k-$120k",
-    position: "UX/UI Designer",
-    description: `CreativeHub is seeking a talented UX/UI Designer to craft intuitive and visually stunning interfaces. You'll lead user research, create wireframes, and deliver pixel-perfect designs in Figma.`,
-    whatYoullDo: [
-      "Conduct user research and usability testing to inform design decisions.",
-      "Create wireframes, prototypes, and high-fidelity mockups in Figma.",
-      "Collaborate closely with engineers to ensure design fidelity in production.",
-    ],
-    whyCompany: [
-      "Creative Freedom: Shape the product from concept to launch.",
-      "Remote-First: Work from anywhere with a flexible schedule.",
-      "Compensation: $90k–$120k with performance bonuses.",
-    ],
-  },
-];
+type Job = {
+  id: number;
+  initials?: string;
+  color?: string;
+  title: string;
+  company: string;
+  location: string;
+  timeAgo?: string;
+  type?: string;
+  tags: string[];
+  salary?: string;
+  description?: string;
+  whatYoullDo: string[];
+  whyCompany: string[];
+};
 
-// Collect all unique tags from jobs
-const ALL_TAGS = Array.from(new Set(JOBS.flatMap((j) => j.tags)));
-const COMPANIES = Array.from(new Set(JOBS.map((j) => j.company))).sort();
+const formatJobFromApi = (job: any): Job => {
+  const rawTags = job.tags;
+  const tagsArray = Array.isArray(rawTags)
+    ? rawTags
+    : typeof rawTags === "string"
+      ? rawTags.split(",").map((tag: string) => tag.trim()).filter(Boolean)
+      : [];
+
+  const whatYouDo = Array.isArray(job.what_youll_do)
+    ? job.what_youll_do
+    : Array.isArray(job.whatYoullDo)
+      ? job.whatYoullDo
+      : [];
+
+  const whyCompany = Array.isArray(job.why_company)
+    ? job.why_company
+    : Array.isArray(job.whyCompany)
+      ? job.whyCompany
+      : [];
+
+  const fallbackCompany = job.company || "Company";
+  const fallbackInitials = fallbackCompany
+    .split(" ")
+    .map((part: string) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "AV";
+
+  return {
+    id: job.id,
+    initials: job.initials || fallbackInitials,
+    color: job.color || "#1e3a4f",
+    title: job.title || "Untitled Role",
+    company: fallbackCompany,
+    location: job.location || "Remote",
+    timeAgo: job.time_ago || job.timeAgo || "Just now",
+    type: job.type || "Full-time",
+    tags: tagsArray,
+    salary: job.salary || "—",
+    description: job.description || "",
+    whatYoullDo: whatYouDo,
+    whyCompany,
+  };
+};
+
 const DATE_FILTERS = ["All Time", "Today", "This Week", "This Month"];
 
 const APPLY_STEPS = [
@@ -109,7 +93,7 @@ function ApplyModal({
   job,
   onClose,
 }: {
-  job: (typeof JOBS)[0];
+  job: Job;
   onClose: () => void;
 }) {
   const [step, setStep] = useState(1);
@@ -146,12 +130,21 @@ function ApplyModal({
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = () => {
-    console.log("Application submitted:", {
-      ...form,
-      file: selectedFile?.name,
-    });
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    try {
+      await api.post(`/jobs/${job.id}/apply`, {
+        full_name: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        linkedin: form.linkedin,
+        cover_letter: form.coverLetter,
+        why_interested: form.whyInterested,
+        experience: form.experience,
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Failed to submit application', error);
+    }
   };
 
   const handleFileDrop = (e: React.DragEvent) => {
@@ -827,14 +820,16 @@ function JobCard({
   isBookmarked,
   onSelect,
   onBookmark,
+  onApply,
   delay,
   visible,
 }: {
-  job: (typeof JOBS)[0];
+  job: Job;
   isSelected: boolean;
   isBookmarked: boolean;
   onSelect: () => void;
   onBookmark: (e: React.MouseEvent) => void;
+  onApply: (e: React.MouseEvent) => void;
   delay: number;
   visible: boolean;
 }) {
@@ -962,10 +957,7 @@ function JobCard({
           </span>
         </div>
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect();
-          }}
+          onClick={onApply}
           className="flex justify-center flex-1 ml-4 py-2 rounded-lg text-[13px] font-semibold text-white transition-all shadow-sm"
           style={{ background: "#7EB0AB" }}
         >
@@ -978,16 +970,16 @@ function JobCard({
 
 export default function UserDashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sliding, setSliding] = useState(false);
   const [slideDirection, setSlideDirection] = useState<"left" | "right">(
     "right",
   );
   const [activeView, setActiveView] = useState<"grid" | "details">("grid");
-  const [lastSelectedJob, setLastSelectedJob] = useState<
-    (typeof JOBS)[0] | null
-  >(null);
+  const [lastSelectedJob, setLastSelectedJob] = useState<Job | null>(null);
 
-  const handleSelectJob = (job: (typeof JOBS)[0]) => {
+  const handleSelectJob = (job: Job) => {
     if (job.id === lastSelectedJob?.id && activeView === "details") return;
     setLastSelectedJob(job);
     setSelectedJob(job);
@@ -1006,7 +998,7 @@ export default function UserDashboardPage() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [bookmarked, setBookmarked] = useState<number[]>([]);
-  const [selectedJob, setSelectedJob] = useState<(typeof JOBS)[0] | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
   const router = useRouter();
@@ -1031,6 +1023,14 @@ export default function UserDashboardPage() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const allTags =
+    jobs.length > 0
+      ? Array.from(new Set(jobs.flatMap((job) => job.tags || [])))
+      : [];
+  const companies =
+    jobs.length > 0
+      ? Array.from(new Set(jobs.map((job) => job.company).filter(Boolean))).sort()
+      : [];
 
   const pathname = usePathname();
   const isSavedPage = pathname === "/user/saved-jobs";
@@ -1052,6 +1052,59 @@ export default function UserDashboardPage() {
     document.title = "Saved Jobs | AVAA";
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchSavedJobs = async () => {
+      if (!isAuthenticated) {
+        setJobs([]);
+        setBookmarked([]);
+        setSelectedJob(null);
+        setLastSelectedJob(null);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await api.get("/bookmarks/jobs");
+        const payload = response.data?.data || [];
+        const formattedJobs: Job[] = payload.map((job: any) =>
+          formatJobFromApi(job),
+        );
+
+        if (!isMounted) return;
+
+        setJobs(formattedJobs);
+        setBookmarked(formattedJobs.map((job) => job.id));
+
+        if (formattedJobs.length > 0) {
+          setSelectedJob((prev) => prev ?? formattedJobs[0]);
+          setLastSelectedJob((prev) => prev ?? formattedJobs[0]);
+        } else {
+          setSelectedJob(null);
+          setLastSelectedJob(null);
+        }
+      } catch (error) {
+        console.error("Failed to load saved jobs", error);
+        if (isMounted) {
+          setJobs([]);
+          setBookmarked([]);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchSavedJobs();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated]);
+
   const toggleSkill = (skill: string) => {
     setSelectedSkills((prev) =>
       prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill],
@@ -1066,14 +1119,49 @@ export default function UserDashboardPage() {
     );
   };
 
-  const toggleBookmark = (id: number) => {
-    setBookmarked((prev) =>
-      prev.includes(id) ? prev.filter((b) => b !== id) : [...prev, id],
-    );
+  const toggleBookmark = async (id: number) => {
+    const numericId = Number(id);
+
+    setBookmarked((prev) => {
+      const exists = prev.map(Number).includes(numericId);
+      if (exists) {
+        return prev.filter((bookmarkId) => Number(bookmarkId) !== numericId);
+      }
+      return [...prev, numericId];
+    });
+
+    try {
+      const response = await api.post(`/jobs/${numericId}/bookmark`);
+      const isSavedOnServer = response.data?.saved;
+
+      setBookmarked((prev) => {
+        const exists = prev.map(Number).includes(numericId);
+        if (isSavedOnServer && !exists) {
+          return [...prev, numericId];
+        }
+        if (!isSavedOnServer && exists) {
+          return prev.filter((bookmarkId) => Number(bookmarkId) !== numericId);
+        }
+        return prev;
+      });
+
+      if (!isSavedOnServer) {
+        setJobs((prev) => prev.filter((job) => job.id !== numericId));
+        if (selectedJob?.id === numericId) {
+          setSelectedJob(null);
+          setLastSelectedJob(null);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to toggle bookmark", error);
+      setBookmarked((prev) =>
+        prev.filter((bookmarkId) => Number(bookmarkId) !== numericId),
+      );
+    }
   };
 
   // ─── Filtering Logic ──────────────────────────────────
-  const filteredJobs = JOBS.filter((job) => {
+  const filteredJobs = jobs.filter((job) => {
     // Search: match title, company, location, or any tag
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -1081,13 +1169,15 @@ export default function UserDashboardPage() {
         job.title.toLowerCase().includes(q) ||
         job.company.toLowerCase().includes(q) ||
         job.location.toLowerCase().includes(q) ||
-        job.tags.some((tag) => tag.toLowerCase().includes(q));
+        (job.tags || []).some((tag) => tag.toLowerCase().includes(q));
       if (!matchesSearch) return false;
     }
 
     // Skills filter: job must have ALL selected skills as tags
     if (selectedSkills.length > 0) {
-      const matches = selectedSkills.every((skill) => job.tags.includes(skill));
+      const matches = selectedSkills.every((skill) =>
+        (job.tags || []).includes(skill),
+      );
       if (!matches) return false;
     }
 
@@ -1125,15 +1215,46 @@ export default function UserDashboardPage() {
 
   // Initial load animation
   useEffect(() => {
-    JOBS.forEach((job, i) => {
+    setVisibleIds([]);
+    jobs.forEach((job, i) => {
       setTimeout(() => {
         setVisibleIds((prev) => [...prev, job.id]);
       }, i * 80);
     });
-    prevFilteredIds.current = JOBS.map((j) => j.id);
-  }, []);
+    prevFilteredIds.current = jobs.map((j) => j.id);
+  }, [jobs]);
 
   if (isLoading) return null;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-[#f5f7fa]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7EB0AB]"></div>
+      </div>
+    );
+  }
+
+  if (jobs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen bg-[#f5f7fa] p-6">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-[#e5e7eb] text-center max-w-md">
+          <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">
+            No saved jobs yet
+          </h3>
+          <p className="text-[#5a6a75] mb-6">
+            Start bookmarking roles from the Jobs tab and they will appear here instantly.
+          </p>
+          <Link
+            href="/user/dashboard"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white"
+            style={{ background: "#7EB0AB" }}
+          >
+            Browse Jobs
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f7fa] page-enter overflow-x-hidden pt-20">
@@ -1379,7 +1500,7 @@ export default function UserDashboardPage() {
               )}
               {!isAuthenticated && !isLoading && (
                 <Link
-                  href="/user/signin"
+                  href="/signin"
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90"
                   style={{ background: "#7EB0AB" }}
                 >
@@ -1540,7 +1661,7 @@ export default function UserDashboardPage() {
                     Skills
                   </h3>
                   <div className="flex flex-wrap gap-2">
-                    {(showAllSkills ? ALL_TAGS : ALL_TAGS.slice(0, 6)).map(
+                    {(showAllSkills ? allTags : allTags.slice(0, 6)).map(
                       (skill) => (
                         <button
                           key={skill}
@@ -1566,14 +1687,14 @@ export default function UserDashboardPage() {
                       ),
                     )}
                   </div>
-                  {ALL_TAGS.length > 6 && (
+                  {allTags.length > 6 && (
                     <button
                       onClick={() => setShowAllSkills(!showAllSkills)}
                       className="mt-2 text-xs font-medium text-[#7EB0AB] hover:text-[#6A9994] transition-colors"
                     >
                       {showAllSkills
                         ? "Show Less"
-                        : `+${ALL_TAGS.length - 6} more`}
+                        : `+${allTags.length - 6} more`}
                     </button>
                   )}
                 </div>
@@ -1584,7 +1705,7 @@ export default function UserDashboardPage() {
                     Company
                   </h3>
                   <div className="space-y-2">
-                    {(showAllCompanies ? COMPANIES : COMPANIES.slice(0, 4)).map(
+                    {(showAllCompanies ? companies : companies.slice(0, 4)).map(
                       (company) => (
                         <label
                           key={company}
@@ -1603,14 +1724,14 @@ export default function UserDashboardPage() {
                       ),
                     )}
                   </div>
-                  {COMPANIES.length > 4 && (
+                  {companies.length > 4 && (
                     <button
                       onClick={() => setShowAllCompanies(!showAllCompanies)}
                       className="mt-2 text-xs font-medium text-[#7EB0AB] hover:text-[#6A9994] transition-colors"
                     >
                       {showAllCompanies
                         ? "Show Less"
-                        : `+${COMPANIES.length - 4} more`}
+                        : `+${companies.length - 4} more`}
                     </button>
                   )}
                 </div>
@@ -1668,6 +1789,15 @@ export default function UserDashboardPage() {
                           ? toggleBookmark(job.id)
                           : setShowAuthPrompt(true);
                       }}
+                      onApply={(e) => {
+                        e.stopPropagation();
+                        if (!isAuthenticated) {
+                          setShowAuthPrompt(true);
+                          return;
+                        }
+                        setSelectedJob(job);
+                        setShowApplyModal(true);
+                      }}
                       delay={index * 50}
                       visible={visibleIds.includes(job.id)}
                     />
@@ -1678,7 +1808,355 @@ export default function UserDashboardPage() {
           </div>
 
           {/* ─── View 2: Job Details (Right half) ─── */}
-          <div className="w-[50%] flex-shrink-0 max-w-[1400px] mx-auto px-6 lg:px-10 py-8"></div>
+          <div className="w-[50%] flex-shrink-0 max-w-[1400px] mx-auto px-6 lg:px-10 py-8">
+            {lastSelectedJob && (
+              <div className="w-full pb-16">
+                {/* Breadcrumbs */}
+                <div className="flex items-center gap-2 text-sm text-[#5a6a75] mb-6">
+                  <button
+                    onClick={handleClearSelection}
+                    className="hover:text-[#1e3a4f] transition-colors"
+                  >
+                    Home
+                  </button>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                  <span className="font-semibold text-[#1e3a4f]">
+                    {lastSelectedJob.title}
+                  </span>
+                </div>
+
+                <div className="flex flex-col lg:flex-row gap-6 items-start">
+                  {/* ── Left Column: Main Job Card ── */}
+                  <div className="flex-1 w-full min-w-0">
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 lg:p-8">
+                      <div className="flex flex-col sm:flex-row gap-5 items-start mb-5">
+                        <div
+                          className="w-16 h-16 rounded-xl flex items-center justify-center text-white font-bold text-xl flex-shrink-0 shadow-sm"
+                          style={{
+                            backgroundColor: lastSelectedJob.color || "#7EB0AB",
+                          }}
+                        >
+                          {lastSelectedJob.initials || "J"}
+                        </div>
+                        <div className="flex-1">
+                          <h1 className="text-2xl font-bold text-[#1a1a1a] mb-1.5">
+                            {lastSelectedJob.title}
+                          </h1>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-[#5a6a75]">
+                            <span className="font-semibold text-[#1e3a4f]">
+                              {lastSelectedJob.company}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <svg
+                                width="13"
+                                height="13"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                              </svg>
+                              {lastSelectedJob.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <svg
+                                width="13"
+                                height="13"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                              {lastSelectedJob.timeAgo}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-3">
+                            <span className="px-3 py-1 bg-[#f0f2f5] text-[#5a6a75] text-xs font-semibold rounded-full border border-[#e5e7eb]">
+                              {lastSelectedJob.type}
+                            </span>
+                            <span className="px-3 py-1 bg-[#e6f7f2] text-[#7EB0AB] text-xs font-semibold rounded-full border border-[#7EB0AB]/20">
+                              {lastSelectedJob.salary}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 mb-6">
+                        <button
+                          onClick={() => {
+                            if (isAuthenticated) {
+                              setShowApplyModal(true);
+                            } else {
+                              setShowAuthPrompt(true);
+                            }
+                          }}
+                          className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 hover:shadow-lg shadow-md"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, #7EB0AB, #6A9994)",
+                          }}
+                        >
+                          Apply Now
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isAuthenticated) {
+                              toggleBookmark(lastSelectedJob.id);
+                            } else {
+                              setShowAuthPrompt(true);
+                            }
+                          }}
+                          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border transition-all ${
+                            bookmarked.map(Number).includes(
+                              Number(lastSelectedJob.id),
+                            )
+                              ? "bg-[#1e3a4f] text-white border-[#1e3a4f]"
+                              : "bg-white text-[#1a1a1a] border-[#e5e7eb] hover:bg-[#f5f7fa]"
+                          }`}
+                        >
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill={
+                              bookmarked.map(Number).includes(
+                                Number(lastSelectedJob.id),
+                              )
+                                ? "currentColor"
+                                : "none"
+                            }
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+                          </svg>
+                          Save Job
+                        </button>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 mb-7">
+                        {(lastSelectedJob.tags || []).map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-3.5 py-1.5 rounded-full text-[13px] font-medium bg-[#f0f2f5] text-[#5a6a75] border border-[#e5e7eb]"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div className="space-y-7">
+                        <section>
+                          <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-2.5">
+                            Job Description
+                          </h3>
+                          <p className="text-[14.5px] text-[#5a6a75] leading-relaxed">
+                            {lastSelectedJob.description}
+                          </p>
+                        </section>
+
+                        <section>
+                          <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-2.5">
+                            Responsibilities
+                          </h3>
+                          <ul className="space-y-2">
+                            {(lastSelectedJob.whatYoullDo || []).map(
+                              (item, i) => (
+                                <li
+                                  key={i}
+                                  className="flex gap-2.5 text-[14.5px] text-[#5a6a75] leading-relaxed"
+                                >
+                                  <span className="text-[#7EB0AB] font-bold mt-0.5 flex-shrink-0">
+                                    •
+                                  </span>
+                                  <span>{item}</span>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        </section>
+
+                        <section>
+                          <h3 className="text-[16px] font-bold text-[#1a1a1a] mb-2.5">
+                            Qualifications
+                          </h3>
+                          <ul className="space-y-2">
+                            {(lastSelectedJob.whyCompany || []).map(
+                              (item, i) => (
+                                <li
+                                  key={i}
+                                  className="flex gap-2.5 text-[14.5px] text-[#5a6a75] leading-relaxed"
+                                >
+                                  <span className="text-[#7EB0AB] font-bold mt-0.5 flex-shrink-0">
+                                    •
+                                  </span>
+                                  <span>{item}</span>
+                                </li>
+                              ),
+                            )}
+                          </ul>
+                        </section>
+                      </div>
+
+                      <div className="mt-8 pt-4 border-t border-[#f0f2f5] flex items-center justify-between">
+                        <span className="text-xs text-[#9ca3af]">
+                          Report this job posting
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#5a6a75] hover:bg-[#f0f2f5] transition-colors">
+                            <svg
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="18" cy="5" r="3" />
+                              <circle cx="6" cy="12" r="3" />
+                              <circle cx="18" cy="19" r="3" />
+                              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                            </svg>
+                          </button>
+                          <button className="p-1.5 rounded-lg text-[#9ca3af] hover:text-red-400 hover:bg-red-50 transition-colors">
+                            <svg
+                              width="15"
+                              height="15"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                              <line x1="4" y1="22" x2="4" y2="15" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Right Column: Sidebar Panels ── */}
+                  <div className="w-full lg:w-[272px] flex-shrink-0 space-y-4">
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
+                      <h3 className="text-[15px] font-bold text-[#1a1a1a] mb-4">
+                        Meet the Recruiter
+                      </h3>
+                      <div className="flex items-center gap-3 mb-4">
+                        <div
+                          className="w-11 h-11 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 border-2"
+                          style={{
+                            backgroundColor: lastSelectedJob.color || "#7EB0AB",
+                            borderColor: `${lastSelectedJob.color || "#7EB0AB"}40`,
+                          }}
+                        >
+                          JD
+                        </div>
+                        <div>
+                          <p className="text-[14px] font-bold text-[#1a1a1a]">
+                            Jane Doe
+                          </p>
+                          <p className="text-[12px] text-[#5a6a75]">
+                            Senior Tech Talent Partner
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => router.push("/user/messages")}
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#e5e7eb] text-sm font-semibold text-[#1a1a1a] hover:bg-[#f5f7fa] hover:border-[#7EB0AB] hover:text-[#7EB0AB] transition-all group"
+                      >
+                        <svg
+                          width="15"
+                          height="15"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="group-hover:stroke-[#7EB0AB] transition-colors"
+                        >
+                          <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+                        </svg>
+                        Message Jane
+                      </button>
+                    </div>
+
+                    <div className="bg-white rounded-2xl border border-[#e5e7eb] p-5">
+                      <h3 className="text-[15px] font-bold text-[#1a1a1a] mb-4">
+                        Similar Jobs
+                      </h3>
+                      <div className="space-y-3">
+                        {filteredJobs
+                          .filter((j) => j.id !== lastSelectedJob.id)
+                          .slice(0, 3)
+                          .map((sj) => (
+                            <button
+                              key={sj.id}
+                              onClick={() => handleSelectJob(sj)}
+                              className="w-full text-left p-3 rounded-xl border border-[#f0f2f5] hover:border-[#7EB0AB]/40 hover:bg-[#f8fffe] transition-all group"
+                            >
+                              <p className="text-[13px] font-bold text-[#1a1a1a] group-hover:text-[#1e3a4f] leading-snug mb-0.5">
+                                {sj.title}
+                              </p>
+                              <p className="text-[11px] text-[#9ca3af] mb-1.5">
+                                {sj.company} • {sj.location}
+                              </p>
+                              <p className="text-[12px] font-semibold text-[#7EB0AB]">
+                                {sj.salary}
+                              </p>
+                            </button>
+                          ))}
+                        {filteredJobs.filter((j) => j.id !== lastSelectedJob.id).length ===
+                          0 && (
+                          <p className="text-xs text-[#9ca3af] text-center py-2">
+                            No similar jobs found
+                          </p>
+                        )}
+                      </div>
+                      {filteredJobs.filter((j) => j.id !== lastSelectedJob.id).length >
+                        3 && (
+                        <button
+                          onClick={handleClearSelection}
+                          className="mt-3 w-full py-2 rounded-xl border border-[#e5e7eb] text-sm font-semibold text-[#5a6a75] hover:bg-[#f5f7fa] hover:text-[#1a1a1a] transition-all"
+                        >
+                          View All
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>{" "}
         {/* Close sliding wrapper */}
       </div>
@@ -1734,7 +2212,7 @@ export default function UserDashboardPage() {
                 <button
                   onClick={() => {
                     localStorage.removeItem("token");
-                    router.push("/user/signin");
+                    router.push("/signin");
                   }}
                   className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-md"
                   style={{ background: "#7EB0AB" }}
