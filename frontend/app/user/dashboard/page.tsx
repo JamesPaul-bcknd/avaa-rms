@@ -1313,7 +1313,7 @@ export default function UserDashboardPage() {
             No jobs found
           </h3>
           <p className="text-[#5a6a75] mb-6">
-            We couldn't find any job listings in the database right now.
+            We couldn&apos;t find any job listings in the database right now.
           </p>
         </div>
       </div>

@@ -8,7 +8,6 @@ use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\JobPostingController;
 use App\Http\Controllers\JobApplicationController;
-
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -88,4 +87,5 @@ Route::group([
 ], function () {
     // URL: GET /api/bookmarks
    Route::get('/bookmarks', [BookmarkController::class, 'index']);
+   Route::get('/bookmarks/jobs', [BookmarkController::class, 'getSavedJobs']);
 });
