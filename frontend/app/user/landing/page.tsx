@@ -316,7 +316,7 @@ export default function LandingPage() {
               Sign In
             </Link>
             <Link
-              href="/user/signup"
+              href="/signup"
               className="px-5 py-2.5 text-sm font-semibold text-white rounded-lg transition-all hover:opacity-90 hover:shadow-lg"
               style={{ background: "#3CD894" }}
             >
@@ -779,7 +779,7 @@ export default function LandingPage() {
                 automatically.
               </p>
               <Link
-                href="/user/signup"
+                href="/signup"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-[#1e3a4f] bg-[#3CD894] hover:bg-[#2bb87a] transition-colors"
               >
                 Get Started Free
@@ -1024,7 +1024,7 @@ export default function LandingPage() {
             Register Here Now <span className="inline-block ml-2">→</span>
           </h2>
           <Link
-            href="/user/signup"
+            href="/signup"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl text-base font-bold bg-white text-[#1e3a4f] hover:shadow-2xl hover:-translate-y-0.5 transition-all"
           >
             Get Started for Free

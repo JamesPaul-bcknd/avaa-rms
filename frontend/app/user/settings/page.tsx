@@ -425,7 +425,7 @@ export default function SettingsPage() {
                                     Cancel
                                 </button>
                                 <button
-                                    onClick={() => logout('/user/signin')}
+                                    onClick={() => logout('/signin')}
                                     className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-md"
                                     style={{ background: '#7EB0AB' }}
                                 >

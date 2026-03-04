@@ -55,7 +55,7 @@ export default function ResetPasswordPage() {
             });
             setSuccess(response.data.message || 'Password reset successfully!');
             setTimeout(() => {
-                router.push('/user/signin');
+                router.push('/signin');
             }, 2000);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Something went wrong. Please try again.');
@@ -220,7 +220,7 @@ export default function ResetPasswordPage() {
                 {/* Back to Sign In */}
                 <div className="text-center mt-6">
                     <Link
-                        href="/user/signin"
+                        href="/signin"
                         className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[#5a6a75] hover:text-[#1e3a4f] transition-colors"
                     >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

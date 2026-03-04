@@ -1607,7 +1607,7 @@ export default function UserDashboardPage() {
             )}
             {!isAuthenticated && !isLoading && (
               <Link
-                href="/user/signin"
+                href="/signin"
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90"
                 style={{ background: "#7EB0AB" }}
               >
