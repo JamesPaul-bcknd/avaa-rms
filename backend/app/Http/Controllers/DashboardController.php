@@ -10,7 +10,7 @@ class DashboardController extends Controller
     public function index(): JsonResponse
     {
         // Fetch all jobs
-        $jobs = JobPosting::latest()->get();
+        $jobs = JobPosting::withCount('applications')->latest()->get();
 
         // Return as JSON with a 200 OK status
         return response()->json([

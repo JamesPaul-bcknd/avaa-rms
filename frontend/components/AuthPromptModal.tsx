@@ -51,7 +51,7 @@ export default function AuthPromptModal({ isOpen, onClose }: AuthPromptModalProp
                         Sign In
                     </Link>
                     <Link
-                        href="/user/signup"
+                        href="/signup"
                         className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 text-center"
                         style={{ background: '#3CD894' }}
                     >

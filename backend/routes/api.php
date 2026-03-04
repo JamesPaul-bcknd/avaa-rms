@@ -6,7 +6,8 @@ use App\Http\Controllers\SocialAuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\AdminController;
-
+use App\Http\Controllers\JobPostingController;
+use App\Http\Controllers\JobApplicationController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -66,6 +67,14 @@ Route::group([
     // Public: View all jobs
     Route::get('/', [DashboardController::class, 'index']); 
 
+    // Recruiter: Manage jobs
+    Route::group(['middleware' => 'auth:api'], function () {
+        Route::post('/', [JobPostingController::class, 'store']);
+        Route::put('/{jobPosting}', [JobPostingController::class, 'update']);
+        Route::delete('/{jobPosting}', [JobPostingController::class, 'destroy']);
+        Route::post('/{jobPosting}/apply', [JobApplicationController::class, 'store']);
+    });
+
     // Protected: Bookmark a specific job
     // URL: POST /api/jobs/{jobId}/bookmark
     Route::post('/{jobId}/bookmark', [BookmarkController::class, 'toggleBookmark'])
@@ -78,4 +87,5 @@ Route::group([
 ], function () {
     // URL: GET /api/bookmarks
    Route::get('/bookmarks', [BookmarkController::class, 'index']);
+   Route::get('/bookmarks/jobs', [BookmarkController::class, 'getSavedJobs']);
 });

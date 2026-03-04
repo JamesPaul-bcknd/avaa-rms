@@ -72,7 +72,7 @@ export function useAuth(options?: { redirect?: boolean }) {
         return response.data;
     };
 
-    const logout = async () => {
+    const logout = async (redirectPath: string = '/signin') => {
         try {
             await api.post('/auth/logout');
         } catch {

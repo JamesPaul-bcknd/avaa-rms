@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from "next/image";
 import { Search, MessageSquare, Bell } from 'lucide-react';
 
 // 1. Define an interface for the Header props
@@ -40,9 +41,11 @@ const Header = ({ title = "Job Applicants" }: HeaderProps) => {
           <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
         </div>
 
-        <img
+        <Image
           src="https://avatar.iran.liara.run/public/boy"
-          className="w-10 h-10 rounded-full border border-gray-200"
+          width={40}
+          height={40}
+          className="rounded-full border border-gray-200"
           alt="Profile"
         />
       </div>
