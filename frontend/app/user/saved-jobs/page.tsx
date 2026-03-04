@@ -1379,7 +1379,7 @@ export default function UserDashboardPage() {
               )}
               {!isAuthenticated && !isLoading && (
                 <Link
-                  href="/user/signin"
+                  href="/signin"
                   className="flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90"
                   style={{ background: "#7EB0AB" }}
                 >
@@ -1734,7 +1734,7 @@ export default function UserDashboardPage() {
                 <button
                   onClick={() => {
                     localStorage.removeItem("token");
-                    router.push("/user/signin");
+                    router.push("/signin");
                   }}
                   className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-md"
                   style={{ background: "#7EB0AB" }}

@@ -79,7 +79,7 @@ export default function VerifyOtpPage() {
                 }
 
                 // If auto-login fails, send to signin with redirect to selection
-                router.push('/user/signin?redirect=/register');
+                router.push('/signin?redirect=/register');
             }, 1200);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Verification failed. Please try again.');

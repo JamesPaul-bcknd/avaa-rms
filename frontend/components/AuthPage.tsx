@@ -109,9 +109,12 @@ const handleSignIn = async (e: React.FormEvent) => {
     // ─── Social Login handlers ───
     // These redirect the user to the Laravel backend to start the OAuth flow
     const handleGoogleLogin = () => {
-        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://backend.test'}/api/auth/google`;
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/google`;
     };
-
+    
+    const handleGoogleSignUp = () => {
+        window.location.href = `${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/auth/google`;
+    };
 
     // ─── Sign-up handler ───
     const handleSignUp = async (e: React.FormEvent) => {
@@ -347,17 +350,31 @@ const handleSignIn = async (e: React.FormEvent) => {
                                     )}
 
                                     <form onSubmit={handleSignUp} className="space-y-5">
-                                        {/* Full Name */}
-                                        <div>
-                                            <label htmlFor="reg-name" className="block text-[15px] font-semibold text-[#1a1a1a] mb-2">Full Name</label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                                                </div>
-                                                <input id="reg-name" type="text" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)}
-                                                    className="w-full pl-12 pr-4 py-3.5 border border-[#d1d5db] rounded-xl text-[15px] text-[#1a1a1a] placeholder-[#9ca3af] bg-white focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all" required />
-                                            </div>
-                                        </div>
+                                       {/* Full Name */}
+<div>
+    <label htmlFor="reg-name" className="block text-[15px] font-semibold text-[#1a1a1a] mb-2">Full Name</label>
+    <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+        </div>
+        <input 
+            id="reg-name" 
+            type="text" 
+            placeholder="John Doe" 
+            value={name} 
+            onChange={(e) => {
+                // Regex: Allows only letters (a-z, A-Z) and spaces
+                const filteredValue = e.target.value.replace(/[^a-zA-Z\s]/g, "");
+                setName(filteredValue);
+            }}
+            className="w-full pl-12 pr-4 py-3.5 border border-[#d1d5db] rounded-xl text-[15px] text-[#1a1a1a] placeholder-[#9ca3af] bg-white focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all" 
+            required 
+        />
+    </div>
+</div>
 
                                         {/* Email */}
                                         <div>
@@ -372,17 +389,30 @@ const handleSignIn = async (e: React.FormEvent) => {
                                         </div>
 
                                         {/* Phone */}
-                                        <div>
-                                            <label htmlFor="reg-phone" className="block text-[15px] font-semibold text-[#1a1a1a] mb-2">Phone Number</label>
-                                            <div className="relative">
-                                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" /></svg>
-                                                </div>
-                                                <input id="reg-phone" type="tel" placeholder="639123456789" value={phone} onChange={(e) => setPhone(e.target.value)}
-                                                    className="w-full pl-12 pr-4 py-3.5 border border-[#d1d5db] rounded-xl text-[15px] text-[#1a1a1a] placeholder-[#9ca3af] bg-white focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all" required />
-                                            </div>
-                                            <p className="text-[11px] text-[#9ca3af] mt-1">Must start with 639 (e.g. 639123456789)</p>
-                                        </div>
+<div>
+    <label htmlFor="reg-phone" className="block text-[15px] font-semibold text-[#1a1a1a] mb-2">Phone Number</label>
+    <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z" />
+            </svg>
+        </div>
+        <input 
+            id="reg-phone" 
+            type="tel" 
+            placeholder="09123456789" 
+            value={phone} 
+            onChange={(e) => {
+                // Regex: Allows only numbers (0-9)
+                const numbersOnly = e.target.value.replace(/[^0-9]/g, "");
+                setPhone(numbersOnly);
+            }}
+            className="w-full pl-12 pr-4 py-3.5 border border-[#d1d5db] rounded-xl text-[15px] text-[#1a1a1a] placeholder-[#9ca3af] bg-white focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all" 
+            required 
+        />
+    </div>
+    <p className="text-[11px] text-[#9ca3af] mt-1"> (e.g. 09123456789)</p>
+</div>
 
                                         {/* Location */}
                                         <div>
@@ -451,7 +481,8 @@ const handleSignIn = async (e: React.FormEvent) => {
 
                                     {/* Social Buttons */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <button type="button" className="flex items-center justify-center gap-2.5 py-3 px-4 border border-[#d1d5db] rounded-xl text-[15px] font-medium text-[#374151] bg-white hover:bg-[#f9fafb] hover:shadow-sm transition-all">
+                                        <button  type="button" 
+        onClick={handleGoogleSignUp} className="flex items-center justify-center gap-2.5 py-3 px-4 border border-[#d1d5db] rounded-xl text-[15px] font-medium text-[#374151] bg-white hover:bg-[#f9fafb] hover:shadow-sm transition-all">
                                             <svg width="20" height="20" viewBox="0 0 24 24">
                                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
                                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
