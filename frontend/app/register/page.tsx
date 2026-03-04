@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Upload, Phone, MapPin, Plus, Briefcase, 
   Building2, ArrowLeft, Wrench, X, FileText,
@@ -57,6 +57,16 @@ export default function RegistrationPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const { setUser } = useAuth({ redirect: false });
   const router = useRouter();
+  
+  // Read role from sessionStorage on component mount
+  useEffect(() => {
+    if (typeof sessionStorage !== 'undefined') {
+      const storedRole = sessionStorage.getItem('selectedRole');
+      if (storedRole && (storedRole === 'job-seeker' || storedRole === 'recruiter')) {
+        setRole(storedRole);
+      }
+    }
+  }, []);
   
   // Modal States
   const [modalConfig, setModalConfig] = useState<{isOpen: boolean, type: 'success' | 'error', message: string}>({
@@ -191,11 +201,11 @@ export default function RegistrationPage() {
         onClose={() => setModalConfig({ ...modalConfig, isOpen: false })}
       />
 
-      {/* Role Toggle */}
+      {/* Role Display - Read Only */}
       <div className="bg-white p-1 rounded-xl shadow-sm mb-8 flex gap-1 border border-black">
         <button
           type="button"
-          onClick={() => setRole('job-seeker')}
+          onClick={() => setRole('job-seeker')} disabled
           className={`px-10 py-3 rounded-lg text-sm font-bold transition-all ${
             role === 'job-seeker' ? 'bg-[#84b2ac] text-white shadow-md' : 'text-slate-500'
           }`}
@@ -204,7 +214,7 @@ export default function RegistrationPage() {
         </button>
         <button
           type="button"
-          onClick={() => setRole('recruiter')}
+          onClick={() => setRole('recruiter')} disabled
           className={`px-10 py-3 rounded-lg text-sm font-bold transition-all ${
             role === 'recruiter' ? 'bg-[#84b2ac] text-white shadow-md' : 'text-slate-500'
           }`}
