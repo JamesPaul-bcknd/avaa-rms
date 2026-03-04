@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from 'react';
+import Image from "next/image";
 import { X, Upload, Plus, ChevronDown, DollarSign, Calendar, Users, MapPin } from 'lucide-react';
 
 interface CreateJobModalProps {
@@ -73,9 +74,9 @@ const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
             <div className="flex flex-col md:flex-row gap-12">
               <div className="flex flex-col items-center pt-4">
                 <input type="file" ref={fileInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
-                <div onClick={() => fileInputRef.current?.click()} className="w-36 h-36 border-2 border-dashed border-slate-300 rounded-full flex flex-col items-center justify-center overflow-hidden bg-slate-50 hover:bg-slate-100 cursor-pointer transition-all group mb-4">
+                <div onClick={() => fileInputRef.current?.click()} className="w-36 h-36 border-2 border-dashed border-slate-300 rounded-full flex flex-col items-center justify-center overflow-hidden bg-slate-50 hover:bg-slate-100 cursor-pointer transition-all group mb-4 relative">
                   {logoPreview ? (
-                    <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                    <Image src={logoPreview} alt="Company logo preview" fill className="object-cover" unoptimized sizes="144px" />
                   ) : (
                     <>
                       <Upload size={28} className="mb-1 text-slate-400 group-hover:text-[#8abeb2]" />
@@ -160,9 +161,9 @@ const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
                 
                 {/* Logo and Tags Section */}
                 <div className="md:col-span-3 flex flex-col items-center gap-4">
-                  <div className="w-40 h-40 rounded-full bg-[#1e454e] flex items-center justify-center text-white text-4xl font-bold overflow-hidden">
+                  <div className="w-40 h-40 rounded-full bg-[#1e454e] flex items-center justify-center text-white text-4xl font-bold overflow-hidden relative">
                     {logoPreview ? (
-                      <img src={logoPreview} className="w-full h-full object-cover" alt="Company" />
+                      <Image src={logoPreview} alt="Company logo" fill className="object-cover" unoptimized sizes="160px" />
                     ) : (
                       formData.company?.substring(0, 2).toUpperCase() || "TN"
                     )}

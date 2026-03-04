@@ -1283,17 +1283,19 @@ export default function UserDashboardPage() {
     selectedCompanies,
     activeDateFilter,
     filteredJobs,
+    selectedJob,
   ]);
 
   // Initial load animation
   useEffect(() => {
+    setVisibleIds([]);
     jobs.forEach((job, i) => {
       setTimeout(() => {
         setVisibleIds((prev) => [...prev, job.id]);
       }, i * 80);
     });
     prevFilteredIds.current = jobs.map((j) => j.id);
-  }, []);
+  }, [jobs]);
 
   if (isLoading) return null;
 

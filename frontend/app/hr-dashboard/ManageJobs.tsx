@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from "next/image";
 import {
   Search, Plus, MessageSquare, Bell, MoreVertical,
   ChevronDown, CheckCircle2, Trash2, X, AlertTriangle, Eye, Power
@@ -225,7 +226,13 @@ const ManageJobs = () => {
             <Bell size={22} />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </div>
-          <img src="https://avatar.iran.liara.run/public/boy" className="w-9 h-9 rounded-full border border-slate-200 shadow-sm" alt="Profile" />
+          <Image
+            src="https://avatar.iran.liara.run/public/boy"
+            width={36}
+            height={36}
+            className="rounded-full border border-slate-200 shadow-sm"
+            alt="Profile"
+          />
         </div>
       </div>
 
