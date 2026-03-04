@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, Plus, MessageSquare, Bell, MoreVertical, 
+import {
+  Search, Plus, MessageSquare, Bell, MoreVertical,
   ChevronDown, CheckCircle2, Trash2, X, AlertTriangle, Eye, Power
 } from 'lucide-react';
 
-import CreateJobModal from './CreateJobModal'; 
+import CreateJobModal from './CreateJobModal';
 
 interface Job {
   id: string;
@@ -24,13 +24,13 @@ interface Job {
 }
 
 const initialJobs: Job[] = [
-  { 
-    id: 'TN', 
-    title: 'Senior Frontend Developer', 
-    location: 'San Francisco, CA', 
-    company: 'TechNova', 
-    status: 'Active', 
-    apps: 125, 
+  {
+    id: 'TN',
+    title: 'Senior Frontend Developer',
+    location: 'San Francisco, CA',
+    company: 'TechNova',
+    status: 'Active',
+    apps: 125,
     date: '2026-02-07',
     type: 'Full-time',
     techStack: ['React', 'Tailwind CSS', 'TypeScript'],
@@ -92,7 +92,7 @@ const ManageJobs = () => {
   };
 
   const updateStatus = (id: string, newStatus: string) => {
-    setJobs(prev => prev.map(j => 
+    setJobs(prev => prev.map(j =>
       j.id === id ? { ...j, status: newStatus } : j
     ));
     setOpenStatusId(null);
@@ -135,18 +135,18 @@ const ManageJobs = () => {
   return (
     <div className="w-full space-y-6 p-2 relative">
       {/* Header Section */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-slate-700">Manage Jobs</h1>
-        <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-all">
-            <MessageSquare size={20} />
-            <span>Messages</span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-700">Manage Jobs</h1>
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-3 sm:px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-all">
+            <MessageSquare size={18} />
+            <span className="hidden sm:inline">Messages</span>
           </button>
           <div className="relative p-2 text-slate-400">
-            <Bell size={24} />
+            <Bell size={22} />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
           </div>
-          <img src="https://avatar.iran.liara.run/public/boy" className="w-10 h-10 rounded-full border border-slate-200 shadow-sm" alt="Profile" />
+          <img src="https://avatar.iran.liara.run/public/boy" className="w-9 h-9 rounded-full border border-slate-200 shadow-sm" alt="Profile" />
         </div>
       </div>
 
@@ -157,9 +157,8 @@ const ManageJobs = () => {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${
-                activeTab === tab ? 'bg-[#8abeb2] text-white' : 'text-slate-400 hover:text-slate-600'
-              }`}
+              className={`px-6 py-2 rounded-lg text-sm font-semibold transition-all ${activeTab === tab ? 'bg-[#8abeb2] text-white' : 'text-slate-400 hover:text-slate-600'
+                }`}
             >
               {tab}
             </button>
@@ -169,14 +168,14 @@ const ManageJobs = () => {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input 
-              type="text" 
-              placeholder="Search job..." 
+            <input
+              type="text"
+              placeholder="Search job..."
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-[#8abeb2]/20"
             />
           </div>
-          
-          <button 
+
+          <button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2 px-5 py-2.5 bg-[#a7f3d0] text-[#065f46] rounded-xl font-bold text-sm hover:bg-[#86efac] transition-all shadow-sm active:scale-95"
           >
@@ -185,8 +184,8 @@ const ManageJobs = () => {
         </div>
       </div>
 
-      {/* Jobs Table */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-visible">
+      {/* Jobs Table — Desktop */}
+      <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-100 overflow-visible">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -214,16 +213,15 @@ const ManageJobs = () => {
                     </div>
                   </td>
                   <td className="px-6 py-5 text-sm font-medium text-slate-500">{job.company}</td>
-                  
+
                   {/* INTERACTIVE STATUS COLUMN */}
                   <td className="px-6 py-5 relative">
-                    <button 
+                    <button
                       onClick={() => setOpenStatusId(openStatusId === job.id ? null : job.id)}
-                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full w-fit border transition-all active:scale-95 group ${
-                        job.status === 'Active' 
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' 
+                      className={`flex items-center gap-1.5 px-3 py-1 rounded-full w-fit border transition-all active:scale-95 group ${job.status === 'Active'
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100'
                           : 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100'
-                      }`}
+                        }`}
                     >
                       <CheckCircle2 size={14} className={job.status === 'Active' ? "fill-emerald-600 text-white" : "fill-amber-600 text-white"} />
                       <span className="text-[11px] font-bold uppercase tracking-wider">{job.status}</span>
@@ -232,13 +230,13 @@ const ManageJobs = () => {
 
                     {openStatusId === job.id && (
                       <div ref={statusRef} className="absolute left-6 top-14 w-32 bg-white border border-slate-100 rounded-xl shadow-xl z-[60] py-1 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                        <button 
+                        <button
                           onClick={() => updateStatus(job.id, 'Active')}
                           className="w-full text-left px-4 py-2 text-xs font-bold text-emerald-600 hover:bg-emerald-50 transition-colors"
                         >
                           Active
                         </button>
-                        <button 
+                        <button
                           onClick={() => updateStatus(job.id, 'Inactive')}
                           className="w-full text-left px-4 py-2 text-xs font-bold text-amber-600 hover:bg-amber-50 transition-colors"
                         >
@@ -250,7 +248,7 @@ const ManageJobs = () => {
 
                   <td className="px-6 py-5 text-center"><span className="text-sm font-bold text-slate-600">{job.apps}</span></td>
                   <td className="px-6 py-5 text-sm text-slate-400 font-medium">{job.date}</td>
-                  
+
                   <td className="px-8 py-5 text-right relative">
                     <button onClick={() => toggleMenu(job.id)} className={`p-2 rounded-lg transition-all ${openMenuId === job.id ? 'bg-slate-100 text-slate-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}>
                       <MoreVertical size={18} />
@@ -264,7 +262,7 @@ const ManageJobs = () => {
                           <Power size={14} className="text-slate-400" /> Mark as {job.status === 'Active' ? 'Inactive' : 'Active'}
                         </button>
                         <hr className="my-1 border-slate-50" />
-                        <button 
+                        <button
                           onClick={() => { setJobToDelete(job.id); setOpenMenuId(null); }}
                           className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors"
                         >
@@ -278,6 +276,55 @@ const ManageJobs = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Jobs — Mobile Card List */}
+      <div className="md:hidden bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-100">
+        {filteredJobs.map((job) => (
+          <div key={job.id} className="p-4 flex flex-col gap-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#2d4e56] flex items-center justify-center text-white font-bold text-xs shrink-0">
+                  {job.id}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-bold text-slate-700 text-sm truncate">{job.title}</div>
+                  <div className="text-xs text-slate-400 font-medium">{job.location}</div>
+                </div>
+              </div>
+              <span className={`shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-wider ${job.status === 'Active'
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                  : 'bg-amber-50 text-amber-600 border-amber-100'
+                }`}>
+                {job.status}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
+              <span>{job.company}</span>
+              <span className="text-slate-400">{job.apps} applicants · {job.date}</span>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleOpenView(job)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 font-semibold text-xs hover:bg-slate-100"
+              >
+                <Eye size={13} /> View / Edit
+              </button>
+              <button
+                onClick={() => updateStatus(job.id, job.status === 'Active' ? 'Inactive' : 'Active')}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 font-semibold text-xs hover:bg-slate-100"
+              >
+                <Power size={13} /> Toggle
+              </button>
+              <button
+                onClick={() => setJobToDelete(job.id)}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-red-100 bg-red-50 text-red-500 font-semibold text-xs hover:bg-red-100"
+              >
+                <Trash2 size={13} />
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* DELETE CONFIRMATION MODAL */}
@@ -294,13 +341,13 @@ const ManageJobs = () => {
               </p>
             </div>
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setJobToDelete(null)}
                 className="flex-1 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={confirmDelete}
                 className="flex-1 py-3 bg-red-500 text-white rounded-xl font-bold text-sm hover:bg-red-600 transition-all shadow-lg shadow-red-200"
               >
@@ -312,9 +359,9 @@ const ManageJobs = () => {
       )}
 
       {isCreateModalOpen && (
-        <CreateJobModal 
-          onClose={() => setIsCreateModalOpen(false)} 
-          onSubmit={handleCreateJob} 
+        <CreateJobModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={handleCreateJob}
         />
       )}
 
@@ -335,7 +382,7 @@ const ManageJobs = () => {
                   <div className="flex items-center justify-between">
                     <h2 className="text-4xl font-extrabold text-slate-800 tracking-tight">{selectedJob.company}</h2>
                     {!isEditing && (
-                      <button 
+                      <button
                         onClick={() => setIsEditing(true)}
                         className="px-6 py-1.5 bg-[#4ade80] text-white rounded-full text-sm font-bold shadow-md hover:bg-emerald-500 transition-all mr-12"
                       >
@@ -354,7 +401,7 @@ const ManageJobs = () => {
 
             <div className="p-8 pt-2 max-h-[70vh] overflow-y-auto">
               <div className="border border-slate-200 rounded-[24px] p-8 space-y-8 relative">
-                
+
                 {/* Tech Stack */}
                 <div className="text-center border-b border-slate-100 pb-6">
                   <h3 className="text-sm font-bold text-slate-700 mb-4">Tech Stack Requirements</h3>
@@ -371,10 +418,10 @@ const ManageJobs = () => {
                 <div className="space-y-1">
                   <h4 className="font-bold text-slate-800">Position</h4>
                   {isEditing ? (
-                    <input 
+                    <input
                       className="w-full p-2 text-sm border rounded-lg bg-slate-50 focus:ring-1 focus:ring-emerald-400 outline-none font-medium"
                       value={selectedJob.title}
-                      onChange={(e) => setSelectedJob({...selectedJob, title: e.target.value})}
+                      onChange={(e) => setSelectedJob({ ...selectedJob, title: e.target.value })}
                     />
                   ) : (
                     <p className="text-slate-500 text-sm font-medium italic">*{selectedJob.title}</p>
@@ -384,11 +431,11 @@ const ManageJobs = () => {
                 <div className="space-y-2">
                   <h4 className="font-bold text-slate-800">Description</h4>
                   {isEditing ? (
-                    <textarea 
+                    <textarea
                       rows={4}
                       className="w-full p-3 text-sm border rounded-xl bg-slate-50 focus:ring-1 focus:ring-emerald-400 outline-none resize-none leading-relaxed"
                       value={selectedJob.description}
-                      onChange={(e) => setSelectedJob({...selectedJob, description: e.target.value})}
+                      onChange={(e) => setSelectedJob({ ...selectedJob, description: e.target.value })}
                     />
                   ) : (
                     <p className="text-slate-500 text-sm leading-relaxed">{selectedJob.description}</p>
@@ -397,7 +444,7 @@ const ManageJobs = () => {
 
                 {isEditing && (
                   <div className="flex justify-end pt-4">
-                    <button 
+                    <button
                       onClick={handleUpdate}
                       className="px-8 py-2 bg-[#4ade80] text-white rounded-full text-sm font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-500 transition-all hover:scale-105 active:scale-95"
                     >
@@ -422,7 +469,7 @@ const ManageJobs = () => {
               <h3 className="text-xl font-bold text-slate-800">Update Successful!</h3>
               <p className="text-slate-500 text-sm">The job list has been updated successfully.</p>
             </div>
-            <button 
+            <button
               onClick={() => setShowSuccessModal(false)}
               className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-all active:scale-95 shadow-lg shadow-slate-200"
             >

@@ -45,12 +45,12 @@ const RejectModal = ({ applicant, isOpen, onClose }: RejectModalProps) => {
 
             <div className="p-8 space-y-6">
               {/* Applicant Profile Section matching screenshot */}
-              <div className="flex items-center gap-5">
-                <div className="w-20 h-20 bg-[#6ee7b7] rounded-2xl flex items-center justify-center text-white shadow-sm">
-                  <User size={40} />
+              <div className="flex items-center gap-4 sm:gap-5">
+                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-[#6ee7b7] rounded-2xl flex items-center justify-center text-white shadow-sm shrink-0">
+                  <User size={32} />
                 </div>
                 <div>
-                  <h3 className="text-4xl font-semibold text-[#2d3748] tracking-tight">
+                  <h3 className="text-2xl sm:text-4xl font-semibold text-[#2d3748] tracking-tight">
                     {applicant?.name || "Alice Johnson"}
                   </h3>
                   <p className="text-gray-400 text-lg font-medium">
