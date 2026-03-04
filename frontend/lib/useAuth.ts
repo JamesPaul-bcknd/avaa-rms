@@ -72,7 +72,7 @@ export function useAuth(options?: { redirect?: boolean }) {
         return response.data;
     };
 
-    const logout = async () => {
+    const logout = async (redirectPath: string = '/user/signin') => {
         try {
             await api.post('/auth/logout');
         } catch {
@@ -80,7 +80,7 @@ export function useAuth(options?: { redirect?: boolean }) {
         } finally {
             localStorage.removeItem('token');
             setUserState(null, true);
-            router.replace('/user/signin');
+            router.replace(redirectPath);
         }
     };
 

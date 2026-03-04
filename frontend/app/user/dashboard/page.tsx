@@ -78,12 +78,21 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = () => {
-    console.log("Application submitted:", {
-      ...form,
-      file: selectedFile?.name,
-    });
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    try {
+      await api.post(`/jobs/${job.id}/apply`, {
+        full_name: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        linkedin: form.linkedin,
+        cover_letter: form.coverLetter,
+        why_interested: form.whyInterested,
+        experience: form.experience,
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Failed to submit application', error);
+    }
   };
 
   const handleFileDrop = (e: React.DragEvent) => {
@@ -2207,10 +2216,7 @@ export default function UserDashboardPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => {
-                    localStorage.removeItem("token");
-                    router.push("/user/signin");
-                  }}
+                  onClick={() => logout('/user/landing')}
                   className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-md"
                   style={{ background: "#7EB0AB" }}
                 >

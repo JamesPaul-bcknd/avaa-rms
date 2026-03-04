@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X } from 'lucide-react';
+import { useAuth } from '@/lib/useAuth';
 
 // Added "users" to the allowed views
 interface SidebarProps {
@@ -10,6 +11,7 @@ interface SidebarProps {
 
 const Sidebar = ({ setView, currentView }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { logout } = useAuth();
 
   // Updated 'view' properties: Users now has its own 'users' view
   const menuItems = [
@@ -84,7 +86,10 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:text-white mt-auto">
+        <div
+          className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:text-white mt-auto"
+          onClick={() => logout('/')}
+        >
           <LogOut size={20} />
           <span>Sign Out</span>
         </div>

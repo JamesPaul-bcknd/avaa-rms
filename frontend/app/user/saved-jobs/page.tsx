@@ -146,12 +146,21 @@ function ApplyModal({
     if (step > 1) setStep(step - 1);
   };
 
-  const handleSubmit = () => {
-    console.log("Application submitted:", {
-      ...form,
-      file: selectedFile?.name,
-    });
-    setSubmitted(true);
+  const handleSubmit = async () => {
+    try {
+      await api.post(`/jobs/${job.id}/apply`, {
+        full_name: form.fullName,
+        email: form.email,
+        phone: form.phone,
+        linkedin: form.linkedin,
+        cover_letter: form.coverLetter,
+        why_interested: form.whyInterested,
+        experience: form.experience,
+      });
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Failed to submit application', error);
+    }
   };
 
   const handleFileDrop = (e: React.DragEvent) => {

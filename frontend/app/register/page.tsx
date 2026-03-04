@@ -113,37 +113,33 @@ export default function RegistrationPage() {
       return;
     }
 
-    // For recruiters, store the selection and proceed to dashboard directly.
-    if (role !== 'job-seeker') {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('accountType', role);
-      }
-      setModalConfig({
-        isOpen: true,
-        type: 'success',
-        message: 'Your profile has been successfully updated!'
-      });
-      router.replace('/user/dashboard');
-      return;
-    }
-
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     if (!token) {
       setModalConfig({
         isOpen: true,
         type: 'error',
-        message: 'Please sign in as a job seeker to update your profile.'
+        message: 'Please sign in to complete your profile.'
       });
       return;
     }
 
     const payload = new FormData();
     payload.append('_method', 'PUT');
-    payload.append('phone', formData.phoneNumber);
-    payload.append('location', formData.location);
-    payload.append('skills', JSON.stringify(trimmedSkills));
-    if (selectedFile) {
-      payload.append('profile_image', selectedFile);
+
+    if (isJobSeeker) {
+      payload.append('phone', formData.phoneNumber);
+      payload.append('location', formData.location);
+      payload.append('skills', JSON.stringify(trimmedSkills));
+      if (selectedFile) {
+        payload.append('profile_image', selectedFile);
+      }
+      payload.append('role', 'user');
+    } else {
+      payload.append('company_name', formData.companyName);
+      payload.append('company_number', formData.companyNumber);
+      payload.append('company_location', formData.companyLocation);
+      payload.append('position', formData.position);
+      payload.append('role', 'recruiter');
     }
 
     setIsSubmitting(true);
@@ -162,7 +158,7 @@ export default function RegistrationPage() {
         type: 'success',
         message: 'Your profile has been successfully updated!'
       });
-      router.replace('/user/dashboard');
+      router.replace(isJobSeeker ? '/user/dashboard' : '/hr-dashboard');
     } catch (err: any) {
       const message = err.response?.data?.error || 'Unable to save your profile right now.';
       setModalConfig({

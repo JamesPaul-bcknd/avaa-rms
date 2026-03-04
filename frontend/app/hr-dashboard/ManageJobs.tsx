@@ -7,9 +7,10 @@ import {
 } from 'lucide-react';
 
 import CreateJobModal from './CreateJobModal';
+import api from '@/lib/axios';
 
 interface Job {
-  id: string;
+  id: number;
   title: string;
   location: string;
   company: string;
@@ -21,38 +22,21 @@ interface Job {
   description: string;
   doList?: string[];
   whyList?: string[];
+  initials?: string;
+  color?: string;
 }
 
-const initialJobs: Job[] = [
-  {
-    id: 'TN',
-    title: 'Senior Frontend Developer',
-    location: 'San Francisco, CA',
-    company: 'TechNova',
-    status: 'Active',
-    apps: 125,
-    date: '2026-02-07',
-    type: 'Full-time',
-    techStack: ['React', 'Tailwind CSS', 'TypeScript'],
-    description: "The Mission: Join TechNova to lead the frontend architecture of our next-gen data platform...",
-    doList: ["Build & Scale...", "Lead...", "Innovate..."],
-    whyList: ["High Growth...", "Flexibility...", "Top Tier Pay..."]
-  },
-  { id: 'DT', title: 'Backend Engineer', location: 'New York, NY', company: 'DataStream', status: 'Inactive', apps: 80, date: '2026-02-06', type: 'Full-time', techStack: ['Node.js', 'PostgreSQL'], description: 'Building scalable APIs.' },
-  { id: 'CA', title: 'UX/UI Designer', location: 'Remote', company: 'Creative Agency', status: 'Active', apps: 150, date: '2026-02-05', type: 'Contract', techStack: ['Figma', 'Adobe XD'], description: 'Designing user-centric interfaces.' },
-];
-
 const ManageJobs = () => {
-  const [jobs, setJobs] = useState<Job[]>(initialJobs);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [activeTab, setActiveTab] = useState('All');
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [openStatusId, setOpenStatusId] = useState<string | null>(null); // State for Status Dropdown
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [openStatusId, setOpenStatusId] = useState<number | null>(null); // State for Status Dropdown
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [jobToDelete, setJobToDelete] = useState<string | null>(null);
+  const [jobToDelete, setJobToDelete] = useState<number | null>(null);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
@@ -70,7 +54,38 @@ const ManageJobs = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const toggleMenu = (id: string) => {
+  // Load jobs from backend
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await api.get('/jobs');
+        const apiJobs = response.data?.data ?? [];
+        const mapped: Job[] = apiJobs.map((job: any) => ({
+          id: job.id,
+          title: job.title,
+          location: job.location,
+          company: job.company,
+          status: 'Active',
+          apps: job.applications_count ?? 0,
+          date: job.created_at ? job.created_at.substring(0, 10) : '',
+          type: job.type || 'Full-time',
+          techStack: Array.isArray(job.tags) ? job.tags : [],
+          description: job.description,
+          doList: Array.isArray(job.what_youll_do) ? job.what_youll_do : [],
+          whyList: Array.isArray(job.why_company) ? job.why_company : [],
+          initials: job.initials,
+          color: job.color,
+        }));
+        setJobs(mapped);
+      } catch (error) {
+        console.error('Failed to load jobs', error);
+      }
+    };
+
+    fetchJobs();
+  }, []);
+
+  const toggleMenu = (id: number) => {
     setOpenMenuId(openMenuId === id ? null : id);
     setOpenStatusId(null); // Close status if menu opens
   };
@@ -82,16 +97,48 @@ const ManageJobs = () => {
     setOpenMenuId(null);
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!selectedJob) return;
-    setJobs(prev => prev.map(j => j.id === selectedJob.id ? selectedJob : j));
-    setIsModalOpen(false);
-    setIsEditing(false);
-    setShowSuccessModal(true);
-    setTimeout(() => setShowSuccessModal(false), 3000);
+
+    const payload = {
+      title: selectedJob.title,
+      company: selectedJob.company,
+      location: selectedJob.location,
+      type: selectedJob.type || 'Full-time',
+      salary: '',
+      description: selectedJob.description,
+      tags: selectedJob.techStack || [],
+      what_youll_do: selectedJob.doList || [],
+      why_company: selectedJob.whyList || [],
+      initials: selectedJob.initials || selectedJob.company?.substring(0, 2)?.toUpperCase(),
+      color: selectedJob.color || '#7EB0AB',
+      time_ago: 'Just now',
+    };
+
+    try {
+      const response = await api.put(`/jobs/${selectedJob.id}`, payload);
+      const updatedJob = response.data?.data;
+      setJobs(prev => prev.map(j => (j.id === selectedJob.id ? {
+        ...j,
+        title: updatedJob.title,
+        company: updatedJob.company,
+        location: updatedJob.location,
+        description: updatedJob.description,
+        techStack: Array.isArray(updatedJob.tags) ? updatedJob.tags : [],
+        doList: Array.isArray(updatedJob.what_youll_do) ? updatedJob.what_youll_do : [],
+        whyList: Array.isArray(updatedJob.why_company) ? updatedJob.why_company : [],
+        type: updatedJob.type || j.type,
+      } : j)));
+      setIsModalOpen(false);
+      setIsEditing(false);
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 3000);
+    } catch (error) {
+      console.error('Failed to update job', error);
+    }
   };
 
-  const updateStatus = (id: string, newStatus: string) => {
+  const updateStatus = (id: number, newStatus: string) => {
     setJobs(prev => prev.map(j =>
       j.id === id ? { ...j, status: newStatus } : j
     ));
@@ -99,32 +146,64 @@ const ManageJobs = () => {
     setOpenMenuId(null);
   };
 
-  const confirmDelete = () => {
-    if (jobToDelete) {
-      setJobs(jobs.filter(j => j.id !== jobToDelete));
-      setJobToDelete(null);
+  const confirmDelete = async () => {
+    if (!jobToDelete) return;
+
+    try {
+      await api.delete(`/jobs/${jobToDelete}`);
+      setJobs(prev => prev.filter(j => j.id !== jobToDelete));
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 3000);
+    } catch (error) {
+      console.error('Failed to delete job', error);
+    } finally {
+      setJobToDelete(null);
+      setOpenMenuId(null);
     }
   };
 
-  const handleCreateJob = (formData: any) => {
-    const newJob: Job = {
-      id: formData.company ? formData.company.substring(0, 2).toUpperCase() : 'NJ',
+  const handleCreateJob = async (formData: any) => {
+    const payload = {
       title: formData.title || 'Untitled Role',
       company: formData.company || 'New Company',
       location: formData.location || 'Remote',
-      status: formData.status || 'Active',
-      apps: 0,
-      date: new Date().toISOString().split('T')[0],
       type: 'Full-time',
-      techStack: formData.skills || [],
+      salary: formData.salary || '',
       description: formData.description || '',
+      tags: formData.skills || [],
+      what_youll_do: [],
+      why_company: [],
+      initials: (formData.company || 'NJ').substring(0, 2).toUpperCase(),
+      color: '#7EB0AB',
+      time_ago: 'Just now',
     };
-    setJobs([newJob, ...jobs]);
-    setIsCreateModalOpen(false);
-    setShowSuccessModal(true);
-    setTimeout(() => setShowSuccessModal(false), 3000);
+
+    try {
+      const response = await api.post('/jobs', payload);
+      const job = response.data?.data;
+      const newJob: Job = {
+        id: job.id,
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        status: formData.status || 'Active',
+        apps: 0,
+        date: job.created_at ? job.created_at.substring(0, 10) : new Date().toISOString().split('T')[0],
+        type: job.type || 'Full-time',
+        techStack: Array.isArray(job.tags) ? job.tags : [],
+        description: job.description,
+        doList: Array.isArray(job.what_youll_do) ? job.what_youll_do : [],
+        whyList: Array.isArray(job.why_company) ? job.why_company : [],
+        initials: job.initials,
+        color: job.color,
+      };
+      setJobs([newJob, ...jobs]);
+      setIsCreateModalOpen(false);
+      setShowSuccessModal(true);
+      setTimeout(() => setShowSuccessModal(false), 3000);
+    } catch (error) {
+      console.error('Failed to create job', error);
+    }
   };
 
   const filteredJobs = jobs.filter(job => {
