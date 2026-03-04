@@ -2,7 +2,24 @@
 import React, { useState } from 'react';
 import { MoreHorizontal, User, CheckCircle, XCircle, CheckCircle2 } from 'lucide-react';
 
-const InterviewsPage = ({ interviews }: { interviews: any[] }) => {
+interface Interview {
+  id: number;
+  candidateName: string;
+  role: string;
+  date: string;
+  interviewer: string;
+  status: string;
+}
+
+// Added onApprove and onReject props to communicate with the parent/UserPage
+const InterviewsPage = ({ 
+  interviews: initialInterviews, 
+  onApprove 
+}: { 
+  interviews: Interview[]; 
+  onApprove?: (candidate: any) => void 
+}) => {
+  const [interviews, setInterviews] = useState(initialInterviews);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
   const [successModal, setSuccessModal] = useState<{ isOpen: boolean; type: 'Approved' | 'Rejected' | ''; name: string }>({
     isOpen: false,
@@ -16,16 +33,32 @@ const InterviewsPage = ({ interviews }: { interviews: any[] }) => {
     { label: "Upcoming", value: 12, color: "bg-[#a3a3a3]" },
   ];
 
-  const handleAction = (type: 'Approved' | 'Rejected', candidateName: string) => {
+  const handleAction = (type: 'Approved' | 'Rejected', interview: Interview) => {
     setActiveMenu(null);
-    setSuccessModal({ isOpen: true, type, name: candidateName });
+    
+    if (type === 'Approved') {
+      // 1. Move to Users Page via callback
+      if (onApprove) {
+        onApprove({
+          id: Date.now(), // Generate a new ID for the user table
+          name: interview.candidateName,
+          position: interview.role,
+          status: 'Active'
+        });
+      }
+    }
+
+    // 2. Remove from current Interview list (for both Approve and Reject)
+    setInterviews(prev => prev.filter(item => item.id !== interview.id));
+    
+    // 3. Show Success Feedback
+    setSuccessModal({ isOpen: true, type, name: interview.candidateName });
   };
 
   return (
     <div className="space-y-6 relative">
       <h1 className="text-gray-500 text-sm font-medium">Scheduled Interviews</h1>
       
-      {/* Stats Cards */}
       <div className="flex gap-4">
         {stats.map((stat, i) => (
           <div key={i} className={`${stat.color} text-white p-6 rounded-2xl w-48 shadow-lg`}>
@@ -35,7 +68,6 @@ const InterviewsPage = ({ interviews }: { interviews: any[] }) => {
         ))}
       </div>
 
-      {/* Table */}
       <div className="bg-white rounded-xl shadow-sm overflow-visible">
         <table className="w-full text-left">
           <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
@@ -76,22 +108,18 @@ const InterviewsPage = ({ interviews }: { interviews: any[] }) => {
                     <MoreHorizontal className="text-gray-400 cursor-pointer" />
                   </button>
 
-                  {/* Dropdown Menu */}
                   {activeMenu === interview.id && (
                     <>
-                      <div 
-                        className="fixed inset-0 z-10" 
-                        onClick={() => setActiveMenu(null)} 
-                      />
+                      <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)} />
                       <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                         <button 
-                          onClick={() => handleAction('Approved', interview.candidateName)}
+                          onClick={() => handleAction('Approved', interview)}
                           className="w-full px-4 py-3 text-left text-sm font-semibold text-emerald-600 hover:bg-emerald-50 flex items-center gap-2"
                         >
                           <CheckCircle size={16} /> Approve
                         </button>
                         <button 
-                          onClick={() => handleAction('Rejected', interview.candidateName)}
+                          onClick={() => handleAction('Rejected', interview)}
                           className="w-full px-4 py-3 text-left text-sm font-semibold text-red-600 hover:bg-red-50 flex items-center gap-2 border-t border-gray-50"
                         >
                           <XCircle size={16} /> Reject
@@ -104,9 +132,11 @@ const InterviewsPage = ({ interviews }: { interviews: any[] }) => {
             ))}
           </tbody>
         </table>
+        {interviews.length === 0 && (
+          <div className="p-10 text-center text-slate-400">No pending interviews.</div>
+        )}
       </div>
 
-      {/* Success Modal */}
       {successModal.isOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center animate-in zoom-in duration-300">
@@ -115,13 +145,11 @@ const InterviewsPage = ({ interviews }: { interviews: any[] }) => {
                 {successModal.type === 'Approved' ? <CheckCircle2 size={48} /> : <XCircle size={48} />}
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">
-              Decision Recorded
-            </h2>
+            <h2 className="text-2xl font-bold text-slate-800 mb-2">Decision Recorded</h2>
             <p className="text-slate-500 mb-6">
               <span className="font-bold text-slate-700">{successModal.name}</span> has been <br/> 
               <span className={`font-black uppercase tracking-wider ${successModal.type === 'Approved' ? 'text-emerald-600' : 'text-red-600'}`}>
-                {successModal.type}
+                {successModal.type === 'Rejected' ? 'Deleted' : successModal.type}
               </span>.
             </p>
             <button 

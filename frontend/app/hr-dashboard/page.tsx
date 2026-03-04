@@ -4,10 +4,13 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import JobTable from "./JobTable";
 import ApplicantsTable from "./ApplicantsTable";
-import InterviewsPage from "./InterviewsPage"; // We will create this below
+import InterviewsPage from "./InterviewsPage";
+import ManageJobs from "./ManageJobs";
+import UserPage from "./UserPage"; // Import your new component
+import { Users } from "lucide-react"; // FIX: Added this import
 
 export default function Home() {
-  const [view, setView] = useState<"list" | "details" | "interviews">("list");
+  const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
   
   // State to store all scheduled interviews
@@ -27,6 +30,7 @@ export default function Home() {
       <Sidebar setView={setView} currentView={view} />
 
       <main className="flex-1 p-4 md:p-8">
+        {/* 1. Dashboard View */}
         {view === "list" && (
           <>
             <Header title="HR Dashboard" />
@@ -34,6 +38,17 @@ export default function Home() {
           </>
         )}
 
+        {/* 2. Manage Jobs View */}
+        {view === "jobs" && (
+          <ManageJobs />
+        )}
+
+        {/* 3. Users View - Now using the UserPage component */}
+        {view === "users" && (
+          <UserPage />
+        )}
+
+        {/* 4. Job Details View */}
         {view === "details" && (
           <ApplicantsTable 
             job={selectedJob} 
@@ -42,6 +57,7 @@ export default function Home() {
           />
         )}
 
+        {/* 5. Interviews View */}
         {view === "interviews" && (
           <InterviewsPage interviews={scheduledInterviews} />
         )}
