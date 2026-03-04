@@ -1144,7 +1144,8 @@ export default function UserDashboardPage() {
       try {
         setLoading(true);
         // 1. Use the full Laravel URL (Port 8000)
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://backend.test'}/api/jobs`);
+        // Replace 'http://backend.test' with your actual local IP and port
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'}/api/jobs`);
         const result = await response.json();
 
         // 2. Check result.success and result.data (the array)
@@ -1300,7 +1301,7 @@ export default function UserDashboardPage() {
   if (isLoading) return null;
 
   // 4. LOADING GUARDS
-  if (loading) {
+  /*if (loading) {
     return (
       <div className="flex justify-center items-center h-screen bg-[#f5f7fa]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7EB0AB]"></div>
@@ -1321,7 +1322,7 @@ export default function UserDashboardPage() {
       </div>
     );
   }
-
+*/
   const handleSelectJob = (job: Job) => {
     if (job.id === lastSelectedJob?.id && activeView === "details") return;
     setLastSelectedJob(job);
@@ -1881,31 +1882,62 @@ export default function UserDashboardPage() {
                   )}
               </aside>
 
-              {/* ─── Job Cards Grid ─── */}
-              <main className="min-w-0 transition-all duration-200 flex-1">
-                <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-                  {filteredJobs.map((job, index) => (
-                    <JobCard
-                      key={job.id}
-                      job={job}
-                      isSelected={selectedJob?.id === job.id}
-                      isBookmarked={bookmarked.map(Number).includes(Number(job.id))}
-                      onSelect={() => handleSelectJob(job)}
-                      // Rename this prop to onBookmark
-                      onBookmark={(e) => {
-                        e.stopPropagation();
-                        if (isAuthenticated) {
-                          toggleBookmark(job.id);
-                        } else {
-                          setShowAuthPrompt(true);
-                        }
-                      }}
-                      delay={index * 50}
-                      visible={visibleIds.includes(job.id)}
-                    />
-                  ))}
-                </div>
-              </main>
+             {/* ─── Job Cards Grid ─── */}
+<main className="min-w-0 transition-all duration-200 flex-1">
+  {loading ? (
+    /* 1. Loading State */
+    <div className="flex justify-center items-center h-64">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7EB0AB]"></div>
+    </div>
+  ) : filteredJobs.length === 0 ? (
+    /* 2. Empty State (No Jobs Found) */
+    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#e5e7eb] shadow-sm">
+      <div className="text-center max-w-md px-6">
+        <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">
+          No jobs found
+        </h3>
+        <p className="text-[#5a6a75] mb-6">
+          We couldn't find any job listings in the database right now.
+        </p>
+        {(searchQuery || selectedSkills.length > 0 || selectedCompanies.length > 0) && (
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setSelectedSkills([]);
+              setSelectedCompanies([]);
+            }}
+            className="text-[#7EB0AB] font-semibold hover:underline transition-all"
+          >
+            Clear filters and try again
+          </button>
+        )}
+      </div>
+    </div>
+  ) : (
+    /* 3. Success State (The Grid) */
+    <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+      {filteredJobs.map((job, index) => (
+        <JobCard
+          key={job.id}
+          job={job}
+          isSelected={selectedJob?.id === job.id}
+          isBookmarked={bookmarked.map(Number).includes(Number(job.id))}
+          onSelect={() => handleSelectJob(job)}
+          onBookmark={(e) => {
+            e.stopPropagation();
+            if (isAuthenticated) {
+              toggleBookmark(job.id);
+            } else {
+              setShowAuthPrompt(true);
+            }
+          }}
+          delay={index * 50}
+          visible={visibleIds.includes(job.id)}
+        />
+      ))}
+    </div>
+  )}
+</main>
             </div>
           </div>
 
@@ -2218,7 +2250,10 @@ export default function UserDashboardPage() {
                   Cancel
                 </button>
                 <button
-                  onClick={() => logout('/user/landing')}
+                  onClick={() => {
+                    localStorage.removeItem("token");
+                    router.push("/signin");
+                  }}
                   className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-md"
                   style={{ background: "#7EB0AB" }}
                 >
