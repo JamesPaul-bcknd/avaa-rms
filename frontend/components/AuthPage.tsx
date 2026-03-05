@@ -28,6 +28,9 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
     const [regEmail, setRegEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [location, setLocation] = useState('');
+    const [companyName, setCompanyName] = useState('');
+    const [companyNumber, setCompanyNumber] = useState('');
+    const [position, setPosition] = useState('');
     const [regPassword, setRegPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [regShowPassword, setRegShowPassword] = useState(false);
@@ -101,8 +104,7 @@ const handleSignIn = async (e: React.FormEvent) => {
     } catch (err: any) {
         if (err.response?.data?.email_not_verified) {
             const unverifiedEmail = err.response?.data?.email || loginEmail;
-            // Updated: Redirect to the top-level verify-otp page
-            router.push(`/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`);
+            router.push(`/user/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`);
             return;
         }
 
@@ -142,7 +144,23 @@ const handleSignIn = async (e: React.FormEvent) => {
                 sessionStorage.setItem('selectedRole', selectedRole);
             }
             const roleToSend = selectedRole === 'job-seeker' ? 'user' : 'recruiter';
-            await api.post('/auth/register', { name, email: regEmail, phone: digits, location, password: regPassword, role: roleToSend });
+            const registrationData = { 
+                name, 
+                email: regEmail, 
+                phone: digits, 
+                location, 
+                password: regPassword, 
+                role: roleToSend 
+            };
+            
+            // Add company fields for recruiters
+            if (selectedRole === 'recruiter') {
+                registrationData.company_name = companyName;
+                registrationData.company_number = companyNumber;
+                registrationData.position = position;
+            }
+            
+            await api.post('/auth/register', registrationData);
 
             // Try to log in immediately so we can send the user to profile completion with a token.
             try {
@@ -155,10 +173,22 @@ const handleSignIn = async (e: React.FormEvent) => {
                 router.replace('/register');
                 return;
             } catch (loginErr: any) {
+                console.log('Login error:', loginErr);
+                console.log('Error response:', loginErr?.response?.data);
+                
                 if (loginErr?.response?.data?.email_not_verified) {
+                    console.log('Redirecting to email verification...');
                     router.push(`/user/verify-otp?email=${encodeURIComponent(regEmail)}`);
                     return;
                 }
+                
+                // Also check for 403 status with email_not_verified
+                if (loginErr?.response?.status === 403 && loginErr?.response?.data?.error?.includes('verify your email')) {
+                    console.log('Redirecting to email verification (403)...');
+                    router.push(`/user/verify-otp?email=${encodeURIComponent(regEmail)}`);
+                    return;
+                }
+                
                 // Fall through to show registration error if login fails for another reason.
                 throw loginErr;
             }
