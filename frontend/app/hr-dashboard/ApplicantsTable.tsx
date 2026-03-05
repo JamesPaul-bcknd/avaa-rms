@@ -21,6 +21,7 @@ interface JobApplication {
   cover_letter?: string;
   why_interested?: string;
   experience?: string;
+  cv_path?: string;
   created_at?: string;
 }
 
@@ -156,7 +157,21 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
                     </span>
                   </td>
                   <td className="px-5 py-4 text-xs text-slate-500 font-semibold whitespace-nowrap">{formatDate(app.created_at)}</td>
-                  <td className="px-5 py-4 text-xs text-slate-600 font-medium">{app.linkedin || 'Not provided'}</td>
+                  <td className="px-5 py-4 text-xs text-slate-600 font-medium">
+                    {app.cv_path ? (
+                      <a 
+                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/storage/${app.cv_path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-teal-600 hover:text-teal-800 underline flex items-center gap-1"
+                      >
+                        <FileText size={14} />
+                        View CV
+                      </a>
+                    ) : (
+                      'Not provided'
+                    )}
+                  </td>
                   <td className="px-5 py-4">
                     <div className="flex justify-center gap-5">
                       <button onClick={() => handleReject(app)} className="text-red-500 hover:scale-125 transition-transform duration-200">
@@ -198,7 +213,22 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
               <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
                 <span>Applied: <span className="font-semibold">{formatDate(app.created_at)}</span></span>
                 <span className="flex items-center gap-1 text-slate-400">
-                  <FileText size={12} />{app.linkedin || 'Not provided'}
+                  {app.cv_path ? (
+                    <a 
+                      href={`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/storage/${app.cv_path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal-600 hover:text-teal-800 underline flex items-center gap-1"
+                    >
+                      <FileText size={12} />
+                      View CV
+                    </a>
+                  ) : (
+                    <>
+                      <FileText size={12} />
+                      Not provided
+                    </>
+                  )}
                 </span>
               </div>
               <div className="flex gap-3">

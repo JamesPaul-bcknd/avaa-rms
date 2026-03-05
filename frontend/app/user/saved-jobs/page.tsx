@@ -132,14 +132,23 @@ function ApplyModal({
 
   const handleSubmit = async () => {
     try {
-      await api.post(`/jobs/${job.id}/apply`, {
-        full_name: form.fullName,
-        email: form.email,
-        phone: form.phone,
-        linkedin: form.linkedin,
-        cover_letter: form.coverLetter,
-        why_interested: form.whyInterested,
-        experience: form.experience,
+      const formData = new FormData();
+      formData.append('full_name', form.fullName);
+      formData.append('email', form.email);
+      formData.append('phone', form.phone);
+      formData.append('linkedin', form.linkedin);
+      formData.append('cover_letter', form.coverLetter);
+      formData.append('why_interested', form.whyInterested);
+      formData.append('experience', form.experience);
+      
+      if (selectedFile) {
+        formData.append('cv', selectedFile);
+      }
+
+      await api.post(`/jobs/${job.id}/apply`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
       setSubmitted(true);
     } catch (error) {
