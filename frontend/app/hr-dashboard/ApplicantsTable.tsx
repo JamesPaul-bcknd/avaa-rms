@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ChevronLeft, Search, MapPin, Clock, X, Check, FileText } from 'lucide-react';
 import InterviewModal from './InterviewModal';
 import RejectModal from './RejectModal';
+import api from '@/lib/axios';
 
 // Defining the interface to match what page.tsx is sending
 interface ApplicantsTableProps {
@@ -11,32 +12,72 @@ interface ApplicantsTableProps {
   onScheduleSuccess: (newInterview: any) => void;
 }
 
+interface JobApplication {
+  id: number;
+  full_name: string;
+  email: string;
+  phone?: string;
+  linkedin?: string;
+  cover_letter?: string;
+  why_interested?: string;
+  experience?: string;
+  cv_path?: string;
+  created_at?: string;
+}
+
 const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProps) => {
   const [modalType, setModalType] = useState<'none' | 'accept' | 'reject'>('none');
   const [selectedApplicant, setSelectedApplicant] = useState<{ name: string; email: string } | null>(null);
 
-  const applicants = [
-    { name: 'Alice Johnson', email: 'alice@example.com', status: 'Pending', date: '2026-01-15', cv: 'AJohnsonCV.pdf' },
-    { name: 'Bob Smith', email: 'bob@example.com', status: 'Pending', date: '2026-01-20', cv: 'BSmithCV.pdf' },
-    { name: 'Carol Davis', email: 'carol@example.com', status: 'Pending', date: '2025-12-10', cv: 'CDavisCV.pdf' },
-    { name: 'David Lee', email: 'david@example.com', status: 'Pending', date: '2026-02-01', cv: 'DLeeCV.pdf' },
-    { name: 'Emma Wilson', email: 'emma@example.com', status: 'Pending', date: '2025-11-28', cv: 'EWilsonCV.pdf' },
-    { name: 'Frank Brown', email: 'frank@example.com', status: 'Pending', date: '2025-12-22', cv: 'FBrownCV.pdf' },
-  ];
+  const [applicants, setApplicants] = useState<JobApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleAccept = (app: { name: string; email: string }) => { 
-    setSelectedApplicant(app); 
-    setModalType('accept'); 
+  useEffect(() => {
+    if (!job?.id) {
+      setApplicants([]);
+      setLoading(false);
+      return;
+    }
+
+    const fetchApplicants = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await api.get(`/jobs/${job.id}/applications`);
+        setApplicants(response.data?.data ?? []);
+      } catch (err) {
+        console.error('Failed to load applicants', err);
+        setError('Unable to load applicants right now.');
+        setApplicants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplicants();
+  }, [job?.id]);
+
+  const handleAccept = (app: JobApplication) => {
+    setSelectedApplicant({ name: app.full_name, email: app.email });
+    setModalType('accept');
   };
   
-  const handleReject = (app: { name: string; email: string }) => { 
-    setSelectedApplicant(app); 
-    setModalType('reject'); 
+  const handleReject = (app: JobApplication) => {
+    setSelectedApplicant({ name: app.full_name, email: app.email });
+    setModalType('reject');
   };
   
   const handleClose = () => { 
     setModalType('none'); 
     setSelectedApplicant(null); 
+  };
+
+  const formatDate = (value?: string) => {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toISOString().split('T')[0];
   };
 
   return (
@@ -59,8 +100,8 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
                   <span className="px-2 py-0.5 bg-[#e2e8f0] text-slate-600 rounded-lg text-xs font-bold uppercase tracking-tight shrink-0">Full-time</span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
-                  <span className="flex items-center gap-1"><MapPin size={12} /> San Francisco, CA</span>
-                  <span className="flex items-center gap-1"><Clock size={12} /> 2d ago</span>
+                  <span className="flex items-center gap-1"><MapPin size={12} /> {job?.location || '—'}</span>
+                  <span className="flex items-center gap-1"><Clock size={12} /> {job?.date || ''}</span>
                 </div>
               </div>
             </div>
@@ -89,19 +130,48 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {applicants.map((app) => (
-                <tr key={app.email} className="hover:bg-slate-50/50 transition-colors">
+              {loading && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-6 text-center text-sm text-slate-400">Loading applicants…</td>
+                </tr>
+              )}
+              {!loading && error && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-6 text-center text-sm text-red-400">{error}</td>
+                </tr>
+              )}
+              {!loading && !error && applicants.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-6 text-center text-sm text-slate-400">No applicants yet for this job.</td>
+                </tr>
+              )}
+              {!loading && !error && applicants.map((app) => (
+                <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-4">
-                    <div className="font-bold text-slate-700 text-sm">{app.name}</div>
+                    <div className="font-bold text-slate-700 text-sm">{app.full_name}</div>
                     <div className="text-xs text-slate-400">{app.email}</div>
                   </td>
                   <td className="px-5 py-4 text-center">
                     <span className="px-3 py-1.5 bg-[#fef08a] text-[#854d0e] rounded-full text-[10px] font-black uppercase tracking-widest">
-                      {app.status}
+                      Pending
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-xs text-slate-500 font-semibold whitespace-nowrap">{app.date}</td>
-                  <td className="px-5 py-4 text-xs text-slate-600 font-medium">{app.cv}</td>
+                  <td className="px-5 py-4 text-xs text-slate-500 font-semibold whitespace-nowrap">{formatDate(app.created_at)}</td>
+                  <td className="px-5 py-4 text-xs text-slate-600 font-medium">
+                    {app.cv_path ? (
+                      <a 
+                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/storage/${app.cv_path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-teal-600 hover:text-teal-800 underline flex items-center gap-1"
+                      >
+                        <FileText size={14} />
+                        View CV
+                      </a>
+                    ) : (
+                      'Not provided'
+                    )}
+                  </td>
                   <td className="px-5 py-4">
                     <div className="flex justify-center gap-5">
                       <button onClick={() => handleReject(app)} className="text-red-500 hover:scale-125 transition-transform duration-200">
@@ -120,21 +190,45 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
 
         {/* --- Mobile View --- */}
         <div className="md:hidden bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
-          {applicants.map((app) => (
-            <div key={app.email} className="p-4 flex flex-col gap-3">
+          {loading && (
+            <div className="p-4 text-center text-sm text-slate-400">Loading applicants…</div>
+          )}
+          {!loading && error && (
+            <div className="p-4 text-center text-sm text-red-400">{error}</div>
+          )}
+          {!loading && !error && applicants.length === 0 && (
+            <div className="p-4 text-center text-sm text-slate-400">No applicants yet for this job.</div>
+          )}
+          {!loading && !error && applicants.map((app) => (
+            <div key={app.id} className="p-4 flex flex-col gap-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                  <div className="font-bold text-slate-700 text-sm">{app.name}</div>
+                  <div className="font-bold text-slate-700 text-sm">{app.full_name}</div>
                   <div className="text-xs text-slate-400 mt-0.5">{app.email}</div>
                 </div>
                 <span className="px-2.5 py-1 bg-[#fef08a] text-[#854d0e] rounded-full text-[9px] font-black uppercase tracking-widest shrink-0">
-                  {app.status}
+                  Pending
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
-                <span>Applied: <span className="font-semibold">{app.date}</span></span>
+                <span>Applied: <span className="font-semibold">{formatDate(app.created_at)}</span></span>
                 <span className="flex items-center gap-1 text-slate-400">
-                  <FileText size={12} />{app.cv}
+                  {app.cv_path ? (
+                    <a 
+                      href={`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/storage/${app.cv_path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-teal-600 hover:text-teal-800 underline flex items-center gap-1"
+                    >
+                      <FileText size={12} />
+                      View CV
+                    </a>
+                  ) : (
+                    <>
+                      <FileText size={12} />
+                      Not provided
+                    </>
+                  )}
                 </span>
               </div>
               <div className="flex gap-3">

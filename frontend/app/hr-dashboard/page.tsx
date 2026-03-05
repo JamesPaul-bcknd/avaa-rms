@@ -12,6 +12,7 @@ import HrMessages from "./HrMessages";
 export default function Home() {
   const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "messages">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [jobCount, setJobCount] = useState<number>(0);
 
   // State to store all scheduled interviews
   const [scheduledInterviews, setScheduledInterviews] = useState<any[]>([]);
@@ -33,8 +34,8 @@ export default function Home() {
         {/* 1. Dashboard View */}
         {view === "list" && (
           <>
-            <Header title="HR Dashboard" />
-            <JobTable onView={handleViewJob} />
+            <Header title="HR Dashboard" jobCount={jobCount} />
+            <JobTable onView={handleViewJob} onJobCountChange={setJobCount} />
           </>
         )}
 

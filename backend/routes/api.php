@@ -72,6 +72,7 @@ Route::group([
         Route::post('/', [JobPostingController::class, 'store']);
         Route::put('/{jobPosting}', [JobPostingController::class, 'update']);
         Route::delete('/{jobPosting}', [JobPostingController::class, 'destroy']);
+        Route::get('/{jobPosting}/applications', [JobApplicationController::class, 'index']);
         Route::post('/{jobPosting}/apply', [JobApplicationController::class, 'store']);
     });
 

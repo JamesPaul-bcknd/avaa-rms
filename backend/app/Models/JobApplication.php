@@ -16,5 +16,6 @@ class JobApplication extends Model
         'cover_letter',
         'why_interested',
         'experience',
+        'cv_path',
     ];
 }

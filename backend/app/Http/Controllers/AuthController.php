@@ -323,6 +323,9 @@ class AuthController extends Controller
 
     /**
      * Send a password reset link to the given email.
+     * 
+     * Shows error if email doesn't exist in database.
+     * Only sends reset email if the email exists.
      */
     public function forgotPassword(Request $request)
     {
@@ -334,21 +337,25 @@ class AuthController extends Controller
             return response()->json(['error' => $validator->errors()->first()], 400);
         }
 
+        // Check if user exists in database
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
-            // Don't reveal whether the email exists
+            // User not found - return error message
             return response()->json([
-                'message' => 'If an account with that email exists, we have sent a password reset link.',
-            ], 200);
+                'error' => 'No account exists with that email address.',
+            ], 404);
         }
 
+        // User exists - proceed with password reset process
+        
         // Delete any existing tokens for this email
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
-        // Generate token
+        // Generate secure random token
         $token = Str::random(64);
 
+        // Store hashed token in database
         DB::table('password_reset_tokens')->insert([
             'email' => $request->email,
             'token' => Hash::make($token),
@@ -358,10 +365,12 @@ class AuthController extends Controller
         // Build reset URL pointing to the frontend
         $resetUrl = 'http://localhost:3000/user/reset-password?token=' . $token . '&email=' . urlencode($request->email);
 
+        // Send reset email
         Mail::to($request->email)->send(new ResetPasswordMail($resetUrl));
 
+        // Return success message
         return response()->json([
-            'message' => 'If an account with that email exists, we have sent a password reset link.',
+            'message' => 'Password reset email sent successfully. Please check your inbox.',
         ], 200);
     }
 
