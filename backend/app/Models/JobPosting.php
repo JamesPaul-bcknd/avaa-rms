@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\JobApplication;
+use App\Models\User;
 
 class JobPosting extends Model
 {
@@ -28,6 +29,9 @@ class JobPosting extends Model
         'description',
         'what_youll_do',
         'why_company',
+        'user_id',
+        'recruiter_name',
+        'recruiter_role',
     ];
 
     // Allow these to be treated as arrays instead of strings
@@ -40,5 +44,10 @@ class JobPosting extends Model
     public function applications()
     {
         return $this->hasMany(JobApplication::class, 'job_posting_id');
+    }
+
+    public function recruiter()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

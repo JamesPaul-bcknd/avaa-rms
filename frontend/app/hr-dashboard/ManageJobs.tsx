@@ -26,6 +26,8 @@ interface Job {
   whyList?: string[];
   initials?: string;
   color?: string;
+  recruiter_name?: string;
+  recruiter_role?: string;
 }
 
 const ManageJobs = () => {
@@ -61,7 +63,7 @@ const ManageJobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await api.get('/jobs');
+        const response = await api.get('/jobs/my-jobs');
         const apiJobs = response.data?.data ?? [];
         const mapped: Job[] = apiJobs.map((job: any) => ({
           id: job.id,
@@ -78,6 +80,8 @@ const ManageJobs = () => {
           whyList: Array.isArray(job.why_company) ? job.why_company : [],
           initials: job.initials,
           color: job.color,
+          recruiter_name: job.recruiter_name,
+          recruiter_role: job.recruiter_role,
         }));
         setJobs(mapped);
       } catch (error) {
@@ -204,6 +208,8 @@ const ManageJobs = () => {
         whyList: Array.isArray(job.why_company) ? job.why_company : [],
         initials: job.initials,
         color: job.color,
+        recruiter_name: job.recruiter_name,
+        recruiter_role: job.recruiter_role,
       };
       setJobs([newJob, ...jobs]);
       setIsCreateModalOpen(false);

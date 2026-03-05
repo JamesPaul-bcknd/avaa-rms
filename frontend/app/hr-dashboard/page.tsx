@@ -1,5 +1,6 @@
 'use client';
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import JobTable from "./JobTable";
@@ -10,12 +11,23 @@ import UserPage from "./UserPage";
 import HrMessages from "./HrMessages";
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "messages">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [jobCount, setJobCount] = useState<number>(0);
 
   // State to store all scheduled interviews
   const [scheduledInterviews, setScheduledInterviews] = useState<any[]>([]);
+
+  // Handle URL parameters on mount
+  useEffect(() => {
+    const viewParam = searchParams.get('view');
+    const userIdParam = searchParams.get('userId');
+    
+    if (viewParam === 'messages') {
+      setView('messages');
+    }
+  }, [searchParams]);
 
   const handleViewJob = (job: any) => {
     setSelectedJob(job);
@@ -65,7 +77,7 @@ export default function Home() {
 
         {/* 6. Messages View */}
         {view === "messages" && (
-          <HrMessages />
+          <HrMessages initialUserId={searchParams.get('userId')} />
         )}
       </main>
     </div>

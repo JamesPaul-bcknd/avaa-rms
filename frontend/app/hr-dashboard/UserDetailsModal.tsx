@@ -1,16 +1,26 @@
 "use client";
 
 import React from 'react';
-import { X, FileText, Eye } from 'lucide-react';
+import Image from 'next/image';
+import { X, FileText, Eye, MessageCircle } from 'lucide-react';
+import { HrUser } from '@/lib/hrProfiles';
+import { useRouter } from 'next/navigation';
 
 interface UserDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  user: any;
+  user: HrUser | null;
 }
 
 const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
+  const router = useRouter();
+
   if (!isOpen || !user) return null;
+
+  const handleMessageUser = () => {
+    // Navigate to messages with the specific user
+    router.push('/hr-dashboard?view=messages&userId=' + user.id);
+  };
 
   return (
     <div 
@@ -33,16 +43,24 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
           {/* Responsive Profile Header */}
           <div className="absolute -bottom-12 sm:-bottom-10 left-6 sm:left-12 flex items-center sm:items-end gap-3 sm:gap-4">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl sm:rounded-3xl border-4 border-white shadow-lg overflow-hidden bg-slate-100 shrink-0">
-              <img 
-                src={`https://i.pravatar.cc/150?u=${user.id}`} 
-                alt={user.name} 
-                className="w-full h-full object-cover"
-              />
+              {user.profile_image_url ? (
+                <Image 
+                  src={user.profile_image_url} 
+                  alt={user.name} 
+                  width={96} 
+                  height={96} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-teal-500 flex items-center justify-center text-white font-bold text-2xl">
+                  {user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                </div>
+              )}
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 bg-white sm:bg-white/10 p-2 rounded-xl sm:backdrop-blur-md shadow-sm sm:shadow-none translate-y-2 sm:translate-y-0">
               <h2 className="text-lg sm:text-2xl font-bold text-slate-800 sm:text-slate-800">{user.name}</h2>
               <span className="w-fit px-2 py-0.5 sm:px-3 sm:py-1 bg-emerald-100 text-emerald-600 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider">
-                {user.status}
+                Active
               </span>
             </div>
           </div>
@@ -65,15 +83,15 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
               </div>
               <div>
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-300 tracking-wider">Email</p>
-                <p className="text-sm font-bold text-slate-700 break-all">{user.name.toLowerCase().replace(' ', '.')}@email.com</p>
+                <p className="text-sm font-bold text-slate-700 break-all">{user.email}</p>
               </div>
               <div>
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-300 tracking-wider">Phone Number</p>
-                <p className="text-sm font-bold text-slate-700">+1 (555) 234-5678</p>
+                <p className="text-sm font-bold text-slate-700">{user.phone || 'Not provided'}</p>
               </div>
               <div>
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-300 tracking-wider">Location</p>
-                <p className="text-sm font-bold text-slate-700">San Francisco, CA</p>
+                <p className="text-sm font-bold text-slate-700">{user.location || 'Not provided'}</p>
               </div>
             </div>
           </div>
@@ -88,23 +106,33 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-300 tracking-wider">Current Job Title</p>
-                  <p className="text-sm font-bold text-slate-700">{user.role}</p>
+                  <p className="text-sm font-bold text-slate-700">{user.position || 'Not specified'}</p>
                 </div>
                 <div>
                   <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-300 tracking-wider">Company</p>
-                  <p className="text-sm font-bold text-slate-700">CloudScale</p>
+                  <p className="text-sm font-bold text-slate-700">Not specified</p>
                 </div>
               </div>
               <div>
                 <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-300 tracking-wider mb-2">Skills & Expertise</p>
                 <div className="flex flex-wrap gap-2">
-                  {['Technical Writing', 'Notion', 'Project Coordination', 'CRM'].map(skill => (
-                    <span key={skill} className="px-2.5 py-1.5 bg-slate-50 text-slate-500 border border-slate-100 rounded-lg text-[10px] sm:text-[11px] font-bold italic">
-                      {skill}
-                    </span>
-                  ))}
+                  {user.skills && user.skills.length > 0 ? (
+                    user.skills.map((skill, index) => (
+                      <span key={index} className="px-2.5 py-1.5 bg-slate-50 text-slate-500 border border-slate-100 rounded-lg text-[10px] sm:text-[11px] font-bold italic">
+                        {skill}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-sm text-slate-400 italic">No skills listed</span>
+                  )}
                 </div>
               </div>
+              {user.bio && (
+                <div>
+                  <p className="text-[9px] sm:text-[10px] uppercase font-bold text-slate-300 tracking-wider mb-2">Bio</p>
+                  <p className="text-sm text-slate-600">{user.bio}</p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -134,10 +162,17 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
         </div>
 
         {/* --- Footer Action --- */}
-        <div className="p-4 sm:p-6 border-t border-slate-50 flex justify-end shrink-0 bg-white sm:rounded-b-[32px]">
+        <div className="p-4 sm:p-6 border-t border-slate-50 flex justify-between gap-3 shrink-0 bg-white sm:rounded-b-[32px]">
+          <button 
+            onClick={handleMessageUser}
+            className="flex-1 sm:flex-auto px-6 py-3 sm:py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center justify-center gap-2"
+          >
+            <MessageCircle size={16} />
+            Send Message
+          </button>
           <button 
             onClick={onClose}
-            className="w-full sm:w-auto px-8 py-3 sm:py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
+            className="flex-1 sm:flex-auto px-8 py-3 sm:py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all active:scale-95"
           >
             Close
           </button>
