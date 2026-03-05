@@ -25,12 +25,29 @@ export default function SettingsPage() {
     const profileMenuRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const { isLoading, user, logout } = useAuth();
-
+    const [phone, setPhone] = useState('');     // Add this
+    const [location, setLocation] = useState('');
     const userName = user?.name || 'User';
     const userInitials = userName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U';
     const userEmail = user?.email || '';
     const profileImageUrl = user?.profile_image_url || null;
+    const userPhone = user?.phone || '';
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    // Security Toggles
+    const [is2FAEnabled, setIs2FAEnabled] = useState(true);
+    const [emailNotifications, setEmailNotifications] = useState(true);
+    const [pushNotifications, setPushNotifications] = useState(true);
 
+    // Marketplace Visibility Selection
+    const [visibility, setVisibility] = useState('public'); // 'public', 'agency', or 'private'
+
+    // Privacy Toggles
+    const [showContact, setShowContact] = useState(true);
+    const [showRatings, setShowRatings] = useState(true);
+    const [hideProfile, setHideProfile] = useState(false);
+    
+
+    const [activeTab, setActiveTab] = useState('Account');
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
@@ -46,8 +63,11 @@ export default function SettingsPage() {
     // Populate fields from user data
     useEffect(() => {
         if (user) {
+            
             setEmail(user.email || '');
             setName(user.name || '');
+            setPhone(user.phone || '');
+            setLocation(user.location || '');
         }
     }, [user]);
 
@@ -143,15 +163,7 @@ export default function SettingsPage() {
                             <span className="hidden sm:inline">Messages</span>
                         </Link>
 
-                        <button
-                            onClick={() => setShowLogoutConfirm(true)}
-                            className="flex items-center gap-1.5 px-3 lg:px-4 py-2 rounded-full text-sm font-medium text-[#5a6a75] hover:bg-[#f0f2f5] transition-colors"
-                        >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
-                            </svg>
-                            <span className="hidden sm:inline">Sign Out</span>
-                        </button>
+                        
 
                         <>
                             {/* Notification Bell */}
@@ -235,175 +247,347 @@ export default function SettingsPage() {
                 </div>
             </nav>
 
-            {/* ─── Content ─── */}
-            <div className="max-w-[780px] mx-auto px-6 py-8">
-                <h1 className="text-[28px] font-bold text-[#1a1a1a] mb-6">Settings</h1>
+            {/* ─── Content Wrapper ─── */}
+<div className="max-w-[1400px] mx-auto px-10 py-10 flex gap-12 bg-[#F9FAFB] min-h-screen">
+    
+   {/* ─── LEFT SIDEBAR ─── */}
+<aside className="w-64 flex-shrink-0">
+    <h1 className="text-2xl font-bold text-gray-900 mb-1">Settings</h1>
+    <p className="text-sm text-gray-500 mb-8">Manage your account preferences.</p>
+    
+    <nav className="space-y-1">
+        {['Account', 'Security & Privacy', 'Job Preferences', 'Notifications', 'Documents'].map((item) => (
+            <button 
+                key={item} 
+                onClick={() => setActiveTab(item)} // Added this
+                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    activeTab === item  // Changed from item === 'Account'
+                    ? 'bg-[#7EB0AB] text-white shadow-md' 
+                    : 'text-gray-500 hover:bg-white hover:shadow-sm'
+                }`}
+            >
+                {item}
+            </button>
+        ))}
+    </nav>
+</aside>
 
-                {/* Success / Error banners */}
-                {saveSuccess && (
-                    <div className="mb-5 p-3.5 rounded-lg bg-green-50 border border-green-200 text-green-700 text-sm flex items-center gap-2">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
-                        {saveSuccess}
-                    </div>
-                )}
-                {saveError && (
-                    <div className="mb-5 p-3.5 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm">
-                        {saveError}
-                    </div>
-                )}
+    {/* ─── MAIN CONTENT AREA ─── */}
+    <main className="flex-1 max-w-4xl space-y-8">
+        {activeTab === 'Account' && (
+            <>
+        {/* Success / Error banners */}
+        {saveSuccess && (
+            <div className="p-4 rounded-xl bg-green-50 border border-green-100 text-green-700 text-sm flex items-center gap-2">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                {saveSuccess}
+            </div>
+        )}
+<div className="mb-2">
+            <h2 className="text-xl font-bold text-gray-900">Account Settings</h2>
+            <p className="text-sm text-gray-400">Manage and update your personal information.</p>
+        </div>
 
-                {/* ─── Section 1: Account Info (read-only) ─── */}
-                <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-6">
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-10 h-10 rounded-full bg-[#e6f7f2] flex items-center justify-center">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7EB0AB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
-                            </svg>
-                        </div>
-                        <h3 className="text-lg font-bold text-[#1a1a1a]">Account Information</h3>
-                    </div>
+        {/* ─── Section 1: Personal Information ─── */}
+<section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+    
+    <div className="mb-6">
+        <h3 className="text-lg font-bold text-gray-900">Personal Information</h3>
+        <p className="text-sm text-gray-500">Edit your name, email, and other essential information.</p>
+    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label className="block text-sm font-semibold text-[#1a1a1a] mb-2">Full Name</label>
-                            <input
-                                type="text"
-                                value={name}
-                                readOnly
-                                className="w-full px-4 py-3 bg-[#f5f7fa] border border-[#e5e7eb] rounded-xl text-sm text-[#5a6a75] cursor-not-allowed"
-                            />
-                            <p className="text-[11px] text-[#9ca3af] mt-1">Edit from your Profile page</p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-semibold text-[#1a1a1a] mb-2">Email Address</label>
-                            <input
-                                type="email"
-                                value={email}
-                                readOnly
-                                className="w-full px-4 py-3 bg-[#f5f7fa] border border-[#e5e7eb] rounded-xl text-sm text-[#5a6a75] cursor-not-allowed"
-                            />
-                            <p className="text-[11px] text-[#9ca3af] mt-1">Email cannot be changed</p>
-                        </div>
+    {/* Profile Initials Row */}
+    <div className="flex items-center gap-6 mb-8">
+        <div className="relative">
+            {/* Initials Circle matching the "JP" style */}
+            <div className="w-20 h-20 rounded-full bg-[#e6f2f1] border-2 border-[#7EB0AB] flex items-center justify-center shadow-sm">
+                <span className="text-[#7EB0AB] text-2xl font-bold tracking-tighter">
+                    {name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : 'JP'}
+                </span>
+            </div>
+        </div>
+        <button className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            Change Image
+        </button>
+    </div>
+
+    {/* Form Fields Grid */}
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+        
+       {/* Name Fields */}
+<div className="flex items-center">
+    <label className="w-32 text-sm font-bold text-gray-900">Name</label>
+    <div className="flex-1 flex gap-3">
+        <input
+            type="text"
+            /* Splits name and takes everything except the last word as first name */
+            value={name ? name.split(' ').slice(0, -1).join(' ') : ''}
+            readOnly
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+        />
+        <input
+            type="text"
+            /* Takes the last word as the last name */
+            value={name ? name.split(' ').slice(-1)[0] : ''}
+            readOnly
+            className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+        />
+    </div>
+</div>
+
+        {/* Username */}
+        <div className="flex items-center">
+            <label className="w-32 text-sm font-bold text-gray-900">Username</label>
+            <input
+                type="text"
+                defaultValue={email}
+                className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-600 focus:outline-none"
+            />
+        </div>
+
+        {/* Email */}
+        <div className="flex items-center">
+            <label className="w-32 text-sm font-bold text-gray-900">Email</label>
+            <input
+                type="email"
+                value={email}
+                readOnly
+                className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+            />
+        </div>
+
+        {/* Phone Number */}
+<div className="flex items-center">
+    <label className="w-32 text-sm font-bold text-gray-900">Phone Number</label>
+    <input
+        type="text"
+        value={phone || 'N/A'} // Uses the 'phone' state variable
+        readOnly
+        className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+    />
+</div>
+
+       {/* Location */}
+<div className="flex items-center">
+    <label className="w-32 text-sm font-bold text-gray-900">Location</label>
+    <input
+        type="text"
+        value={location || 'N/A'} // Replaced hardcoded "San Francisco" with state
+        readOnly
+        className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-500 cursor-not-allowed"
+    />
+</div>
+
+        {/* Portfolio Link */}
+        <div className="flex items-center">
+            <label className="w-32 text-sm font-bold text-gray-900">Portfolio Link</label>
+            <input
+                type="text"
+                defaultValue="N/A"
+                className="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-lg text-sm text-gray-600 focus:outline-none"
+            />
+        </div>
+    </div>
+
+    {/* Action Buttons */}
+    <div className="flex justify-end gap-3 mt-10">
+        <button className="px-10 py-2.5 text-sm font-bold text-gray-500 bg-white border border-gray-100 rounded-lg hover:bg-gray-50">
+            Discard
+        </button>
+        <button className="px-10 py-2.5 text-sm font-bold text-white bg-[#7EB0AB] rounded-lg shadow-sm hover:bg-[#6A9994] transition-all">
+            Save Changes
+        </button>
+    </div>
+</section>
+
+        {/* ─── Section 2: Change Password ─── */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 className="text-lg font-bold text-gray-900 mb-6">Change Password</h3>
+            <div className="space-y-6">
+                <div>
+                    <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Current Password</label>
+                    <div className="relative">
+                        <input
+                            type={showCurrentPassword ? 'text' : 'password'}
+                            value={currentPassword}
+                            onChange={(e) => setCurrentPassword(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#7EB0AB] outline-none"
+                            placeholder="••••••••"
+                        />
                     </div>
                 </div>
 
-                {/* ─── Section 2: Change Password ─── */}
-                <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-6">
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-10 h-10 rounded-full bg-[#fef3e2] flex items-center justify-center">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0110 0v4" />
-                            </svg>
-                        </div>
-                        <h3 className="text-lg font-bold text-[#1a1a1a]">Change Password</h3>
+                <div className="grid grid-cols-2 gap-6">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase mb-2">New Password</label>
+                        <input
+                            type={showNewPassword ? 'text' : 'password'}
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#7EB0AB] outline-none"
+                            placeholder="Min. 8 characters"
+                        />
                     </div>
-
-                    <div className="space-y-5">
-                        {/* Current Password */}
-                        <div>
-                            <label htmlFor="current-password" className="block text-sm font-semibold text-[#1a1a1a] mb-2">Current Password</label>
-                            <div className="relative">
-                                <input
-                                    id="current-password"
-                                    type={showCurrentPassword ? 'text' : 'password'}
-                                    value={currentPassword}
-                                    onChange={(e) => setCurrentPassword(e.target.value)}
-                                    className="w-full px-4 py-3 pr-12 bg-[#f5f7fa] border border-[#e5e7eb] rounded-xl text-sm text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all"
-                                    placeholder="Enter current password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#9ca3af] hover:text-[#5a6a75] transition-colors"
-                                >
-                                    <EyeIcon open={showCurrentPassword} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* New Password */}
-                        <div>
-                            <label htmlFor="new-password" className="block text-sm font-semibold text-[#1a1a1a] mb-2">New Password</label>
-                            <div className="relative">
-                                <input
-                                    id="new-password"
-                                    type={showNewPassword ? 'text' : 'password'}
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-4 py-3 pr-12 bg-[#f5f7fa] border border-[#e5e7eb] rounded-xl text-sm text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all"
-                                    placeholder="Enter new password (min 6 characters)"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowNewPassword(!showNewPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#9ca3af] hover:text-[#5a6a75] transition-colors"
-                                >
-                                    <EyeIcon open={showNewPassword} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Confirm New Password */}
-                        <div>
-                            <label htmlFor="confirm-password" className="block text-sm font-semibold text-[#1a1a1a] mb-2">Confirm New Password</label>
-                            <div className="relative">
-                                <input
-                                    id="confirm-password"
-                                    type={showConfirmPassword ? 'text' : 'password'}
-                                    value={confirmNewPassword}
-                                    onChange={(e) => setConfirmNewPassword(e.target.value)}
-                                    className="w-full px-4 py-3 pr-12 bg-[#f5f7fa] border border-[#e5e7eb] rounded-xl text-sm text-[#1a1a1a] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all"
-                                    placeholder="Re-enter new password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#9ca3af] hover:text-[#5a6a75] transition-colors"
-                                >
-                                    <EyeIcon open={showConfirmPassword} />
-                                </button>
-                            </div>
-                        </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Confirm Password</label>
+                        <input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            value={confirmNewPassword}
+                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-[#7EB0AB] outline-none"
+                            placeholder="Re-type password"
+                        />
                     </div>
                 </div>
 
-                {/* ─── Section 3: Two-Factor (coming soon) ─── */}
-                <div className="bg-white rounded-2xl border border-[#e5e7eb] p-6 mb-6 opacity-60">
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-10 h-10 rounded-full bg-[#eef2ff] flex items-center justify-center">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-[#1a1a1a]">Two-Factor Authentication</h3>
-                            <span className="text-[11px] font-medium text-[#6366f1] bg-[#eef2ff] px-2 py-0.5 rounded-full">Coming Soon</span>
-                        </div>
+                {/* Password Strength Indicator */}
+                <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-gray-400">Password Strength</span>
+                        <span className="text-xs font-bold text-[#7EB0AB]">
+                            {newPassword.length > 8 ? 'Strong' : newPassword.length > 0 ? 'Weak' : ''}
+                        </span>
                     </div>
-                    <p className="text-sm text-[#5a6a75]">Add an extra layer of security to your account with two-factor authentication. This feature will be available soon.</p>
+                    <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div 
+                            className="h-full bg-[#7EB0AB] transition-all duration-500" 
+                            style={{ width: newPassword.length > 8 ? '100%' : newPassword.length > 4 ? '50%' : newPassword.length > 0 ? '20%' : '0%' }}
+                        ></div>
+                    </div>
                 </div>
 
-                {/* ─── Save Changes Button ─── */}
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-3 pt-4">
+                    <button className="px-6 py-2.5 text-sm font-bold text-gray-400 hover:text-gray-600">Discard</button>
                     <button
                         onClick={handleChangePassword}
-                        disabled={saving || (!currentPassword && !newPassword)}
-                        className="flex items-center gap-2 px-6 py-3 bg-[#7EB0AB] hover:bg-[#6A9994] disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold rounded-xl transition-colors focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:ring-offset-2"
+                        disabled={saving || !newPassword}
+                        className="px-8 py-2.5 bg-[#7EB0AB] text-white text-sm font-bold rounded-xl shadow-md hover:bg-[#6A9994] transition-all disabled:opacity-50"
                     >
-                        {saving ? (
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
-                                <polyline points="17 21 17 13 7 13 7 21" />
-                                <polyline points="7 3 7 8 15 8" />
-                            </svg>
-                        )}
-                        {saving ? 'Saving...' : 'Change Password'}
+                        {saving ? 'Saving...' : 'Save Changes'}
                     </button>
                 </div>
             </div>
+        </section>
+
+       {/* ─── Section 3: Delete Account ─── */}
+<section className="bg-white rounded-2xl border border-red-100 p-8 shadow-sm">
+    <h3 className="text-lg font-bold text-red-600 mb-2">Delete Account</h3>
+    <p className="text-sm text-gray-500 mb-6">Permanently delete your account and all associated data. This action cannot be undone.</p>
+    <div className="flex justify-end">
+        <button 
+            onClick={() => setShowDeleteModal(true)}
+            className="px-6 py-2.5 text-sm font-bold text-white bg-red-500 rounded-xl shadow-sm hover:bg-red-600 transition-all"
+        >
+            Delete Account
+        </button>
+    </div>
+</section></>
+)}
+{/* 2. SECURITY & PRIVACY TAB CONTENT */}
+{activeTab === 'Security & Privacy' && (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="mb-2">
+            <h2 className="text-xl font-bold text-gray-900">Security Settings</h2>
+            <p className="text-sm text-gray-400">Manage your account security preferences to keep your data safe.</p>
+        </div>
+
+        {/* --- Section 1: 2FA & Login Alerts --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-8">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h3 className="text-sm font-bold text-gray-900">Two-Factor Authentication (2FA)</h3>
+                    <p className="text-xs text-gray-500">Protect your account with an extra layer of security. We will ask for a verification code when you log in on a new device.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" className="sr-only peer" defaultChecked />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7EB0AB]"></div>
+                </label>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-sm font-bold text-gray-900">Login Alerts</h3>
+                <p className="text-xs text-gray-500 -mt-2">Choose how you want to be notified when a new login is detected on your account.</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Email Notifications */}
+                    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
+                        <div className="flex items-center gap-3">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7EB0AB]"></div>
+                            </label>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">Email Notifications</p>
+                                <p className="text-xs text-gray-400">Send an alert your email</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Push Notifications */}
+                    <div className="flex items-center justify-between p-4 border border-gray-100 rounded-xl">
+                        <div className="flex items-center gap-3">
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                <div className="w-9 h-5 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7EB0AB]"></div>
+                            </label>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">Push Notifications</p>
+                                <p className="text-xs text-gray-400">Alerts via desktop or mobile app</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {/* --- Section 2: Marketplace Visibility --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 mb-6">Marketplace Visibility</h3>
+            <div className="space-y-3">
+                {[
+                    { id: 'public', title: 'Public', desc: 'Visible to all potential clients and search engines' },
+                    { id: 'agency', title: 'Agency-only', desc: 'Only verified agencies can view your full profile and ratings' },
+                    { id: 'private', title: 'Private', desc: 'Your profile is hidden from the marketplace search results' }
+                ].map((option) => (
+                    <label key={option.id} className={`flex items-center justify-between p-4 border rounded-xl cursor-pointer transition-all ${option.id === 'public' ? 'border-[#7EB0AB] bg-[#F9FBFB]' : 'border-gray-100 hover:border-gray-200'}`}>
+                        <div>
+                            <p className="text-sm font-bold text-gray-900">{option.title}</p>
+                            <p className="text-xs text-gray-500">{option.desc}</p>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${option.id === 'public' ? 'border-[#7EB0AB]' : 'border-gray-300'}`}>
+                            {option.id === 'public' && <div className="w-2.5 h-2.5 rounded-full bg-[#7EB0AB]"></div>}
+                        </div>
+                    </label>
+                ))}
+            </div>
+        </section>
+
+        {/* --- Section 3: Privacy & Security --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 mb-6">Privacy & Security</h3>
+            <div className="space-y-6">
+                {[
+                    { label: 'Show Contact Info', desc: 'Enable clients to reach you directly before booking', checked: true },
+                    { label: 'Show Ratings & Reviews', desc: 'Let potential clients see your track record and VA score', checked: true },
+                    { label: 'Hide profile while employed', desc: 'Reduce noise by hiding when you aren\'t looking for work', checked: false }
+                ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-bold text-gray-900">{item.label}</p>
+                            <p className="text-xs text-gray-500">{item.desc}</p>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" className="sr-only peer" defaultChecked={item.checked} />
+                            <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7EB0AB]"></div>
+                        </label>
+                    </div>
+                ))}
+            </div>
+        </section>
+    </div>
+)}
+    </main>
+</div>
 
             {/* ─── Sign Out Confirmation Modal ─── */}
             {showLogoutConfirm && (
@@ -436,6 +620,67 @@ export default function SettingsPage() {
                     </div>
                 </div>
             )}
+            {/* Delete Account Modal Overlay */}
+{showDeleteModal && (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Warning Icon */}
+            <div className="flex justify-center mb-6">
+                <div className="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 className="text-xl font-bold text-center text-gray-900 mb-2">Permanently Delete Account?</h2>
+            <p className="text-center text-sm text-gray-500 mb-6">This action cannot be undone.</p>
+
+            {/* Warning Box */}
+            <div className="bg-red-50 border border-red-100 rounded-2xl p-4 flex gap-3 mb-8">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mt-0.5">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                <p className="text-xs font-medium text-red-700 leading-relaxed">
+                    All your data will be deleted immediately.
+                </p>
+            </div>
+
+            <div className="space-y-4">
+                <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-gray-500 ml-1">Reason for leaving (Optional)</label>
+                    <select className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none">
+                        <option>Select a reason</option>
+                        <option>No longer need the service</option>
+                        <option>Technical issues</option>
+                        <option>Switching to another platform</option>
+                    </select>
+                </div>
+
+                <div className="space-y-1.5 relative">
+                    <label className="text-xs font-bold text-gray-500 ml-1">Confirm Password</label>
+                    <input 
+                        type="password" 
+                        placeholder="Enter your password"
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:outline-none"
+                    />
+                </div>
+
+                <div className="pt-2 flex flex-col gap-3">
+                    <button className="w-full py-3.5 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition-colors">
+                        Delete Account
+                    </button>
+                    <button 
+                        onClick={() => setShowDeleteModal(false)}
+                        className="w-full py-3.5 bg-white text-gray-600 font-bold rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
+                    >
+                        Cancel, Keep My Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+)}
         </div>
     );
 }
