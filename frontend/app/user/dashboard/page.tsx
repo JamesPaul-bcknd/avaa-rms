@@ -3,10 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import AuthPromptModal from "@/components/AuthPromptModal";
+import { messagesApi } from "@/lib/messages";
 import api from "@/lib/axios";
+import MessageModal from '@/components/messaging/MessageModal';
 
 interface Job {
   id: number;
@@ -23,6 +25,8 @@ interface Job {
   description: string;
   whatYoullDo: string[];
   whyCompany: string[];
+  recruiter_name?: string;
+  recruiter_role?: string;
 }
 const DATE_FILTERS = ["All Time", "Today", "This Week", "This Month"];
 
@@ -766,163 +770,6 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
   );
 }
 
-// ─── Messaging Modal ─────────────────────────────────────────
-interface Recruiter {
-  name: string;
-  role: string;
-  initials: string;
-  color: string;
-}
-
-function MessagingModal({
-  recruiter,
-  onClose,
-}: {
-  recruiter: Recruiter;
-  onClose: () => void;
-}) {
-  const [messages, setMessages] = useState<
-    { id: number; text: string; from: "user" | "recruiter"; time: string }[]
-  >([
-    {
-      id: 1,
-      text: `Hi! I'm ${recruiter.name}. I saw your interest in the position. How can I help you today?`,
-      from: "recruiter",
-      time: "Just now",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const sendMessage = () => {
-    const text = input.trim();
-    if (!text) return;
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    const newMsg = { id: Date.now(), text, from: "user" as const, time: timeStr };
-    setMessages((prev) => [...prev, newMsg]);
-    setInput("");
-    // Simulate recruiter reply
-    setTimeout(() => {
-      const replies = [
-        "That's a great question! I'll follow up with the hiring team.",
-        "Sure, feel free to share your resume and I'll pass it along.",
-        "Thanks for reaching out! We'll get back to you shortly.",
-        "I appreciate your interest. Let me check and get back to you!",
-      ];
-      const reply = replies[Math.floor(Math.random() * replies.length)];
-      const replyTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      setMessages((prev) => [
-        ...prev,
-        { id: Date.now() + 1, text: reply, from: "recruiter", time: replyTime },
-      ]);
-    }, 1200);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") sendMessage();
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-sm">
-      <div
-        className="bg-white w-full sm:w-[420px] sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col"
-        style={{ height: "560px", animation: "fadeInScale 0.25s ease-out" }}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center gap-3 px-4 py-3.5 flex-shrink-0"
-          style={{ background: "linear-gradient(135deg, #1e3a4f, #2d5570)" }}
-        >
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 border-2 border-white/30"
-            style={{ backgroundColor: recruiter.color }}
-          >
-            {recruiter.initials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-white truncate">{recruiter.name}</p>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
-              <p className="text-xs text-white/70 truncate">{recruiter.role}</p>
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors flex-shrink-0"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3 bg-[#f5f7fa]">
-          {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`flex items-end gap-2 ${msg.from === "user" ? "flex-row-reverse" : "flex-row"
-                }`}
-            >
-              {msg.from === "recruiter" && (
-                <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0 mb-1"
-                  style={{ backgroundColor: recruiter.color }}
-                >
-                  {recruiter.initials}
-                </div>
-              )}
-              <div className={`max-w-[75%] ${msg.from === "user" ? "items-end" : "items-start"} flex flex-col gap-1`}>
-                <div
-                  className={`px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.from === "user"
-                    ? "bg-[#1e3a4f] text-white rounded-br-sm"
-                    : "bg-white text-[#1a1a1a] border border-[#e5e7eb] rounded-bl-sm shadow-sm"
-                    }`}
-                >
-                  {msg.text}
-                </div>
-                <span className="text-[10px] text-[#9ca3af] px-1">{msg.time}</span>
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Input */}
-        <div className="px-4 py-3 border-t border-[#e5e7eb] bg-white flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Type a message..."
-              className="flex-1 px-3.5 py-2.5 bg-[#f5f7fa] border border-[#e5e7eb] rounded-xl text-sm text-[#1a1a1a] placeholder-[#9ca3af] focus:outline-none focus:ring-2 focus:ring-[#7EB0AB] focus:border-transparent transition-all"
-            />
-            <button
-              onClick={sendMessage}
-              disabled={!input.trim()}
-              className="w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
-              style={{ background: "linear-gradient(135deg, #7EB0AB, #6A9994)" }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13" />
-                <polygon points="22 2 15 22 11 13 2 9 22 2" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Animated job card wrapper
 function JobCard({
   job,
@@ -1100,8 +947,8 @@ export default function UserDashboardPage() {
   const [bookmarked, setBookmarked] = useState<number[]>([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showApplyModal, setShowApplyModal] = useState(false);
-  const [showMessagingModal, setShowMessagingModal] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const userName = user?.name || "User";
   const userInitials =
@@ -1121,6 +968,9 @@ export default function UserDashboardPage() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalRecruiter, setMessageModalRecruiter] = useState<{id: number, name: string} | null>(null);
   // 2. DERIVED DATA (Calculated after state)
   // We only need one declaration of these.
   // We add '|| []' and 'jobs.length' checks to prevent crashes while loading.
@@ -1146,6 +996,34 @@ export default function UserDashboardPage() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Handle URL parameters for auto-navigation to messages
+  useEffect(() => {
+    const recruiterId = searchParams.get('recruiterId');
+    if (recruiterId && isAuthenticated) {
+      // Navigate to messages with specific recruiter ID
+      router.push(`/user/messages?userId=${recruiterId}`);
+    }
+  }, [searchParams, isAuthenticated, router]);
+
+  // Fetch unread messages count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await messagesApi.getUnreadCount();
+          setUnreadCount(response.data.unread_count);
+        } catch (error) {
+          console.error('Failed to fetch unread count:', error);
+        }
+      }
+    };
+
+    fetchUnreadCount();
+    // Poll every 30 seconds for real-time updates
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   // 3. FETCHING DATA
   useEffect(() => {
@@ -1451,7 +1329,7 @@ export default function UserDashboardPage() {
             {/* Messages Link */}
             <Link
               href="/user/messages"
-              className="flex items-center gap-2 px-3 lg:px-5 py-2.5 rounded-lg border border-[#e5e7eb] text-[15px] font-semibold text-[#1a1a1a] bg-white hover:bg-[#f9fafb] shadow-sm transition-colors"
+              className="flex items-center gap-2 px-3 lg:px-5 py-2.5 rounded-lg border border-[#e5e7eb] text-[15px] font-semibold text-[#1a1a1a] bg-white hover:bg-[#f9fafb] shadow-sm transition-colors relative"
             >
               <svg
                 width="18"
@@ -1463,15 +1341,40 @@ export default function UserDashboardPage() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               >
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                 <rect x="3" y="5" width="18" height="14" rx="2" ry="2" />
                 <polyline points="3 7 12 13 21 7" />
               </svg>
               <span className="hidden sm:inline">Messages</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center font-bold">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Link>
 
             {isAuthenticated && (
               <>
                 {/* Notification Bell */}
+                <div className="relative mx-1">
+                  <button className="p-2 text-[#5a6a75] hover:text-[#1a1a1a] hover:bg-[#f0f2f5] rounded-full transition-colors relative">
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                    <div className="absolute top-2 right-2.5 w-[7px] h-[7px] bg-red-500 rounded-full border-2 border-white"></div>
+                  </button>
+                </div>
+                <div className="w-px h-6 bg-[#e5e7eb] mx-1"></div>
                 <div className="relative mx-1">
                   <button className="p-2 text-[#5a6a75] hover:text-[#1a1a1a] hover:bg-[#f0f2f5] rounded-full transition-colors relative">
                     <svg
@@ -2134,21 +2037,37 @@ export default function UserDashboardPage() {
                             borderColor: (lastSelectedJob?.color || "#7EB0AB") + "40",
                           }}
                         >
-                          JD
+                          {lastSelectedJob?.recruiter_name 
+                            ? lastSelectedJob.recruiter_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                            : 'JD'
+                          }
                         </div>
                         <div>
-                          <p className="text-[14px] font-bold text-[#1a1a1a]">Jane Doe</p>
-                          <p className="text-[12px] text-[#5a6a75]">Senior Tech Talent Partner</p>
+                          <p className="text-[14px] font-bold text-[#1a1a1a]">
+                            {lastSelectedJob?.recruiter_name || 'Jane Doe'}
+                          </p>
+                          <p className="text-[12px] text-[#5a6a75]">
+                            {lastSelectedJob?.recruiter_role || 'Senior Tech Talent Partner'}
+                          </p>
                         </div>
                       </div>
                       <button
-                        onClick={() => setShowMessagingModal(true)}
+                        onClick={() => {
+                          // Open messaging modal with recruiter
+                          const recruiterId = lastSelectedJob?.recruiter_id || lastSelectedJob?.user_id || lastSelectedJob?.posted_by;
+                          const recruiterName = lastSelectedJob?.recruiter_name || 'Recruiter';
+                          if (recruiterId) {
+                            setMessageModalRecruiter({ id: recruiterId, name: recruiterName });
+                            setShowMessageModal(true);
+                          }
+                        }}
                         className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-[#e5e7eb] text-sm font-semibold text-[#1a1a1a] hover:bg-[#f5f7fa] hover:border-[#7EB0AB] hover:text-[#7EB0AB] transition-all group"
+                        disabled={!lastSelectedJob?.recruiter_id && !lastSelectedJob?.user_id && !lastSelectedJob?.posted_by}
                       >
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:stroke-[#7EB0AB] transition-colors">
                           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
                         </svg>
-                        Message Jane
+                        Message {lastSelectedJob?.recruiter_name?.split(' ')[0] || 'Recruiter'}
                       </button>
                     </div>
 
@@ -2202,19 +2121,6 @@ export default function UserDashboardPage() {
         <ApplyModal
           job={selectedJob}
           onClose={() => setShowApplyModal(false)}
-        />
-      )}
-
-      {/* ─── Messaging Modal ─── */}
-      {showMessagingModal && lastSelectedJob && (
-        <MessagingModal
-          recruiter={{
-            name: "Jane Doe",
-            role: "Senior Tech Talent Partner",
-            initials: "JD",
-            color: lastSelectedJob.color || "#7EB0AB",
-          }}
-          onClose={() => setShowMessagingModal(false)}
         />
       )}
 
@@ -2278,6 +2184,17 @@ export default function UserDashboardPage() {
       <AuthPromptModal
         isOpen={showAuthPrompt}
         onClose={() => setShowAuthPrompt(false)}
+      />
+
+      {/* ─── Message Modal ─── */}
+      <MessageModal
+        isOpen={showMessageModal}
+        onClose={() => {
+          setShowMessageModal(false);
+          setMessageModalRecruiter(null);
+        }}
+        recruiterId={messageModalRecruiter?.id || 0}
+        recruiterName={messageModalRecruiter?.name || 'Recruiter'}
       />
     </div>
   );
