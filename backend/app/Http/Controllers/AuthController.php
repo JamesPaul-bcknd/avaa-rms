@@ -190,6 +190,9 @@ class AuthController extends Controller
             'company_name' => 'sometimes|nullable|string|max:150',
             'company_number' => 'sometimes|nullable|string|max:50',
             'company_location' => 'sometimes|nullable|string|max:150',
+            'company_description' => 'sometimes|nullable|string|max:1000',
+            'industry' => 'sometimes|nullable|string|max:150',
+            'website' => 'sometimes|nullable|string|max:255',
             'position' => 'sometimes|nullable|string|max:150',
             'role' => 'sometimes|string|in:user,recruiter,admin',
         ]);

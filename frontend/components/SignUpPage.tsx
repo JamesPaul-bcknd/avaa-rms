@@ -132,40 +132,30 @@ export default function SignUpPage() {
                 location: role === 'job-seeker' ? (location || 'N/A') : (companyLocation || 'N/A'),
             });
 
-            let token: string;
-            try {
-                const loginRes = await api.post('/auth/login', { email, password });
-                token = loginRes.data.access_token;
-                localStorage.setItem('token', token);
-            } catch (loginErr: any) {
-                if (loginErr?.response?.data?.email_not_verified) {
-                    router.push(`/user/verify-otp?email=${encodeURIComponent(email)}`);
-                    return;
-                }
-                throw loginErr;
-            }
-
-            const payload = new FormData();
-            payload.append('_method', 'PUT');
+            // Build profile payload to apply after OTP verification
+            const profileData: Record<string, string> = {};
             if (role === 'job-seeker') {
-                payload.append('role', 'user');
-                payload.append('phone', normalizedPhone);
-                payload.append('location', location || '');
-                payload.append('headline', headline);
-                payload.append('bio', bio);
-                payload.append('skills', JSON.stringify(skills));
+                profileData.role = 'user';
+                profileData.phone = normalizedPhone;
+                profileData.location = location || '';
+                profileData.headline = headline;
+                profileData.bio = bio;
+                profileData.skills = JSON.stringify(skills);
             } else {
-                payload.append('role', 'recruiter');
-                payload.append('company_name', companyName);
-                payload.append('position', jobTitle);
-                payload.append('company_location', companyLocation);
-                payload.append('company_description', companyDesc);
-                payload.append('industry', industry);
-                payload.append('website', website);
+                profileData.role = 'recruiter';
+                profileData.company_name = companyName;
+                profileData.position = jobTitle;
+                profileData.company_location = companyLocation;
+                profileData.company_description = companyDesc;
+                profileData.industry = industry;
+                profileData.website = website;
             }
-            await api.post('/auth/profile', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
 
-            router.replace(role === 'job-seeker' ? '/user/dashboard' : '/hr-dashboard');
+            // Always require email verification before entering the app
+            sessionStorage.setItem('pendingSignupEmail', email);
+            sessionStorage.setItem('pendingSignupPassword', password);
+            sessionStorage.setItem('pendingProfileData', JSON.stringify(profileData));
+            router.push(`/user/verify-otp?email=${encodeURIComponent(email)}&role=${role}`);
         } catch (err: any) {
             const errors = err.response?.data;
             if (typeof errors === 'string') {

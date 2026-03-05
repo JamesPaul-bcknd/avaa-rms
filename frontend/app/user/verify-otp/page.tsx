@@ -15,6 +15,7 @@ export default function VerifyOtpPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get('email') || '';
+    const role = searchParams.get('role') || 'job-seeker';
 
     useEffect(() => { document.title = 'Verify Email | AVAA'; }, []);
 
@@ -60,26 +61,39 @@ export default function VerifyOtpPage() {
             const otpCode = otp.join('');
             const response = await api.post('/auth/verify-otp', { email, otp: otpCode });
             setSuccess(response.data.message || 'Email verified successfully!');
+            const destination = role === 'recruiter' ? '/hr-dashboard' : '/user/dashboard';
             setTimeout(async () => {
-                // Try to auto-login with pending creds (set during signup) to go straight to type selection.
                 const pendingEmail = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pendingSignupEmail') : null;
                 const pendingPassword = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pendingSignupPassword') : null;
+                const pendingProfile = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('pendingProfileData') : null;
 
                 if (pendingEmail && pendingPassword) {
                     try {
                         const loginResponse = await api.post('/auth/login', { email: pendingEmail, password: pendingPassword });
                         localStorage.setItem('token', loginResponse.data.access_token);
+
+                        // Apply profile data saved from sign-up form
+                        if (pendingProfile) {
+                            try {
+                                const profileData = JSON.parse(pendingProfile);
+                                const payload = new FormData();
+                                Object.entries(profileData).forEach(([key, val]) => payload.append(key, val as string));
+                                await api.put('/auth/profile', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
+                            } catch (_) { /* non-critical */ }
+                        }
+
                         sessionStorage.removeItem('pendingSignupEmail');
                         sessionStorage.removeItem('pendingSignupPassword');
-                        router.replace('/register');
+                        sessionStorage.removeItem('pendingProfileData');
+                        router.replace(destination);
                         return;
                     } catch (loginErr) {
                         // fall through to signin redirect
                     }
                 }
 
-                // If auto-login fails, send to signin with redirect to selection
-                router.push('/signin?redirect=/register');
+                // If auto-login fails, send to signin
+                router.push('/signin');
             }, 1200);
         } catch (err: any) {
             setError(err.response?.data?.error || 'Verification failed. Please try again.');
