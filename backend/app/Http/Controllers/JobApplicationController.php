@@ -10,6 +10,18 @@ use Illuminate\Support\Facades\Auth;
 
 class JobApplicationController extends Controller
 {
+    public function index(JobPosting $jobPosting): JsonResponse
+    {
+        $this->authorizeRecruiter();
+
+        $applications = $jobPosting->applications()->latest()->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $applications,
+        ], 200);
+    }
+
     public function store(Request $request, JobPosting $jobPosting): JsonResponse
     {
         $user = Auth::guard('api')->user();
@@ -34,5 +46,13 @@ class JobApplicationController extends Controller
         ]);
 
         return response()->json(['success' => true, 'data' => $application], 201);
+    }
+
+    private function authorizeRecruiter(): void
+    {
+        $user = Auth::guard('api')->user();
+        if (!$user || $user->role !== 'recruiter') {
+            abort(403, 'Only recruiters can manage applications.');
+        }
     }
 }

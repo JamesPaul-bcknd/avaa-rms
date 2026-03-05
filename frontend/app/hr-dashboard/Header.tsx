@@ -6,16 +6,19 @@ import { Search, MessageSquare, Bell } from 'lucide-react';
 // 1. Define an interface for the Header props
 interface HeaderProps {
   title?: string; // Optional, defaults to "Job Applicants" if not provided
+  jobCount?: number; // Optional job count to display
 }
 
 // 2. Update the Header to accept the props
-const Header = ({ title = "Job Applicants" }: HeaderProps) => {
+const Header = ({ title = "Job Applicants", jobCount }: HeaderProps) => {
   return (
     <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
       <div>
         {/* Use the title prop here */}
         <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-        <p className="text-sm text-gray-500 font-medium">6 total jobs</p>
+        {jobCount !== undefined && (
+          <p className="text-sm text-gray-500 font-medium">{jobCount} total {jobCount === 1 ? 'job' : 'jobs'}</p>
+        )}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
