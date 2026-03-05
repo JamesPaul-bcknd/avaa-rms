@@ -7,7 +7,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\JobPostingController;
-use App\Http\Controllers\JobApplicationController;
+use App\Http\Controllers\MessageController;
+use App\Http\Controllers\HrProfileController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -69,6 +70,7 @@ Route::group([
 
     // Recruiter: Manage jobs
     Route::group(['middleware' => 'auth:api'], function () {
+        Route::get('/my-jobs', [JobPostingController::class, 'index']);
         Route::post('/', [JobPostingController::class, 'store']);
         Route::put('/{jobPosting}', [JobPostingController::class, 'update']);
         Route::delete('/{jobPosting}', [JobPostingController::class, 'destroy']);
@@ -89,4 +91,30 @@ Route::group([
     // URL: GET /api/bookmarks
    Route::get('/bookmarks', [BookmarkController::class, 'index']);
    Route::get('/bookmarks/jobs', [BookmarkController::class, 'getSavedJobs']);
+});
+
+// --- HR Profile Routes (Prefix: /api/hr) ---
+Route::group([
+    'middleware' => 'auth:api',
+    'prefix' => 'hr'
+], function () {
+    Route::get('/users', [HrProfileController::class, 'index']);
+    Route::get('/users/{userId}', [HrProfileController::class, 'show']);
+    Route::get('/conversable-users', [HrProfileController::class, 'getConversableUsers']);
+    Route::get('/search', [HrProfileController::class, 'search']);
+    Route::get('/profile', [HrProfileController::class, 'profile']);
+    Route::put('/profile', [HrProfileController::class, 'updateProfile']);
+});
+
+// --- Messaging Routes (Prefix: /api/messages) ---
+Route::group([
+    'middleware' => 'auth:api',
+    'prefix' => 'messages'
+], function () {
+    Route::get('/conversations', [MessageController::class, 'conversations']);
+    Route::get('/conversation/{userId}', [MessageController::class, 'conversation']);
+    Route::post('/conversation/{userId}', [MessageController::class, 'send']);
+    Route::put('/{messageId}/read', [MessageController::class, 'markAsRead']);
+    Route::delete('/conversation/{userId}', [MessageController::class, 'deleteConversation']);
+    Route::get('/unread-count', [MessageController::class, 'unreadCount']);
 });
