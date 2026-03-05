@@ -1,5 +1,7 @@
-import AuthPage from '@/components/AuthPage';
+'use client';
+
+import SignUpPage from '@/components/SignUpPage';
 
 export default function SignUpAliasPage() {
-  return <AuthPage initialMode="signup" />;
+  return <SignUpPage />;
 }
