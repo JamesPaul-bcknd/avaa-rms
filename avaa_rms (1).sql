@@ -302,7 +302,8 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `name`, `email`, `phone`, `location`, `bio`, `role`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
 (1, 'Test User', 'test@example.com', NULL, NULL, NULL, 'user', '2026-02-25 20:03:05', '$2y$12$XcGe9DUA5tUUclACxWE82.ZTKNGQG/pAFasmTALMDY0wevVSAxp.u', 'HrZ9s903g4', '2026-02-25 20:03:06', '2026-02-25 20:03:06'),
 (2, 'AVAA Admin', 'admin@avaa.com', NULL, NULL, NULL, 'admin', '2026-02-25 20:03:06', '$2y$12$BAFunedgfnlrqP6bU4Jev.wRyjjAqEUjBbr6HbUJcwyhyHImps0jW', 'DH4dtl9G8S', '2026-02-25 20:03:06', '2026-02-25 20:03:06'),
-(4, 'James Paul Salonga', 'jpsalonga98@gmail.com', NULL, NULL, NULL, 'user', NULL, '$2y$12$7FEcg2jp41jSi.5HBNGrz.JAkk4yG6n2rfjpBkQXVZ8bmzmUivjFi', NULL, '2026-02-25 23:50:27', '2026-03-01 16:45:42');
+(4, 'James Paul Salonga', 'jpsalonga98@gmail.com', NULL, NULL, NULL, 'user', NULL, '$2y$12$7FEcg2jp41jSi.5HBNGrz.JAkk4yG6n2rfjpBkQXVZ8bmzmUivjFi', NULL, '2026-02-25 23:50:27', '2026-03-01 16:45:42'),
+(5, 'HR Manager', 'hr@avaa.com', NULL, NULL, NULL, 'recruiter', '2026-03-04 22:35:00', '$2y$12$LwvihqrlmxsNljFG8TCkk.BEeK3TxEFcIeXmndEBiKHGMeZXRFNXi', NULL, '2026-03-04 22:35:00', '2026-03-04 22:35:00');
 
 --
 -- Indexes for dumped tables
@@ -449,7 +450,7 @@ ALTER TABLE `saved_jobs`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- Constraints for dumped tables

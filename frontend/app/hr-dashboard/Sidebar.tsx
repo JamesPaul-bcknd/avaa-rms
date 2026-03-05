@@ -1,27 +1,28 @@
-"use client";
+'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
 
-// Added "users" to the allowed views
+// Added "users" and "messages" to the allowed views
 interface SidebarProps {
-  setView: (view: "list" | "details" | "interviews" | "jobs" | "users") => void;
-  currentView: "list" | "details" | "interviews" | "jobs" | "users";
+  setView: (view: "list" | "details" | "interviews" | "jobs" | "users" | "messages") => void;
+  currentView: "list" | "details" | "interviews" | "jobs" | "users" | "messages";
 }
 
 const Sidebar = ({ setView, currentView }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { logout } = useAuth();
 
-  // Updated 'view' properties: Users now has its own 'users' view
+  // Updated 'view' properties: Users and Messages now have their own views
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, view: 'list' as const },
     { name: 'Users', icon: Users, view: 'users' as const }, 
     { name: 'Manage Jobs', icon: Briefcase, view: 'jobs' as const },
+    { name: 'Messages', icon: MessageSquare, view: 'messages' as const },
     { name: 'Interviews', icon: Calendar, view: 'interviews' as const },
   ];
 
-  const handleNav = (view: "list" | "details" | "interviews" | "jobs" | "users") => {
+  const handleNav = (view: "list" | "details" | "interviews" | "jobs" | "users" | "messages") => {
     setView(view);
     setMobileOpen(false);
   };
@@ -31,7 +32,12 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
       {/* ── Mobile top bar ── */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-[#1e2632] text-white">
         <div className="flex items-center gap-2 font-bold text-lg">
-          <div className="w-7 h-7 bg-teal-500 rounded-md flex items-center justify-center text-sm">▲</div>
+          {/* LOGO REPLACEMENT */}
+          <img 
+            src="/icon.png" 
+            alt="Logo" 
+            className="w-8 h-8 object-contain" 
+          />
           HR Panel
         </div>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1 text-gray-400 hover:text-white">
@@ -64,8 +70,13 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
 
       {/* ── Desktop sidebar ── */}
       <div className="hidden lg:flex w-64 shrink-0 h-screen bg-[#1e2632] text-gray-400 flex-col p-6 sticky top-0">
-        <div className="flex items-center gap-2 mb-12 text-white font-bold text-xl">
-          <div className="w-8 h-8 bg-teal-500 rounded-md flex items-center justify-center">▲</div>
+       <div className="flex items-center gap-2 mb-12 text-white font-bold text-xl">
+          {/* LOGO REPLACEMENT */}
+          <img 
+            src="/icon.png" 
+            alt="Logo" 
+            className="w-10 h-10 object-contain" 
+          />
           HR Panel
         </div>
 

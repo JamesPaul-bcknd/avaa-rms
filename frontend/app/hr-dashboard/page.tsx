@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -6,11 +6,11 @@ import JobTable from "./JobTable";
 import ApplicantsTable from "./ApplicantsTable";
 import InterviewsPage from "./InterviewsPage";
 import ManageJobs from "./ManageJobs";
-import UserPage from "./UserPage"; // Import your new component
-import { Users } from "lucide-react"; // FIX: Added this import
+import UserPage from "./UserPage";
+import HrMessages from "./HrMessages";
 
 export default function Home() {
-  const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users">("list");
+  const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "messages">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
 
   // State to store all scheduled interviews
@@ -60,6 +60,11 @@ export default function Home() {
         {/* 5. Interviews View */}
         {view === "interviews" && (
           <InterviewsPage interviews={scheduledInterviews} />
+        )}
+
+        {/* 6. Messages View */}
+        {view === "messages" && (
+          <HrMessages />
         )}
       </main>
     </div>

@@ -3,12 +3,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from "next/image";
 import {
-  Search, Plus, MessageSquare, Bell, MoreVertical,
-  ChevronDown, CheckCircle2, Trash2, X, AlertTriangle, Eye, Power
+  Search, Plus, Bell, MoreVertical,
+  ChevronDown, CheckCircle2, Trash2, X, AlertTriangle, Eye, Power, BarChart3
 } from 'lucide-react';
 
 import CreateJobModal from './CreateJobModal';
 import api from '@/lib/axios';
+import JobMetricsModal from './JobMetricsModal';
 
 interface Job {
   id: number;
@@ -38,6 +39,7 @@ const ManageJobs = () => {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
+  const [metricsJob, setMetricsJob] = useState<Job | null>(null);
 
   const menuRef = useRef<HTMLDivElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
@@ -95,6 +97,11 @@ const ManageJobs = () => {
     setSelectedJob(job);
     setIsModalOpen(true);
     setIsEditing(false);
+    setOpenMenuId(null);
+  };
+
+  const handleOpenMetrics = (job: Job) => {
+    setMetricsJob(job);
     setOpenMenuId(null);
   };
 
@@ -218,10 +225,6 @@ const ManageJobs = () => {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl sm:text-3xl font-bold text-slate-700">Manage Jobs</h1>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-3 sm:px-4 py-2 border border-slate-200 rounded-xl text-slate-600 font-medium hover:bg-slate-50 transition-all">
-            <MessageSquare size={18} />
-            <span className="hidden sm:inline">Messages</span>
-          </button>
           <div className="relative p-2 text-slate-400">
             <Bell size={22} />
             <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
@@ -344,6 +347,12 @@ const ManageJobs = () => {
                         <button onClick={() => handleOpenView(job)} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                           <Eye size={14} className="text-slate-400" /> View / Edit
                         </button>
+                        <button
+                          onClick={() => handleOpenMetrics(job)}
+                          className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+                        >
+                          <BarChart3 size={14} className="text-slate-400" /> Metrics
+                        </button>
                         <button onClick={() => updateStatus(job.id, job.status === 'Active' ? 'Inactive' : 'Active')} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors">
                           <Power size={14} className="text-slate-400" /> Mark as {job.status === 'Active' ? 'Inactive' : 'Active'}
                         </button>
@@ -389,12 +398,18 @@ const ManageJobs = () => {
               <span>{job.company}</span>
               <span className="text-slate-400">{job.apps} applicants · {job.date}</span>
             </div>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => handleOpenView(job)}
                 className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 font-semibold text-xs hover:bg-slate-100"
               >
                 <Eye size={13} /> View / Edit
+              </button>
+              <button
+                onClick={() => handleOpenMetrics(job)}
+                className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 font-semibold text-xs hover:bg-slate-100"
+              >
+                <BarChart3 size={13} /> Metrics
               </button>
               <button
                 onClick={() => updateStatus(job.id, job.status === 'Active' ? 'Inactive' : 'Active')}
@@ -412,6 +427,19 @@ const ManageJobs = () => {
           </div>
         ))}
       </div>
+
+      {/* METRICS MODAL */}
+      {metricsJob && (
+        <JobMetricsModal
+          job={{
+            id: metricsJob.id,
+            title: metricsJob.title,
+            location: metricsJob.location,
+            status: metricsJob.status,
+          }}
+          onClose={() => setMetricsJob(null)}
+        />
+      )}
 
       {/* DELETE CONFIRMATION MODAL */}
       {jobToDelete && (

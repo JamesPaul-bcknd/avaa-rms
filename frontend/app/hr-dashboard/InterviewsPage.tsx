@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import { MoreHorizontal, User, CheckCircle, XCircle, CheckCircle2 } from 'lucide-react';
+import Header from './Header'; // 1. Import your Header component
 
 interface Interview {
   id: number;
@@ -11,7 +12,6 @@ interface Interview {
   status: string;
 }
 
-// Added onApprove and onReject props to communicate with the parent/UserPage
 const InterviewsPage = ({
   interviews: initialInterviews,
   onApprove
@@ -37,10 +37,9 @@ const InterviewsPage = ({
     setActiveMenu(null);
 
     if (type === 'Approved') {
-      // 1. Move to Users Page via callback
       if (onApprove) {
         onApprove({
-          id: Date.now(), // Generate a new ID for the user table
+          id: Date.now(),
           name: interview.candidateName,
           position: interview.role,
           status: 'Active'
@@ -48,17 +47,16 @@ const InterviewsPage = ({
       }
     }
 
-    // 2. Remove from current Interview list (for both Approve and Reject)
     setInterviews(prev => prev.filter(item => item.id !== interview.id));
-
-    // 3. Show Success Feedback
     setSuccessModal({ isOpen: true, type, name: interview.candidateName });
   };
 
   return (
     <div className="space-y-6 relative">
-      <h1 className="text-gray-500 text-sm font-medium">Scheduled Interviews</h1>
+      {/* 2. Integrated Header with custom title */}
+      <Header title="Scheduled Interviews" />
 
+      {/* 3. Stats Section */}
       <div className="flex flex-wrap gap-4">
         {stats.map((stat, i) => (
           <div key={i} className={`${stat.color} text-white p-5 sm:p-6 rounded-2xl flex-1 min-w-[130px] shadow-lg`}>
@@ -68,7 +66,8 @@ const InterviewsPage = ({
         ))}
       </div>
 
-      <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-visible">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-white rounded-xl shadow-sm overflow-visible border border-slate-100">
         <table className="w-full text-left">
           <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
             <tr>
@@ -137,7 +136,7 @@ const InterviewsPage = ({
         )}
       </div>
 
-      {/* Interviews — Mobile Card List */}
+      {/* Mobile Card List View */}
       <div className="md:hidden bg-white rounded-xl shadow-sm border border-slate-100 divide-y divide-slate-100">
         {interviews.length === 0 && (
           <div className="p-8 text-center text-slate-400 text-sm">No pending interviews.</div>
@@ -180,6 +179,7 @@ const InterviewsPage = ({
         ))}
       </div>
 
+      {/* Success Modal */}
       {successModal.isOpen && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center animate-in zoom-in duration-300">

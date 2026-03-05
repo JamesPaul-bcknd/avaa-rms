@@ -1,71 +1,140 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Search, MessageSquare, Bell, Pencil, Trash2, User as UserIcon } from 'lucide-react';
+import { Search, Eye, Ban, MessageSquare, Bell } from 'lucide-react';
+import UserDetailsModal from './UserDetailsModal';
+import EndContractModal from './EndContractModal'; // Import the new component
 
 const initialUsers = [
-  { id: 1, name: 'John Doe', position: 'Backend', status: 'Active' },
-  { id: 2, name: 'Miracle', position: 'Frontend', status: 'Active' },
-  { id: 3, name: 'Dendi', position: 'Back end', status: 'Active' },
+  { id: 'JD', name: 'John Doe', role: 'Quality Assurance', position: 'Backend', status: 'Active', color: 'bg-teal-500' },
+  { id: 'SC', name: 'Sarah Chen', role: 'UI/UX Designer', position: 'Frontend', status: 'Active', color: 'bg-slate-800' },
+  { id: 'MC', name: 'Michael Chen', role: 'Backend Engineer', position: 'Back end', status: 'Active', color: 'bg-emerald-400' },
 ];
 
 const UserPage = () => {
-  // Changed to state so it can receive new approved users
   const [users, setUsers] = useState(initialUsers);
+  
+  // State for View Modal
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [isViewOpen, setIsViewOpen] = useState(false);
 
-  const deleteUser = (id: number) => {
-    setUsers(users.filter(u => u.id !== id));
+  // State for End Contract Modal
+  const [userToBlock, setUserToBlock] = useState<any>(null);
+  const [isBlockOpen, setIsBlockOpen] = useState(false);
+
+  // Triggered when clicking the Ban icon
+  const handleBlockRequest = (user: any) => {
+    setUserToBlock(user);
+    setIsBlockOpen(true);
   };
 
+  // Triggered when clicking "End Contract" in the modal
+  const handleConfirmBlock = () => {
+    if (userToBlock) {
+      setUsers(users.filter(u => u.id !== userToBlock.id));
+      setIsBlockOpen(false);
+      setUserToBlock(null);
+    }
+  };
+
+  const handleOpenViewModal = (user: any) => {
+    setSelectedUser(user);
+    setIsViewOpen(true);
+  };
+
+  const actionBtnBase = `
+    p-2 bg-white rounded-xl border border-slate-200 
+    transition-all duration-200 ease-in-out shadow-sm
+    hover:shadow-md hover:-translate-y-0.5 active:scale-95
+  `;
+
   return (
-    <div className="w-full space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-700">Users</h1>
-        <div className="relative w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input type="text" placeholder="Search users..." className="pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm w-full sm:w-64 outline-none focus:ring-2 focus:ring-teal-500/20" />
+    <div className="w-full min-h-screen bg-[#f8f9fa] p-4 sm:p-8 space-y-8">
+      
+      {/* ── Header Section ── */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-3xl font-bold text-slate-700">Users</h1>
+        
+        <div className="flex items-center gap-3 flex-1 justify-end">
+          <div className="relative w-full max-w-xs hidden sm:block">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search jobs..." 
+              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-teal-500/20" 
+            />
+          </div>
+
+          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-slate-600 font-bold text-sm hover:bg-slate-50 shadow-sm transition-all">
+            <MessageSquare size={18} className="text-slate-400" />
+            Messages
+          </button>
+
+          <button className="p-2 bg-white border border-slate-200 rounded-xl text-slate-400 hover:bg-slate-50 shadow-sm relative">
+            <Bell size={20} />
+            <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+          </button>
+
+          <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+            <img src="https://i.pravatar.cc/150?u=hr" alt="User" className="w-full h-full object-cover" />
+          </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 sm:p-8">
-        <h2 className="text-lg font-bold text-slate-800 mb-6">Active Employees</h2>
+      {/* ── Table Container ── */}
+      <div className="bg-white rounded-[24px] shadow-sm border border-slate-100 overflow-hidden p-2">
+        <div className="p-6">
+            <h2 className="text-lg font-bold text-slate-800">Active Employee</h2>
+        </div>
 
-        {/* Desktop Table */}
+        {/* Desktop View */}
         <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left">
-            <thead>
-              <tr className="text-[11px] uppercase tracking-wider font-bold text-slate-400 border-b border-slate-50">
-                <th className="px-6 py-4">Name</th>
-                <th className="px-6 py-4">Position</th>
-                <th className="px-6 py-4 text-center">Status</th>
-                <th className="px-6 py-4 text-center">Action</th>
+            <thead className="text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-slate-50/50 border-y border-slate-50">
+              <tr>
+                <th className="px-8 py-4">Name</th>
+                <th className="px-8 py-4">Position</th>
+                <th className="px-8 py-4 text-center">Status</th>
+                <th className="px-8 py-4 text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
               {users.map((user) => (
-                <tr key={user.id} className="group">
-                  <td className="px-6 py-6">
+                <tr key={user.id} className="hover:bg-slate-50/50 transition-colors group">
+                  <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-lg border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-400">
-                        <UserIcon size={20} />
+                      <div className={`w-12 h-12 rounded-xl ${user.color} flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm`}>
+                        {user.id}
                       </div>
-                      <span className="font-bold text-slate-700">{user.name}</span>
+                      <div>
+                        <div className="font-bold text-slate-700 text-[16px]">{user.name}</div>
+                        <div className="text-xs text-slate-400 font-medium uppercase tracking-tight">{user.role}</div>
+                      </div>
                     </div>
                   </td>
-                  <td className="px-6 py-6 text-sm text-slate-500 font-medium">{user.position}</td>
-                  <td className="px-6 py-6 text-center">
-                    <span className="px-6 py-1.5 bg-[#bbf7d0] text-[#16a34a] rounded-full text-xs font-bold">{user.status}</span>
+                  <td className="px-8 py-5">
+                    <span className="text-slate-500 font-semibold">{user.position}</span>
                   </td>
-                  <td className="px-6 py-6">
+                  <td className="px-8 py-5 text-center">
+                    <span className="px-4 py-1.5 bg-emerald-50 text-emerald-500 rounded-full text-[10px] font-black uppercase tracking-widest">
+                      {user.status}
+                    </span>
+                  </td>
+                  <td className="px-8 py-5">
                     <div className="flex items-center justify-center gap-3">
-                      <button className="p-2 border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors">
-                        <Pencil size={18} />
-                      </button>
-                      <button
-                        onClick={() => deleteUser(user.id)}
-                        className="p-2 border border-slate-200 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                      <button 
+                        onClick={() => handleOpenViewModal(user)}
+                        title="View Details"
+                        className={`${actionBtnBase} text-slate-400 hover:text-teal-500 hover:border-teal-200`}
                       >
-                        <Trash2 size={18} />
+                        <Eye size={18} />
+                      </button>
+                      <button 
+                        onClick={() => handleBlockRequest(user)}
+                        title="Block User"
+                        className={`${actionBtnBase} text-slate-400 hover:text-red-500 hover:border-red-200`}
+                      >
+                        <Ban size={18} />
                       </button>
                     </div>
                   </td>
@@ -75,35 +144,57 @@ const UserPage = () => {
           </table>
         </div>
 
-        {/* Mobile Card List */}
-        <div className="md:hidden divide-y divide-slate-100">
+        {/* Mobile View */}
+        <div className="md:hidden divide-y divide-slate-50">
           {users.map((user) => (
-            <div key={user.id} className="py-4 flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-400 shrink-0">
-                  <UserIcon size={16} />
+            <div key={user.id} className="p-6 flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg ${user.color} flex items-center justify-center text-white font-bold text-xs`}>
+                    {user.id}
+                  </div>
+                  <div>
+                    <div className="font-bold text-slate-700 text-sm">{user.name}</div>
+                    <div className="text-[10px] text-slate-400 uppercase font-bold">{user.role}</div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold text-slate-700 text-sm">{user.name}</p>
-                  <p className="text-xs text-slate-400">{user.position}</p>
-                </div>
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-500 rounded-full text-[9px] font-black uppercase">
+                  {user.status}
+                </span>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="px-3 py-1 bg-[#bbf7d0] text-[#16a34a] rounded-full text-[10px] font-bold">{user.status}</span>
-                <button className="p-1.5 border border-slate-200 rounded-lg text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-colors">
-                  <Pencil size={14} />
-                </button>
-                <button
-                  onClick={() => deleteUser(user.id)}
-                  className="p-1.5 border border-slate-200 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => handleOpenViewModal(user)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-50"
                 >
-                  <Trash2 size={14} />
+                  <Eye size={14} /> View
+                </button>
+                <button 
+                  onClick={() => handleBlockRequest(user)}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-red-500 hover:bg-red-50"
+                >
+                  <Ban size={14} /> Block
                 </button>
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {/* 1. Details Modal */}
+      <UserDetailsModal 
+        isOpen={isViewOpen} 
+        onClose={() => setIsViewOpen(false)} 
+        user={selectedUser} 
+      />
+
+      {/* 2. End Contract Confirmation Modal */}
+      <EndContractModal 
+        isOpen={isBlockOpen}
+        userName={userToBlock?.name || ''}
+        onClose={() => setIsBlockOpen(false)}
+        onConfirm={handleConfirmBlock}
+      />
     </div>
   );
 };

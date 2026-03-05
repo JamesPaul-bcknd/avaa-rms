@@ -33,6 +33,7 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
     const [regShowPassword, setRegShowPassword] = useState(false);
     const [regError, setRegError] = useState('');
     const [regLoading, setRegLoading] = useState(false);
+    const [selectedRole, setSelectedRole] = useState<'job-seeker' | 'recruiter'>('job-seeker');
 
     const router = useRouter();
 
@@ -138,8 +139,10 @@ const handleSignIn = async (e: React.FormEvent) => {
             if (typeof sessionStorage !== 'undefined') {
                 sessionStorage.setItem('pendingSignupEmail', regEmail);
                 sessionStorage.setItem('pendingSignupPassword', regPassword);
+                sessionStorage.setItem('selectedRole', selectedRole);
             }
-            await api.post('/auth/register', { name, email: regEmail, phone: digits, location, password: regPassword });
+            const roleToSend = selectedRole === 'job-seeker' ? 'user' : 'recruiter';
+            await api.post('/auth/register', { name, email: regEmail, phone: digits, location, password: regPassword, role: roleToSend });
 
             // Try to log in immediately so we can send the user to profile completion with a token.
             try {
@@ -354,6 +357,34 @@ const handleSignIn = async (e: React.FormEvent) => {
                                     )}
 
                                     <form onSubmit={handleSignUp} className="space-y-5">
+                                       {/* Role Selection */}
+                                       <div>
+                                            <label className="block text-[15px] font-semibold text-[#1a1a1a] mb-3">I am a:</label>
+                                            <div className="flex gap-3 p-1 bg-gray-100 rounded-xl border border-gray-200">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedRole('job-seeker')}
+                                                    className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all ${
+                                                        selectedRole === 'job-seeker' 
+                                                            ? 'bg-[#7EB0AB] text-white shadow-md' 
+                                                            : 'text-gray-600 hover:text-gray-900'
+                                                    }`}
+                                                >
+                                                    Job Seeker
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setSelectedRole('recruiter')}
+                                                    className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all ${
+                                                        selectedRole === 'recruiter' 
+                                                            ? 'bg-[#7EB0AB] text-white shadow-md' 
+                                                            : 'text-gray-600 hover:text-gray-900'
+                                                    }`}
+                                                >
+                                                    Recruiter
+                                                </button>
+                                            </div>
+                                        </div>
                                        {/* Full Name */}
 <div>
     <label htmlFor="reg-name" className="block text-[15px] font-semibold text-[#1a1a1a] mb-2">Full Name</label>
