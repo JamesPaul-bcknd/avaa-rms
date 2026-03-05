@@ -33,13 +33,13 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|between:2,100',
+            'name'     => 'required|string|max:255|regex:/^[a-zA-Z\s]+$/',
             'email' => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|min:6',
             'phone' => 'required|string|regex:/^639\d{9}$/',
             'location' => 'required|string|max:100',
         ], [
-            'phone.regex' => 'Phone must be a valid PH number starting with 639 (e.g. 639123456789).',
+            'phone.regex' => 'Phone must be a valid PH number (e.g. 09123456789).',
         ]);
 
         if ($validator->fails()) {

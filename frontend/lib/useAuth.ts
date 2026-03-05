@@ -80,7 +80,7 @@ export function useAuth(options?: { redirect?: boolean }) {
         } finally {
             localStorage.removeItem('token');
             setUserState(null, true);
-            router.replace(redirectPath);
+            router.replace('/signin');
         }
     };
 
