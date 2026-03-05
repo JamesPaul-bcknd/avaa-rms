@@ -70,12 +70,16 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
                 password: loginPassword,
             });
 
-            const { access_token, user } = response.data;
+            const { access_token } = response.data;
             localStorage.setItem('token', access_token);
 
-            if (user && user.role === 'admin') {
+            // Always fetch fresh user data from DB to get the correct role
+            const meResponse = await api.post('/auth/me');
+            const user = meResponse.data;
+
+            if (user?.role === 'admin') {
                 router.replace('/admin/dashboard');
-            } else if (user && user.role === 'recruiter') {
+            } else if (user?.role === 'recruiter') {
                 router.replace('/hr-dashboard');
             } else {
                 router.replace('/user/dashboard');
@@ -83,7 +87,7 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
         } catch (err: any) {
             if (err.response?.data?.email_not_verified) {
                 const unverifiedEmail = err.response?.data?.email || loginEmail;
-                router.push(`/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`);
+                router.push(`/user/verify-otp?email=${encodeURIComponent(unverifiedEmail)}`);
                 return;
             }
             setLoginError(err.response?.data?.error || 'Invalid credentials. Please try again.');

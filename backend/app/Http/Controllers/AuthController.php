@@ -38,7 +38,7 @@ class AuthController extends Controller
             'password' => 'required|string|min:6',
             'phone' => 'required|string|regex:/^639\d{9}$/',
             'location' => 'required|string|max:100',
-            'role' => 'required|string|in:user,recruiter',
+            'role'     => 'required|string|in:user,recruiter',
         ], [
             'phone.regex' => 'Phone must be a valid PH number (e.g. 09123456789).',
         ]);

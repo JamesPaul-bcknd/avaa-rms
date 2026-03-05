@@ -130,6 +130,7 @@ export default function SignUpPage() {
                 password,
                 phone: normalizedPhone,
                 location: role === 'job-seeker' ? (location || 'N/A') : (companyLocation || 'N/A'),
+                role: role === 'recruiter' ? 'recruiter' : 'user',
             });
 
             // Build profile payload to apply after OTP verification
