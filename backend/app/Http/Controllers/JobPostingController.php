@@ -9,11 +9,34 @@ use Illuminate\Support\Facades\Auth;
 
 class JobPostingController extends Controller
 {
+    public function index(): JsonResponse
+    {
+        $this->authorizeRecruiter();
+
+        $recruiter = Auth::guard('api')->user();
+        $jobs = JobPosting::where('user_id', $recruiter->id)
+            ->withCount('applications')
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $jobs
+        ], 200);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $this->authorizeRecruiter();
 
         $validated = $this->validateJob($request);
+        
+        // Add recruiter information
+        $recruiter = Auth::guard('api')->user();
+        $validated['user_id'] = $recruiter->id;
+        $validated['recruiter_name'] = $recruiter->name;
+        $validated['recruiter_role'] = $recruiter->role === 'recruiter' ? 'Senior Tech Talent Partner' : 'Hiring Manager';
+        
         $job = JobPosting::create($validated);
 
         return response()->json(['success' => true, 'data' => $job], 201);
@@ -22,6 +45,7 @@ class JobPostingController extends Controller
     public function update(Request $request, JobPosting $jobPosting): JsonResponse
     {
         $this->authorizeRecruiter();
+        $this->authorizeJobOwnership($jobPosting);
 
         $validated = $this->validateJob($request, false);
         $jobPosting->update($validated);
@@ -32,6 +56,7 @@ class JobPostingController extends Controller
     public function destroy(JobPosting $jobPosting): JsonResponse
     {
         $this->authorizeRecruiter();
+        $this->authorizeJobOwnership($jobPosting);
 
         $jobPosting->delete();
 
@@ -43,6 +68,14 @@ class JobPostingController extends Controller
         $user = Auth::guard('api')->user();
         if (!$user || $user->role !== 'recruiter') {
             abort(403, 'Only recruiters can manage jobs.');
+        }
+    }
+
+    private function authorizeJobOwnership(JobPosting $jobPosting): void
+    {
+        $user = Auth::guard('api')->user();
+        if ($jobPosting->user_id !== $user->id) {
+            abort(403, 'You can only manage your own jobs.');
         }
     }
 
@@ -64,6 +97,9 @@ class JobPostingController extends Controller
             'initials' => 'nullable|string|max:5',
             'color' => 'nullable|string|max:7',
             'time_ago' => 'nullable|string|max:50',
+            'user_id' => 'nullable|integer',
+            'recruiter_name' => 'nullable|string|max:255',
+            'recruiter_role' => 'nullable|string|max:255',
         ];
 
         $validated = $request->validate($rules);
