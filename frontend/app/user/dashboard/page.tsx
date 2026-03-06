@@ -27,6 +27,9 @@ interface Job {
   whyCompany: string[];
   recruiter_name?: string;
   recruiter_role?: string;
+  recruiter_id?: number;
+  user_id?: number;
+  posted_by?: number;
 }
 const DATE_FILTERS = ["All Time", "Today", "This Week", "This Month"];
 
@@ -92,7 +95,7 @@ function ApplyModal({ job, onClose }: { job: Job; onClose: () => void }) {
       formData.append('cover_letter', form.coverLetter);
       formData.append('why_interested', form.whyInterested);
       formData.append('experience', form.experience);
-      
+
       if (selectedFile) {
         formData.append('cv', selectedFile);
       }
@@ -970,7 +973,7 @@ export default function UserDashboardPage() {
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageModalRecruiter, setMessageModalRecruiter] = useState<{id: number, name: string} | null>(null);
+  const [messageModalRecruiter, setMessageModalRecruiter] = useState<{ id: number, name: string } | null>(null);
   // 2. DERIVED DATA (Calculated after state)
   // We only need one declaration of these.
   // We add '|| []' and 'jobs.length' checks to prevent crashes while loading.
@@ -1794,62 +1797,62 @@ export default function UserDashboardPage() {
                   )}
               </aside>
 
-             {/* ─── Job Cards Grid ─── */}
-<main className="min-w-0 transition-all duration-200 flex-1">
-  {loading ? (
-    /* 1. Loading State */
-    <div className="flex justify-center items-center h-64">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7EB0AB]"></div>
-    </div>
-  ) : filteredJobs.length === 0 ? (
-    /* 2. Empty State (No Jobs Found) */
-    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#e5e7eb] shadow-sm">
-      <div className="text-center max-w-md px-6">
-        <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">
-          No jobs found
-        </h3>
-        <p className="text-[#5a6a75] mb-6">
-          We couldn't find any job listings in the database right now.
-        </p>
-        {(searchQuery || selectedSkills.length > 0 || selectedCompanies.length > 0) && (
-          <button
-            onClick={() => {
-              setSearchQuery("");
-              setSelectedSkills([]);
-              setSelectedCompanies([]);
-            }}
-            className="text-[#7EB0AB] font-semibold hover:underline transition-all"
-          >
-            Clear filters and try again
-          </button>
-        )}
-      </div>
-    </div>
-  ) : (
-    /* 3. Success State (The Grid) */
-    <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
-      {filteredJobs.map((job, index) => (
-        <JobCard
-          key={job.id}
-          job={job}
-          isSelected={selectedJob?.id === job.id}
-          isBookmarked={bookmarked.map(Number).includes(Number(job.id))}
-          onSelect={() => handleSelectJob(job)}
-          onBookmark={(e) => {
-            e.stopPropagation();
-            if (isAuthenticated) {
-              toggleBookmark(job.id);
-            } else {
-              setShowAuthPrompt(true);
-            }
-          }}
-          delay={index * 50}
-          visible={visibleIds.includes(job.id)}
-        />
-      ))}
-    </div>
-  )}
-</main>
+              {/* ─── Job Cards Grid ─── */}
+              <main className="min-w-0 transition-all duration-200 flex-1">
+                {loading ? (
+                  /* 1. Loading State */
+                  <div className="flex justify-center items-center h-64">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7EB0AB]"></div>
+                  </div>
+                ) : filteredJobs.length === 0 ? (
+                  /* 2. Empty State (No Jobs Found) */
+                  <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-[#e5e7eb] shadow-sm">
+                    <div className="text-center max-w-md px-6">
+                      <h3 className="text-xl font-bold text-[#1a1a1a] mb-2">
+                        No jobs found
+                      </h3>
+                      <p className="text-[#5a6a75] mb-6">
+                        We couldn't find any job listings in the database right now.
+                      </p>
+                      {(searchQuery || selectedSkills.length > 0 || selectedCompanies.length > 0) && (
+                        <button
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSelectedSkills([]);
+                            setSelectedCompanies([]);
+                          }}
+                          className="text-[#7EB0AB] font-semibold hover:underline transition-all"
+                        >
+                          Clear filters and try again
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* 3. Success State (The Grid) */
+                  <div className="grid gap-5 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                    {filteredJobs.map((job, index) => (
+                      <JobCard
+                        key={job.id}
+                        job={job}
+                        isSelected={selectedJob?.id === job.id}
+                        isBookmarked={bookmarked.map(Number).includes(Number(job.id))}
+                        onSelect={() => handleSelectJob(job)}
+                        onBookmark={(e) => {
+                          e.stopPropagation();
+                          if (isAuthenticated) {
+                            toggleBookmark(job.id);
+                          } else {
+                            setShowAuthPrompt(true);
+                          }
+                        }}
+                        delay={index * 50}
+                        visible={visibleIds.includes(job.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </main>
             </div>
           </div>
 
@@ -2037,7 +2040,7 @@ export default function UserDashboardPage() {
                             borderColor: (lastSelectedJob?.color || "#7EB0AB") + "40",
                           }}
                         >
-                          {lastSelectedJob?.recruiter_name 
+                          {lastSelectedJob?.recruiter_name
                             ? lastSelectedJob.recruiter_name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                             : 'JD'
                           }
