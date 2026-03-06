@@ -1,544 +1,347 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/useAuth";
-import Image from "next/image";
-import { ArrowLeft, User, Mail, Phone, MapPin, Briefcase, Calendar, Edit } from "lucide-react";
-import api from "@/lib/axios";
+import React, { useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import { Eye, EyeOff } from 'lucide-react';
 
-interface ProfileData {
-  id: number;
-  name: string;
-  email: string;
-  phone?: string;
-  location?: string;
-  bio?: string;
-  profile_image_url?: string;
-  role: string;
-  position?: string;
-  company_name?: string;
-  company_number?: string;
-  skills?: string[];
-  created_at: string;
-}
-
-export default function HRProfilePage() {
+export default function ProfileSettingsPage() {
   const router = useRouter();
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    location: '',
-    bio: '',
-    position: '',
-    company_name: '',
-    company_number: '',
-    skills: [] as string[]
-  });
+  const [activeTab, setActiveTab] = useState<'platform' | 'security'>('platform');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const fetchProfile = useCallback(async () => {
-    try {
-      // Fetch from HR profile API
-      const response = await api.get('/hr/profile');
-      const result = response.data;
+  // Toggle States for Security Tab
+  const [twoFactor, setTwoFactor] = useState(true);
+  const [emailNotif, setEmailNotif] = useState(false);
+  const [pushNotif, setPushNotif] = useState(true);
 
-      if (result.success && result.data) {
-        const profileData: ProfileData = {
-          id: result.data.id,
-          name: result.data.name,
-          email: result.data.email,
-          phone: result.data.phone || '',
-          location: result.data.location || '',
-          bio: result.data.bio || '',
-          profile_image_url: result.data.profile_image_url || '',
-          role: result.data.role || 'recruiter',
-          position: result.data.position || 'Senior Tech Talent Partner',
-          company_name: result.data.company_name || '',
-          company_number: result.data.company_number || '',
-          skills: result.data.skills || [],
-          created_at: result.data.created_at || new Date().toISOString()
-        };
-        setProfile(profileData);
-        setFormData({
-          name: profileData.name,
-          email: profileData.email,
-          phone: profileData.phone || '',
-          location: profileData.location || '',
-          bio: profileData.bio || '',
-          position: profileData.position || '',
-          company_name: profileData.company_name || '',
-          company_number: profileData.company_number || '',
-          skills: profileData.skills || []
-        });
-      } else {
-        // Fallback to auth user data if API fails
-        if (user) {
-          const profileData: ProfileData = {
-            id: user.id || 0,
-            name: user.name || '',
-            email: user.email || '',
-            phone: user.phone || '',
-            location: user.location || '',
-            bio: user.bio || '',
-            profile_image_url: user.profile_image_url || '',
-            role: user.role || 'recruiter',
-            position: user.position || 'Senior Tech Talent Partner',
-            company_name: user.company_name || '',
-            company_number: user.company_number || '',
-            skills: user.skills || [],
-            created_at: user.created_at || new Date().toISOString()
-          };
-          setProfile(profileData);
-          setFormData({
-            name: profileData.name,
-            email: profileData.email,
-            phone: profileData.phone || '',
-            location: profileData.location || '',
-            bio: profileData.bio || '',
-            position: profileData.position || '',
-            company_name: profileData.company_name || '',
-            company_number: profileData.company_number || '',
-            skills: profileData.skills || []
-          });
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile, user]);
-
-  const handleSave = async () => {
-    try {
-      const response = await api.put('/hr/profile', formData);
-      const result = response.data;
-
-      if (result.success) {
-        alert('Profile updated successfully!');
-        setIsEditing(false);
-        
-        // Update local profile state
-        if (profile) {
-          setProfile({
-            ...profile,
-            ...formData
-          });
-        }
-      } else {
-        alert('Failed to update profile: ' + (result.error || 'Unknown error'));
-      }
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-      alert('Failed to update profile');
-    }
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    // Reset form data to current profile
-    if (profile) {
-      setFormData({
-        name: profile.name,
-        email: profile.email,
-        phone: profile.phone || '',
-        location: profile.location || '',
-        bio: profile.bio || '',
-        position: profile.position || '',
-        company_name: profile.company_name || '',
-        company_number: profile.company_number || '',
-        skills: profile.skills || []
-      });
-    }
-  };
-
-  const addSkill = () => {
-    const newSkill = prompt('Add a new skill:');
-    if (newSkill && newSkill.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, newSkill.trim()]
-      }));
-    }
-  };
-
-  const removeSkill = (indexToRemove: number) => {
-    setFormData(prev => ({
-      ...prev,
-      skills: prev.skills.filter((_, index) => index !== indexToRemove)
-    }));
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-red-600 mb-4">Failed to load profile</p>
-          <button
-            onClick={() => router.back()}
-            className="px-4 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600"
-          >
-            Go Back
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Custom Toggle Component to match your design
+  const CustomToggle = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
+    <button
+      type="button"
+      onClick={onChange}
+      className={`w-11 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out shrink-0 ${checked ? 'bg-[#7EB0AB]' : 'bg-slate-200'}`}
+    >
+      <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`}></div>
+    </button>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-[#f4f7f6] font-sans">
+
+      <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-10 animate-in fade-in duration-300">
+
+        {/* --- Top Header with Logo --- */}
+        <div className="flex items-start gap-4 mb-8">
+          {/* Clickable Logo -> Redirects to Dashboard */}
           <button
-            onClick={() => router.back()}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+            onClick={() => router.push('/hr-dashboard')}
+            className="flex items-center justify-center shrink-0 mt-1 hover:opacity-80 transition-opacity"
+            title="Back to Dashboard"
           >
-            <ArrowLeft size={20} />
-            Back to Dashboard
+            {/* Custom SVG Logo matching screenshot */}
+            <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M20 5L35 30H5L20 5Z" fill="#7EB0AB" opacity="0.8" />
+              <path d="M20 15L28 28H12L20 15Z" fill="#2d4e56" />
+            </svg>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-600 mt-2">
-            This information will be displayed to job seekers in the "Meet the Recruiter" section
-          </p>
+
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Account Settings</h1>
+            <p className="text-[13px] text-slate-500 mt-1">Manage your account, security, preferences, and notifications.</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Profile Card */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="text-center">
-                <div className="relative inline-block mb-4">
-                  {profile.profile_image_url ? (
-                    <Image
-                      src={profile.profile_image_url}
-                      alt={profile.name}
-                      width={120}
-                      height={120}
-                      className="w-30 h-30 rounded-full object-cover border-4 border-teal-100"
-                    />
-                  ) : (
-                    <div className="w-30 h-30 rounded-full bg-teal-500 flex items-center justify-center text-white text-2xl font-bold border-4 border-teal-100">
-                      {profile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
-                    </div>
-                  )}
-                  {!isEditing && (
-                    <button
-                      onClick={() => setIsEditing(true)}
-                      className="absolute bottom-0 right-0 bg-teal-500 text-white p-2 rounded-full hover:bg-teal-600"
-                    >
-                      <Edit size={16} />
-                    </button>
-                  )}
-                </div>
-                
-                <h2 className="text-xl font-bold text-gray-900">{profile.name}</h2>
-                <p className="text-teal-600 font-medium">{profile.position}</p>
-                <p className="text-gray-500 text-sm">{profile.role}</p>
+        {/* --- Tabs --- */}
+        <div className="flex gap-8 border-b border-slate-200 mb-8">
+          <button
+            onClick={() => setActiveTab('platform')}
+            className={`pb-3 text-sm font-bold transition-all relative ${activeTab === 'platform' ? 'text-[#7EB0AB]' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            Platform Settings
+            {activeTab === 'platform' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7EB0AB] rounded-t-full"></div>}
+          </button>
+          <button
+            onClick={() => setActiveTab('security')}
+            className={`pb-3 text-sm font-bold transition-all relative ${activeTab === 'security' ? 'text-[#7EB0AB]' : 'text-slate-400 hover:text-slate-600'}`}
+          >
+            Security & Privacy
+            {activeTab === 'security' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-[#7EB0AB] rounded-t-full"></div>}
+          </button>
+        </div>
+
+        {/* ========================================== */}
+        {/* PLATFORM SETTINGS TAB                      */}
+        {/* ========================================== */}
+        {activeTab === 'platform' && (
+          <div className="space-y-8">
+
+            {/* 1. Personal Information */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+              <div className="mb-6">
+                <h2 className="text-base font-bold text-slate-800">Personal Information</h2>
+                <p className="text-[13px] text-slate-500 mt-1">Edit your name, email, and other essential information.</p>
               </div>
 
-              {/* Quick Stats */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Member Since</span>
-                    <span className="font-medium">
-                      {new Date(profile.created_at).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'short' 
-                      })}
-                    </span>
+              <div className="flex items-center gap-6 mb-8">
+                <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-100 border border-slate-200 shrink-0">
+                  <Image
+                    src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=256&q=80"
+                    alt="Profile"
+                    width={80}
+                    height={80}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <button className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-[13px] font-bold hover:bg-slate-50 transition-colors shadow-sm">
+                  Change Profile
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <label className="w-28 text-[13px] font-bold text-slate-800 shrink-0">Name</label>
+                  <div className="flex gap-3 flex-1">
+                    <input type="text" defaultValue="Beatriz" className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
+                    <input type="text" defaultValue="Valeska" className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Profile Status</span>
-                    <span className="text-green-600 font-medium">Active</span>
-                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <label className="w-28 text-[13px] font-bold text-slate-800 shrink-0">Location</label>
+                  <input type="text" defaultValue="San Francisco, CA" className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <label className="w-28 text-[13px] font-bold text-slate-800 shrink-0">Email</label>
+                  <input type="email" defaultValue="beatriz.valeska@email.com" className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <label className="w-28 text-[13px] font-bold text-slate-800 shrink-0">Phone Number</label>
+                  <input type="text" defaultValue="+1 (555) 123-4567" className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-8">
+                <button className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-[13px] font-bold hover:bg-slate-50 transition-colors shadow-sm">Discard</button>
+                <button className="px-6 py-2.5 bg-[#7EB0AB] hover:bg-[#689b96] text-white rounded-lg text-[13px] font-bold transition-colors shadow-sm active:scale-95">Save Changes</button>
+              </div>
+            </div>
+
+            {/* 2. Language & Localization */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+              <div className="mb-6">
+                <h2 className="text-base font-bold text-slate-800">Language & Localization</h2>
+                <p className="text-[13px] text-slate-500 mt-1">Basic Identification details for the admin console and user portal.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-slate-800">Language</label>
+                  <select className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all outline-none">
+                    <option>English</option>
+                    <option>Spanish</option>
+                    <option>French</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-slate-800">Theme</label>
+                  <select className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all outline-none">
+                    <option>Light</option>
+                    <option>Dark</option>
+                    <option>System Default</option>
+                  </select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[13px] font-bold text-slate-800">Timezone</label>
+                  <select className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all outline-none">
+                    <option>(UTC-05:00) Eastern Time (US & Canada)</option>
+                    <option>(UTC-08:00) Pacific Time (US & Canada)</option>
+                    <option>(UTC+00:00) Greenwich Mean Time</option>
+                  </select>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Column - Profile Details */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Profile Information</h3>
-              
-              {isEditing ? (
-                <div className="space-y-6">
-                  {/* Name */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
+            {/* 3. Company Details */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+              <div className="mb-6">
+                <h2 className="text-base font-bold text-slate-800">Company Details</h2>
+                <p className="text-[13px] text-slate-500 mt-1">Edit your name, email, and other essential information.</p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-slate-800">Company Description</label>
+                  <textarea
+                    rows={4}
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all resize-none"
+                  ></textarea>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className="w-32 text-[13px] font-bold text-slate-800 shrink-0">Company Name</label>
+                    <input type="text" defaultValue="TechNova" className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
                   </div>
 
-                  {/* Email */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className="w-28 text-[13px] font-bold text-slate-800 shrink-0">Location</label>
+                    <input type="text" defaultValue="San Francisco, CA" className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
                   </div>
 
-                  {/* Phone */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="+63 912 345 6789"
-                    />
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className="w-32 text-[13px] font-bold text-slate-800 shrink-0">Company Email</label>
+                    <input type="email" defaultValue="contact@technova.com" className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
                   </div>
 
-                  {/* Location */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
-                    <input
-                      type="text"
-                      value={formData.location}
-                      onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Manila, Philippines"
-                    />
-                  </div>
-
-                  {/* Company Name - Only for recruiters */}
-                  {profile?.role === 'recruiter' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Name</label>
-                    <input
-                      type="text"
-                      value={formData.company_name || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Company Name"
-                    />
-                  </div>
-                  )}
-
-                  {/* Company Number - Only for recruiters */}
-                  {profile?.role === 'recruiter' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Company Number</label>
-                    <input
-                      type="tel"
-                      value={formData.company_number || ''}
-                      onChange={(e) => setFormData(prev => ({ ...prev, company_number: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Company Phone Number"
-                    />
-                  </div>
-                  )}
-
-                  {/* Position */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
-                    <input
-                      type="text"
-                      value={formData.position}
-                      onChange={(e) => setFormData(prev => ({ ...prev, position: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Senior Tech Talent Partner"
-                    />
-                  </div>
-
-                  {/* Bio */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Bio</label>
-                    <textarea
-                      value={formData.bio}
-                      onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-                      placeholder="Tell job seekers about yourself and your recruitment approach..."
-                    />
-                  </div>
-
-                  {/* Skills */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Skills</label>
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {formData.skills.map((skill, index) => (
-                        <span
-                          key={index}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm"
-                        >
-                          {skill}
-                          <button
-                            onClick={() => removeSkill(index)}
-                            className="ml-1 text-teal-600 hover:text-teal-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                      <button
-                        onClick={addSkill}
-                        className="px-3 py-1 border border-dashed border-teal-300 text-teal-600 rounded-full text-sm hover:bg-teal-50"
-                      >
-                        + Add Skill
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-3 pt-4">
-                    <button
-                      onClick={handleSave}
-                      className="px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 font-medium"
-                    >
-                      Save Changes
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
-                    >
-                      Cancel
-                    </button>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className="w-28 text-[13px] font-bold text-slate-800 shrink-0">Phone Number</label>
+                    <input type="text" defaultValue="+1 (555) 123-4567" className="flex-1 px-4 py-2.5 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all" />
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  {/* Profile Information */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <User size={16} className="text-gray-400" />
-                      Profile Information
-                    </h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-600 w-32">Full Name:</span>
-                        <span className="font-medium">{profile.name}</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-gray-600 w-32">Email:</span>
-                        <span className="font-medium">{profile.email}</span>
-                      </div>
-                      {profile.phone && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-600 w-32">Phone:</span>
-                          <span className="font-medium">{profile.phone}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+              </div>
 
-                  {/* Company Information - Only for recruiters */}
-                  {profile.role === 'recruiter' && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <Briefcase size={16} className="text-gray-400" />
-                      Company Information
-                    </h4>
-                    <div className="space-y-3">
-                      {profile.company_name && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-600 w-32">Company Name:</span>
-                          <span className="font-medium">{profile.company_name}</span>
-                        </div>
-                      )}
-                      {profile.company_number && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-600 w-32">Company Number:</span>
-                          <span className="font-medium">{profile.company_number}</span>
-                        </div>
-                      )}
-                      {profile.location && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-600 w-32">Company Location:</span>
-                          <span className="font-medium">{profile.location}</span>
-                        </div>
-                      )}
-                      {profile.position && (
-                        <div className="flex items-center gap-3">
-                          <span className="text-gray-600 w-32">Position:</span>
-                          <span className="font-medium">{profile.position}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  )}
+              <div className="flex justify-end gap-3 mt-8">
+                <button className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-[13px] font-bold hover:bg-slate-50 transition-colors shadow-sm">Discard</button>
+                <button className="px-6 py-2.5 bg-[#7EB0AB] hover:bg-[#689b96] text-white rounded-lg text-[13px] font-bold transition-colors shadow-sm active:scale-95">Save Changes</button>
+              </div>
+            </div>
+          </div>
+        )}
 
-                  {/* Professional Information */}
-                  <div>
-                    <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <Briefcase size={16} className="text-gray-400" />
-                      Professional Information
-                    </h4>
-                    <div className="space-y-3">
-                      {profile.bio && (
-                        <div>
-                          <span className="text-gray-600 block mb-2">Bio:</span>
-                          <p className="text-gray-800 leading-relaxed">{profile.bio}</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+        {/* ========================================== */}
+        {/* SECURITY & PRIVACY TAB                     */}
+        {/* ========================================== */}
+        {activeTab === 'security' && (
+          <div className="space-y-8">
 
-                  {/* Skills */}
-                  {profile.skills && profile.skills.length > 0 && (
+            {/* Top Info section */}
+            <div>
+              <h2 className="text-[20px] font-bold text-slate-800">Account Settings</h2>
+              <p className="text-[13px] text-slate-500 mt-1">Manage and update your personal information.</p>
+            </div>
+
+            {/* 1. Alerts & Authentication Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+
+              {/* 2FA */}
+              <div className="flex items-start gap-4 pb-6 border-b border-slate-100 mb-6">
+                <div className="mt-1">
+                  <CustomToggle checked={twoFactor} onChange={() => setTwoFactor(!twoFactor)} />
+                </div>
+                <div>
+                  <h3 className="text-[14px] font-bold text-slate-800">Two-Factor Authentication (2FA)</h3>
+                  <p className="text-[13px] text-slate-500 mt-0.5 leading-relaxed">Protect your account with an extra layer of security. We will ask for a verification code when you log in on a new device.</p>
+                </div>
+              </div>
+
+              {/* Login Alerts */}
+              <div>
+                <h3 className="text-[14px] font-bold text-slate-800">Login Alerts</h3>
+                <p className="text-[13px] text-slate-500 mt-0.5 mb-5">Choose how you want to be notified when a new login is detected on your account.</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+                    <CustomToggle checked={emailNotif} onChange={() => setEmailNotif(!emailNotif)} />
                     <div>
-                      <h4 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <User size={16} className="text-gray-400" />
-                        Skills
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {profile.skills.map((skill, index) => (
-                          <span
-                            key={index}
-                            className="px-3 py-1 bg-teal-100 text-teal-700 rounded-full text-sm"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+                      <p className="text-[13px] font-bold text-slate-800">Email Notifications</p>
+                      <p className="text-[12px] text-slate-500">Send an alert to your email</p>
                     </div>
-                  )}
+                  </div>
 
-                  {/* Edit Button */}
-                  <div className="pt-4">
+                  <div className="border border-slate-200 rounded-xl p-4 flex items-center gap-4">
+                    <CustomToggle checked={pushNotif} onChange={() => setPushNotif(!pushNotif)} />
+                    <div>
+                      <p className="text-[13px] font-bold text-slate-800">Push Notifications</p>
+                      <p className="text-[12px] text-slate-500">Alerts via desktop or mobile app</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Change Password Card */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm">
+              <div className="mb-6">
+                <h3 className="text-[15px] font-bold text-slate-800">Change Password</h3>
+                <p className="text-[13px] text-slate-500 mt-0.5">Update your password to keep your account secure.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Old Password */}
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-slate-800">Old Password</label>
+                  <input
+                    type="password"
+                    defaultValue="password123"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all"
+                  />
+                </div>
+
+                {/* New Password */}
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-slate-800">New Password</label>
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      defaultValue="newpassword123"
+                      className="w-full px-4 py-2.5 pr-10 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all"
+                    />
                     <button
-                      onClick={() => setIsEditing(true)}
-                      className="px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 font-medium flex items-center gap-2"
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                     >
-                      <Edit size={16} />
-                      Edit Profile
+                      {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                   </div>
                 </div>
-              )}
+
+                {/* Confirm Password */}
+                <div className="space-y-2">
+                  <label className="text-[13px] font-bold text-slate-800">Confirm Password</label>
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      defaultValue="newpassword123"
+                      className="w-full px-4 py-2.5 pr-10 bg-white border border-slate-200 rounded-lg text-[13px] text-slate-700 focus:outline-none focus:border-[#7EB0AB] focus:ring-1 focus:ring-[#7EB0AB] transition-all"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Password Strength Indicator */}
+              <div className="mb-10">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[12px] font-bold text-slate-600">Password Strength</span>
+                  <span className="text-[12px] font-bold text-[#7EB0AB]">Strong</span>
+                </div>
+                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="w-[85%] h-full bg-[#7EB0AB] rounded-full transition-all duration-500"></div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                <button className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-[13px] font-bold hover:bg-slate-50 transition-colors shadow-sm">Discard</button>
+                <button className="px-6 py-2.5 bg-[#7EB0AB] hover:bg-[#689b96] text-white rounded-lg text-[13px] font-bold transition-colors shadow-sm active:scale-95">Save Changes</button>
+              </div>
             </div>
+
           </div>
-        </div>
+        )}
+
       </div>
     </div>
   );

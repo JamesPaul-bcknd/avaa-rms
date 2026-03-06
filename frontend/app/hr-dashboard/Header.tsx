@@ -1,20 +1,29 @@
 'use client';
-import Image from "next/image";
-import { Search, MessageSquare, Bell, User, Settings, LogOut } from 'lucide-react';
+
+import {
+  Search,
+  MessageSquare,
+  Bell,
+  User,
+  Settings,
+  LogOut
+} from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import { useRouter } from 'next/navigation';
 
-// 1. Define an interface for the Header props
+// 1. ADD onSettingsClick to the Props
 interface HeaderProps {
-  title?: string; // Optional, defaults to "Job Applicants" if not provided
-  jobCount?: number; // Optional job count to display
+  title?: string;
+  jobCount?: number;
+  onMessagesClick?: () => void;
+  onSettingsClick?: () => void;
 }
 
-// 2. Update the Header to accept the props
-const Header = ({ title = "Job Applicants", jobCount }: HeaderProps) => {
+const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClick }: HeaderProps) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
   const { user, logout } = useAuth();
   const router = useRouter();
 
@@ -35,106 +44,121 @@ const Header = ({ title = "Job Applicants", jobCount }: HeaderProps) => {
     logout('/signin');
   };
 
+  // This handles the old profile page route (which you saw in the screenshot)
   const handleProfileClick = () => {
     setShowProfileMenu(false);
     router.push('/hr-dashboard/profile');
   };
 
+  const handleMessagesClick = () => {
+    if (onMessagesClick) {
+      onMessagesClick();
+    } else {
+      router.push('/hr-dashboard?view=messages');
+    }
+  };
+
+  // 2. NEW HANDLER FOR SETTINGS
+  const handleSettingsClick = () => {
+    setShowProfileMenu(false);
+    router.push('/hr-dashboard/profile'); // Redirects to the standalone page
+  };
+
+
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+    <header className="flex flex-col sm:flex-row sm:items-center justify-between px-6 lg:px-10 py-5 bg-white border-b border-gray-100 gap-4 sticky top-0 z-20">
+
+      {/* Left Side: Title & Subtitle */}
       <div>
-        {/* Use the title prop here */}
-        <h1 className="text-2xl font-bold text-slate-800">{title}</h1>
-        {jobCount !== undefined && (
-          <p className="text-sm text-gray-500 font-medium">{jobCount} total {jobCount === 1 ? 'job' : 'jobs'}</p>
-        )}
+        <h1 className="text-[22px] font-bold text-[#1e293b] tracking-tight">{title}</h1>
+        {title === "Dashboard" ? (
+          <p className="text-[13px] text-gray-500 mt-0.5">Welcome back Admin, here's what's happening today.</p>
+        ) : jobCount !== undefined ? (
+          <p className="text-[13px] text-gray-500 font-medium mt-0.5">{jobCount} total {jobCount === 1 ? 'job' : 'jobs'}</p>
+        ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+      {/* Right Side: Actions Cluster */}
+      <div className="flex items-center gap-4">
+
+        {/* Search Bar */}
+        <div className="relative hidden sm:block">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
           <input
             type="text"
             placeholder="Search jobs..."
-            className="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg w-full sm:w-56 focus:outline-none focus:ring-1 focus:ring-teal-500"
+            className="pl-9 pr-4 py-2 bg-transparent border border-gray-200 rounded-lg w-64 text-sm focus:outline-none focus:ring-1 focus:ring-[#53968b] text-slate-700 placeholder-gray-400"
           />
         </div>
 
-        <div className="relative p-2 text-slate-600 cursor-pointer">
-          <Bell size={22} />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-        </div>
+        {/* Messages Button */}
+        <button
+          onClick={handleMessagesClick}
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#1e293b] hover:bg-gray-50 transition-colors shadow-sm"
+        >
+          <MessageSquare size={16} className="text-[#1e293b]" />
+          Messages
+        </button>
+
+        {/* Notification Bell */}
+        <button className="relative p-1.5 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors">
+          <Bell size={20} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+        </button>
+
+        {/* Vertical Divider */}
+        <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
 
         {/* Profile Dropdown */}
         <div className="relative" ref={profileMenuRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 cursor-pointer hover:border-teal-500 transition-colors"
+            className="w-10 h-10 rounded-full overflow-hidden cursor-pointer hover:ring-2 hover:ring-[#53968b]/30 transition-all shadow-sm"
           >
-            {user?.profile_image_url ? (
-              <Image
-                src={user.profile_image_url}
-                alt={userName}
-                width={40}
-                height={40}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-teal-500 flex items-center justify-center text-white font-bold">
-                {userInitials}
-              </div>
-            )}
+            <div className="w-full h-full bg-[#53968b] flex items-center justify-center text-white text-[15px] font-bold">
+              {userInitials}
+            </div>
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Profile Dropdown Menu */}
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden z-50">
-              {/* User Info Header */}
-              <div className="p-4 border-b border-gray-100 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-teal-500 flex items-center justify-center text-white font-bold shrink-0">
-                  {user?.profile_image_url ? (
-                    <Image
-                      src={user.profile_image_url}
-                      alt={userName}
-                      width={40}
-                      height={40}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    userInitials
-                  )}
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 overflow-hidden z-50">
+              <div className="p-4 border-b border-gray-50 flex items-center gap-3 bg-slate-50/50">
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-[#53968b] flex items-center justify-center text-white text-[15px] font-bold shrink-0 shadow-sm">
+                  {userInitials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>
+                  <p className="text-sm font-bold text-[#1e293b] truncate">{userName}</p>
                   <p className="text-xs text-gray-500 truncate">{user?.email || 'hr@example.com'}</p>
                 </div>
               </div>
 
-              {/* Menu Items */}
               <div className="py-2">
+                {/* Old View Profile Route (You can keep this or remove it if you don't need the old UI) 
+                */}
+
+                {/* 3. WIRE UP THE ACCOUNT SETTINGS BUTTON */}
                 <button
-                  onClick={handleProfileClick}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                  onClick={handleSettingsClick}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                 >
-                  <User size={16} className="text-gray-400" />
-                  View Profile
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
                   <Settings size={16} className="text-gray-400" />
-                  Settings
+                  Account Settings
                 </button>
-                <div className="border-t border-gray-100 my-2"></div>
+
+                <div className="border-t border-gray-50 my-1 mx-4"></div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
                 >
-                  <LogOut size={16} />
+                  <LogOut size={16} className="text-red-400" />
                   Sign Out
                 </button>
               </div>
             </div>
           )}
         </div>
+
       </div>
     </header>
   );
