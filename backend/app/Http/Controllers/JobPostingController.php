@@ -66,8 +66,8 @@ class JobPostingController extends Controller
     private function authorizeRecruiter(): void
     {
         $user = Auth::guard('api')->user();
-        if (!$user || $user->role !== 'recruiter') {
-            abort(403, 'Only recruiters can manage jobs.');
+        if (!$user || !in_array($user->role, ['recruiter', 'hr', 'admin'], true)) {
+            abort(403, 'Only HR users can manage jobs.');
         }
     }
 
@@ -86,7 +86,7 @@ class JobPostingController extends Controller
             'company' => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'type' => 'required|string|max:100',
-            'salary' => 'nullable|string|max:100',
+            'salary' => ['nullable', 'regex:/^\\d+$/', 'max:100'],
             'description' => 'required|string',
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:50',
@@ -102,7 +102,9 @@ class JobPostingController extends Controller
             'recruiter_role' => 'nullable|string|max:255',
         ];
 
-        $validated = $request->validate($rules);
+        $validated = $request->validate($rules, [
+            'salary.regex' => 'Salary range must contain numbers only.',
+        ]);
 
         // Defaults
         $validated['initials'] = $validated['initials'] ?? strtoupper(substr($validated['company'], 0, 2));
@@ -111,6 +113,10 @@ class JobPostingController extends Controller
         $validated['tags'] = $validated['tags'] ?? [];
         $validated['what_youll_do'] = $validated['what_youll_do'] ?? [];
         $validated['why_company'] = $validated['why_company'] ?? [];
+
+        if (array_key_exists('salary', $validated) && $validated['salary'] !== null) {
+            $validated['salary'] = preg_replace('/\D+/', '', (string) $validated['salary']);
+        }
 
         return $validated;
     }

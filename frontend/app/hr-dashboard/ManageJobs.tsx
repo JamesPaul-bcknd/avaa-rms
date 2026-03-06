@@ -177,12 +177,17 @@ const ManageJobs = () => {
   };
 
   const handleCreateJob = async (formData: any) => {
+    const salaryValue = String(formData.salary ?? '').trim();
+    if (salaryValue && !/^\d+$/.test(salaryValue)) {
+      throw new Error('Salary range must contain numbers only.');
+    }
+
     const payload = {
       title: formData.title || 'Untitled Role',
       company: formData.company || 'New Company',
       location: formData.location || 'Remote',
       type: 'Full-time',
-      salary: formData.salary || '',
+      salary: salaryValue,
       description: formData.description || '',
       tags: formData.skills || [],
       what_youll_do: [],
@@ -213,12 +218,17 @@ const ManageJobs = () => {
         recruiter_name: job.recruiter_name,
         recruiter_role: job.recruiter_role,
       };
-      setJobs([newJob, ...jobs]);
+      setJobs((prev) => [newJob, ...prev]);
       setIsCreateModalOpen(false);
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create job', error);
+      const message = error?.response?.data?.message
+        || error?.response?.data?.error
+        || error?.message
+        || 'Unable to create job right now.';
+      throw new Error(message);
     }
   };
 
