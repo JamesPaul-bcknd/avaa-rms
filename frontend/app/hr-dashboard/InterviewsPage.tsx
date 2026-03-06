@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { MoreHorizontal, User, CheckCircle, XCircle, CheckCircle2 } from 'lucide-react';
 import Header from './Header'; // 1. Import your Header component
+import api from '@/lib/axios';
 
 interface Interview {
   id: number;
@@ -14,10 +15,12 @@ interface Interview {
 
 const InterviewsPage = ({
   interviews: initialInterviews,
-  onApprove
+  onApprove,
+  onDecision
 }: {
   interviews: Interview[];
-  onApprove?: (candidate: any) => void
+  onApprove?: (candidate: any) => void;
+  onDecision?: (interviewId: number) => void;
 }) => {
   const [interviews, setInterviews] = useState(initialInterviews);
   const [activeMenu, setActiveMenu] = useState<number | null>(null);
@@ -27,16 +30,61 @@ const InterviewsPage = ({
     name: ''
   });
 
-  const stats = [
-    { label: "Today's Total", value: interviews.length, color: "bg-[#2d5a61]" },
-    { label: "Pending Feedback", value: 2, color: "bg-[#94b3af]" },
-    { label: "Upcoming", value: 12, color: "bg-[#a3a3a3]" },
-  ];
+  useEffect(() => {
+    setInterviews(initialInterviews);
+  }, [initialInterviews]);
 
-  const handleAction = (type: 'Approved' | 'Rejected', interview: Interview) => {
+  const parseInterviewDate = (value: string): Date | null => {
+    const directParse = new Date(value);
+    if (!Number.isNaN(directParse.getTime())) {
+      return directParse;
+    }
+
+    // Fallback for date-only formats that may need explicit time.
+    const dateOnlyParse = new Date(`${value}T00:00:00`);
+    return Number.isNaN(dateOnlyParse.getTime()) ? null : dateOnlyParse;
+  };
+
+  const stats = useMemo(() => {
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    let todaysTotal = 0;
+    let pendingFeedback = 0;
+    let upcoming = 0;
+
+    interviews.forEach((interview) => {
+      const interviewDate = parseInterviewDate(interview.date);
+      if (!interviewDate) {
+        return;
+      }
+
+      if (interviewDate >= startOfToday && interviewDate < endOfToday) {
+        todaysTotal += 1;
+        return;
+      }
+
+      if (interviewDate < startOfToday) {
+        pendingFeedback += 1;
+        return;
+      }
+
+      upcoming += 1;
+    });
+
+    return [
+      { label: "Today's Total", value: todaysTotal, color: 'bg-[#2d5a61]' },
+      { label: 'Pending Feedback', value: pendingFeedback, color: 'bg-[#94b3af]' },
+      { label: 'Upcoming', value: upcoming, color: 'bg-[#a3a3a3]' },
+    ];
+  }, [interviews]);
+
+  const handleAction = async (type: 'Approved' | 'Rejected', interview: Interview) => {
     setActiveMenu(null);
 
     if (type === 'Approved') {
+      await api.post(`/jobs/interviews/${interview.id}/approve`);
       if (onApprove) {
         onApprove({
           id: Date.now(),
@@ -45,9 +93,14 @@ const InterviewsPage = ({
           status: 'Active'
         });
       }
+    } else {
+      await api.post(`/jobs/interviews/${interview.id}/reject`, {
+        reason: 'Rejected after interview.',
+      });
     }
 
     setInterviews(prev => prev.filter(item => item.id !== interview.id));
+    onDecision?.(interview.id);
     setSuccessModal({ isOpen: true, type, name: interview.candidateName });
   };
 

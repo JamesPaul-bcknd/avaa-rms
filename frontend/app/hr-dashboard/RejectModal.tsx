@@ -6,20 +6,25 @@ interface RejectModalProps {
   applicant: { name: string; email: string } | null;
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: (reason: string) => Promise<void>;
 }
 
-const RejectModal = ({ applicant, isOpen, onClose }: RejectModalProps) => {
+const RejectModal = ({ applicant, isOpen, onClose, onSubmit }: RejectModalProps) => {
   const [isSuccess, setIsSuccess] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     if (!isOpen) {
       setIsSuccess(false);
+      setMessage('');
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  const handleSend = () => {
+  const handleSend = async () => {
+    if (!message.trim()) return;
+    await onSubmit(message.trim());
     setIsSuccess(true);
   };
 
@@ -64,6 +69,8 @@ const RejectModal = ({ applicant, isOpen, onClose }: RejectModalProps) => {
                 <label className="block text-lg font-bold text-[#2d3748] ml-1">Message</label>
                 <textarea
                   rows={5}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   className="w-full px-4 py-4 bg-[#edf2f7] rounded-2xl text-slate-600 font-medium border-none focus:ring-2 focus:ring-red-100 outline-none resize-none transition-all"
                   placeholder="Enter rejection message here..."
                 />
@@ -73,6 +80,7 @@ const RejectModal = ({ applicant, isOpen, onClose }: RejectModalProps) => {
               <div className="flex justify-end pt-2">
                 <button
                   onClick={handleSend}
+                  disabled={!message.trim()}
                   className="px-8 py-3 bg-[#ff5c5c] text-white rounded-2xl font-bold text-lg hover:bg-red-600 transition-all shadow-sm active:scale-95"
                 >
                   Send Rejection

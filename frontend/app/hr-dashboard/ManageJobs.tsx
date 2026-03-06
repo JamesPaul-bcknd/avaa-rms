@@ -63,15 +63,17 @@ const ManageJobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await api.get('/jobs/my-jobs');
+        const response = await api.get('/jobs');
         const apiJobs = response.data?.data ?? [];
         const mapped: Job[] = apiJobs.map((job: any) => ({
           id: job.id,
           title: job.title,
           location: job.location,
           company: job.company,
-          status: 'Active',
-          apps: job.applications_count ?? 0,
+          status: typeof job.status === 'string'
+            ? `${job.status.charAt(0).toUpperCase()}${job.status.slice(1).toLowerCase()}`
+            : 'Active',
+          apps: job.active_applications_count ?? job.applications_count ?? 0,
           date: job.created_at ? job.created_at.substring(0, 10) : '',
           type: job.type || 'Full-time',
           techStack: Array.isArray(job.tags) ? job.tags : [],
