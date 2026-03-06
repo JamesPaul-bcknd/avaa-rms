@@ -177,9 +177,12 @@ class MessageController extends Controller
             return true;
         }
 
-        // For testing: Allow all recruiter-user and user-recruiter messaging
-        if (($sender->role === 'recruiter' && $receiver->role === 'user') ||
-            ($sender->role === 'user' && $receiver->role === 'recruiter')) {
+        $senderIsHr = in_array($sender->role, ['recruiter', 'hr'], true);
+        $receiverIsHr = in_array($receiver->role, ['recruiter', 'hr'], true);
+
+        // Allow all HR-user and user-HR messaging.
+        if (($senderIsHr && $receiver->role === 'user') ||
+            ($sender->role === 'user' && $receiverIsHr)) {
             return true;
         }
 

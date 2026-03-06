@@ -11,6 +11,7 @@ const nextConfig = {
                 hostname: 'avatar.iran.liara.run',
             },
         ],
+        domains: ['backend.test', 'http://127.0.0.1:8000'],
     },
 };
 

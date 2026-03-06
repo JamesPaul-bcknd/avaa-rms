@@ -36,7 +36,7 @@ const JobTable = ({ onView, onJobCountChange }: JobTableProps) => {
           location: job.location,
           company: job.company,
           status: job.status || 'Active',
-          apps: job.applications_count ?? 0,
+          apps: job.active_applications_count ?? job.applications_count ?? 0,
           date: job.created_at ? job.created_at.substring(0, 10) : '',
           color: job.color,
         }));
