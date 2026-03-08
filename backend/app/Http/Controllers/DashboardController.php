@@ -9,8 +9,17 @@ class DashboardController extends Controller
 {
     public function index(): JsonResponse
     {
-        // Fetch all jobs
-        $jobs = JobPosting::withCount('applications')->latest()->get();
+        // Include both total applications and active applications.
+        // Active applicants are those still pending review.
+        $jobs = JobPosting::withCount([
+            'applications',
+            'applications as active_applications_count' => function ($query) {
+                $query->where(function ($statusQuery) {
+                    $statusQuery->whereNull('status')
+                        ->orWhere('status', 'pending');
+                });
+            },
+        ])->latest()->get();
 
         // Return as JSON with a 200 OK status
         return response()->json([

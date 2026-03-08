@@ -24,8 +24,11 @@ class HrProfileController extends Controller
             ], 403);
         }
 
-        // Get all regular users (not admins or other HR)
+        // Show only users who were approved after interviews.
         $users = User::where('role', 'user')
+            ->whereHas('jobApplications', function ($query) {
+                $query->where('status', 'hired');
+            })
             ->select(['id', 'name', 'email', 'phone', 'location', 'bio', 'profile_image', 'skills', 'position', 'created_at', 'updated_at'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -52,7 +55,10 @@ class HrProfileController extends Controller
         }
 
         $user = User::where('id', $userId)
-            ->where('role', 'user') // Only allow viewing regular user profiles
+            ->where('role', 'user')
+            ->whereHas('jobApplications', function ($query) {
+                $query->where('status', 'hired');
+            })
             ->select(['id', 'name', 'email', 'phone', 'location', 'bio', 'profile_image', 'skills', 'position', 'created_at', 'updated_at'])
             ->firstOrFail();
 
@@ -123,6 +129,9 @@ class HrProfileController extends Controller
         $query = $request->input('query');
 
         $users = User::where('role', 'user')
+            ->whereHas('jobApplications', function ($hiredQuery) {
+                $hiredQuery->where('status', 'hired');
+            })
             ->where(function($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")
                   ->orWhere('email', 'like', "%{$query}%")
@@ -175,6 +184,7 @@ class HrProfileController extends Controller
      */
     public function updateProfile(Request $request): JsonResponse
     {
+        /** @var \App\Models\User $user */
         $user = Auth::guard('api')->user();
         
         if (!$user) {

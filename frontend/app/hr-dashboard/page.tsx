@@ -9,6 +9,7 @@ import InterviewsPage from "./InterviewsPage";
 import ManageJobs from "./ManageJobs";
 import UserPage from "./UserPage";
 import HrMessages from "./HrMessages";
+import api from "@/lib/axios";
 
 export default function Home() {
   const searchParams = useSearchParams();
@@ -35,8 +36,30 @@ export default function Home() {
   };
 
   const handleScheduleSuccess = (newInterview: any) => {
-    setScheduledInterviews((prev) => [...prev, newInterview]);
+    setScheduledInterviews((prev) => {
+      const withoutExisting = prev.filter((item) => item.id !== newInterview.id);
+      return [newInterview, ...withoutExisting];
+    });
   };
+
+  const handleInterviewDecision = (interviewId: number) => {
+    setScheduledInterviews((prev) => prev.filter((item) => item.id !== interviewId));
+  };
+
+  useEffect(() => {
+    const loadInterviews = async () => {
+      try {
+        const response = await api.get('/jobs/interviews');
+        setScheduledInterviews(response.data?.data ?? []);
+      } catch (error) {
+        console.error('Failed to load interviews', error);
+      }
+    };
+
+    if (view === 'interviews') {
+      loadInterviews();
+    }
+  }, [view]);
 
   return (
     <div className="flex bg-[#f1f5f9] min-h-screen">
@@ -72,7 +95,10 @@ export default function Home() {
 
         {/* 5. Interviews View */}
         {view === "interviews" && (
-          <InterviewsPage interviews={scheduledInterviews} />
+          <InterviewsPage
+            interviews={scheduledInterviews}
+            onDecision={handleInterviewDecision}
+          />
         )}
 
         {/* 6. Messages View */}

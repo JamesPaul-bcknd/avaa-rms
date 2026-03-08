@@ -67,6 +67,11 @@ class User extends Authenticatable implements JWTSubject
         return $this->receivedMessages()->whereNull('read_at');
     }
 
+    public function jobApplications()
+    {
+        return $this->hasMany(JobApplication::class, 'user_id');
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

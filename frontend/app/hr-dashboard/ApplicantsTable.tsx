@@ -14,6 +14,7 @@ interface ApplicantsTableProps {
 
 interface JobApplication {
   id: number;
+  user_id?: number | null;
   full_name: string;
   email: string;
   phone?: string;
@@ -27,7 +28,7 @@ interface JobApplication {
 
 const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProps) => {
   const [modalType, setModalType] = useState<'none' | 'accept' | 'reject'>('none');
-  const [selectedApplicant, setSelectedApplicant] = useState<{ name: string; email: string } | null>(null);
+  const [selectedApplicant, setSelectedApplicant] = useState<{ id: number; userId?: number | null; name: string; email: string } | null>(null);
 
   const [applicants, setApplicants] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,12 +60,12 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
   }, [job?.id]);
 
   const handleAccept = (app: JobApplication) => {
-    setSelectedApplicant({ name: app.full_name, email: app.email });
+    setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
     setModalType('accept');
   };
   
   const handleReject = (app: JobApplication) => {
-    setSelectedApplicant({ name: app.full_name, email: app.email });
+    setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
     setModalType('reject');
   };
   
@@ -250,8 +251,27 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
         onClose={handleClose}
         applicantName={selectedApplicant?.name ?? ''}
         jobTitle={job?.title || 'Unknown Position'}
-        onSchedule={(interviewData: any) => {
-          onScheduleSuccess(interviewData);
+        onSchedule={async (interviewData: any) => {
+          if (!selectedApplicant?.id) return;
+
+          const response = await api.post(`/jobs/applications/${selectedApplicant.id}/approve`, {
+            interview_date: interviewData.date,
+            interview_time: interviewData.time,
+            interview_type: interviewData.type,
+            interviewer: interviewData.interviewer,
+          });
+
+          const scheduledInterview = response.data?.data?.interview;
+          if (scheduledInterview) {
+            onScheduleSuccess(scheduledInterview);
+          } else {
+            onScheduleSuccess({
+              ...interviewData,
+              id: selectedApplicant.id,
+            });
+          }
+
+          setApplicants((prev) => prev.filter((app) => app.id !== selectedApplicant.id));
         }}
       />
       
@@ -259,6 +279,15 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
         isOpen={modalType === 'reject'}
         onClose={handleClose}
         applicant={selectedApplicant}
+        onSubmit={async (reason: string) => {
+          if (!selectedApplicant?.id) return;
+
+          await api.post(`/jobs/applications/${selectedApplicant.id}/reject`, {
+            reason,
+          });
+
+          setApplicants((prev) => prev.filter((app) => app.id !== selectedApplicant.id));
+        }}
       />
     </div>
   );

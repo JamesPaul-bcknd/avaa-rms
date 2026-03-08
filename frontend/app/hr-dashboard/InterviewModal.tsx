@@ -7,7 +7,7 @@ interface InterviewModalProps {
   jobTitle: string;
   isOpen: boolean;
   onClose: () => void;
-  onSchedule: (interviewData: any) => void;
+  onSchedule: (interviewData: any) => Promise<void>;
 }
 
 const InterviewModal = ({
@@ -34,8 +34,8 @@ const InterviewModal = ({
     onClose();
   };
 
-  const handleSchedule = () => {
-    onSchedule({
+  const handleSchedule = async () => {
+    await onSchedule({
       id: Date.now(),
       candidateName: applicantName,
       role: jobTitle,

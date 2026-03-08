@@ -27,6 +27,9 @@ interface Job {
   whyCompany: string[];
   recruiter_name?: string;
   recruiter_role?: string;
+  recruiter_id?: number;
+  user_id?: number;
+  posted_by?: number;
 }
 const DATE_FILTERS = ["All Time", "Today", "This Week", "This Month"];
 
