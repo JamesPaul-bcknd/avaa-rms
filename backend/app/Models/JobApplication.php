@@ -17,5 +17,22 @@ class JobApplication extends Model
         'why_interested',
         'experience',
         'cv_path',
+        'status', // 'pending', 'accepted', 'rejected'
     ];
+
+    /**
+     * Get the user that applied.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the job posting that was applied to.
+     */
+    public function jobPosting()
+    {
+        return $this->belongsTo(JobPosting::class, 'job_posting_id');
+    }
 }

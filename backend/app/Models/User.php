@@ -68,6 +68,22 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Get job applications for this user (when user is a job seeker)
+     */
+    public function jobApplications()
+    {
+        return $this->hasMany(JobApplication::class, 'user_id');
+    }
+
+    /**
+     * Get job postings for this user (when user is a recruiter)
+     */
+    public function jobPostings()
+    {
+        return $this->hasMany(JobPosting::class, 'user_id');
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>

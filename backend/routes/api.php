@@ -76,6 +76,7 @@ Route::group([
         Route::delete('/{jobPosting}', [JobPostingController::class, 'destroy']);
         Route::get('/{jobPosting}/applications', [JobApplicationController::class, 'index']);
         Route::post('/{jobPosting}/apply', [JobApplicationController::class, 'store']);
+        Route::put('/applications/{application}/status', [JobApplicationController::class, 'updateStatus']);
     });
 
     // Protected: Bookmark a specific job
