@@ -4,7 +4,6 @@ import {
   Search,
   MessageSquare,
   Bell,
-  User,
   Settings,
   LogOut
 } from 'lucide-react';
@@ -12,23 +11,24 @@ import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/lib/useAuth';
 import { useRouter } from 'next/navigation';
 
-// 1. ADD onSettingsClick to the Props
 interface HeaderProps {
   title?: string;
   jobCount?: number;
   onMessagesClick?: () => void;
-  onSettingsClick?: () => void;
+  onSettingsClick?: () => void; 
+  onNotificationsClick?: () => void;
 }
 
-const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClick }: HeaderProps) => {
+const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClick, onNotificationsClick }: HeaderProps) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  const userName = user?.name || 'HR User';
-  const userInitials = userName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'HR';
+  // Using the name from your screenshot for the default
+  const userName = user?.name || 'Catherine';
+  const userInitials = userName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'C';
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -44,10 +44,13 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
     logout('/signin');
   };
 
-  // This handles the old profile page route (which you saw in the screenshot)
-  const handleProfileClick = () => {
+  const handleSettingsClick = () => {
     setShowProfileMenu(false);
-    router.push('/hr-dashboard/profile');
+    if (onSettingsClick) {
+      onSettingsClick(); 
+    } else {
+      router.push('/hr-dashboard/profile');
+    }
   };
 
   const handleMessagesClick = () => {
@@ -58,23 +61,16 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
     }
   };
 
-  // 2. NEW HANDLER FOR SETTINGS
-  const handleSettingsClick = () => {
-    setShowProfileMenu(false);
-    router.push('/hr-dashboard/profile'); // Redirects to the standalone page
-  };
-
-
   return (
-    <header className="flex flex-col sm:flex-row sm:items-center justify-between px-6 lg:px-10 py-5 bg-white border-b border-gray-100 gap-4 sticky top-0 z-20">
+    <header className="flex flex-col sm:flex-row sm:items-center justify-between px-6 lg:px-10 py-5 bg-white border-b border-slate-100 gap-4 sticky top-0 z-20">
 
       {/* Left Side: Title & Subtitle */}
       <div>
-        <h1 className="text-[22px] font-bold text-[#1e293b] tracking-tight">{title}</h1>
+        <h1 className="text-[22px] font-bold text-slate-800 tracking-tight">{title}</h1>
         {title === "Dashboard" ? (
-          <p className="text-[13px] text-gray-500 mt-0.5">Welcome back Admin, here's what's happening today.</p>
+          <p className="text-[13px] text-slate-500 mt-0.5">Welcome back Admin, here's what's happening today.</p>
         ) : jobCount !== undefined ? (
-          <p className="text-[13px] text-gray-500 font-medium mt-0.5">{jobCount} total {jobCount === 1 ? 'job' : 'jobs'}</p>
+          <p className="text-[13px] text-slate-500 font-medium mt-0.5">{jobCount} total {jobCount === 1 ? 'job' : 'jobs'}</p>
         ) : null}
       </div>
 
@@ -83,31 +79,34 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
 
         {/* Search Bar */}
         <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
           <input
             type="text"
             placeholder="Search jobs..."
-            className="pl-9 pr-4 py-2 bg-transparent border border-gray-200 rounded-lg w-64 text-sm focus:outline-none focus:ring-1 focus:ring-[#53968b] text-slate-700 placeholder-gray-400"
+            className="pl-9 pr-4 py-2 bg-slate-50/50 border border-slate-200 rounded-xl w-64 text-sm focus:outline-none focus:ring-1 focus:ring-[#53968b] focus:border-[#53968b] text-slate-700 placeholder-slate-400 transition-all"
           />
         </div>
 
         {/* Messages Button */}
         <button
           onClick={handleMessagesClick}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-[#1e293b] hover:bg-gray-50 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
         >
-          <MessageSquare size={16} className="text-[#1e293b]" />
+          <MessageSquare size={16} className="text-slate-500" />
           Messages
         </button>
 
         {/* Notification Bell */}
-        <button className="relative p-1.5 text-gray-500 hover:text-gray-700 focus:outline-none transition-colors">
-          <Bell size={20} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-        </button>
+<button 
+  onClick={onNotificationsClick}
+  className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full focus:outline-none transition-colors"
+>
+  <Bell size={20} />
+  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+</button>
 
         {/* Vertical Divider */}
-        <div className="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+        <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
 
         {/* Profile Dropdown */}
         <div className="relative" ref={profileMenuRef}>
@@ -122,34 +121,34 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
 
           {/* Profile Dropdown Menu */}
           {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100 overflow-hidden z-50">
-              <div className="p-4 border-b border-gray-50 flex items-center gap-3 bg-slate-50/50">
+            <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="p-4 border-b border-slate-50 flex items-center gap-3 bg-slate-50/50">
                 <div className="w-10 h-10 rounded-full overflow-hidden bg-[#53968b] flex items-center justify-center text-white text-[15px] font-bold shrink-0 shadow-sm">
                   {userInitials}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-[#1e293b] truncate">{userName}</p>
-                  <p className="text-xs text-gray-500 truncate">{user?.email || 'hr@example.com'}</p>
+                  <p className="text-sm font-bold text-slate-800 truncate">{userName}</p>
+                  <p className="text-xs font-medium text-slate-400 truncate">{user?.email || 'bauncatherine56@gmail.com'}</p>
                 </div>
               </div>
 
               <div className="py-2">
-                {/* Old View Profile Route (You can keep this or remove it if you don't need the old UI) 
-                */}
-
-                {/* 3. WIRE UP THE ACCOUNT SETTINGS BUTTON */}
+                
+                {/* Account Settings Link */}
                 <button
                   onClick={handleSettingsClick}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-[#53968b] transition-colors"
                 >
-                  <Settings size={16} className="text-gray-400" />
+                  <Settings size={16} className="text-slate-400" />
                   Account Settings
                 </button>
 
-                <div className="border-t border-gray-50 my-1 mx-4"></div>
+                <div className="border-t border-slate-50 my-1 mx-4"></div>
+                
+                {/* Sign Out */}
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 transition-colors"
                 >
                   <LogOut size={16} className="text-red-400" />
                   Sign Out
