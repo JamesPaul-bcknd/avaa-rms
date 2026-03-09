@@ -67,9 +67,20 @@ class User extends Authenticatable implements JWTSubject
         return $this->receivedMessages()->whereNull('read_at');
     }
 
+    /**
+     * Get job applications for this user (when user is a job seeker)
+     */
     public function jobApplications()
     {
         return $this->hasMany(JobApplication::class, 'user_id');
+    }
+
+    /**
+     * Get job postings for this user (when user is a recruiter)
+     */
+    public function jobPostings()
+    {
+        return $this->hasMany(JobPosting::class, 'user_id');
     }
 
     /**

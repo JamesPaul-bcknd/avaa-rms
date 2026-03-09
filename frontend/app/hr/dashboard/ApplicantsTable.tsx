@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, Search, MapPin, Clock, X, Check, FileText } from 'lucide-react';
 import InterviewModal from './InterviewModal';
 import RejectModal from './RejectModal';
+import ApplicationStatusModal from './ApplicationStatusModal';
 import api from '@/lib/axios';
 
 // Defining the interface to match what page.tsx is sending
@@ -23,12 +24,14 @@ interface JobApplication {
   why_interested?: string;
   experience?: string;
   cv_path?: string;
+  status: 'pending' | 'accepted' | 'rejected';
   created_at?: string;
 }
 
 const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProps) => {
   const [modalType, setModalType] = useState<'none' | 'accept' | 'reject'>('none');
   const [selectedApplicant, setSelectedApplicant] = useState<{ id: number; userId?: number | null; name: string; email: string } | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const [applicants, setApplicants] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +71,37 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
     setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
     setModalType('reject');
   };
+
+  const confirmStatusUpdate = async () => {
+    if (!selectedApplicant || modalType === 'none') return;
+    
+    setIsUpdating(true);
+    try {
+      await updateApplicationStatus(selectedApplicant.id, modalType as 'accepted' | 'rejected');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const updateApplicationStatus = async (applicationId: number, status: 'accepted' | 'rejected') => {
+    try {
+      await api.put(`/jobs/applications/${applicationId}/status`, { status });
+      
+      // Update local state
+      setApplicants(prev => 
+        prev.map(app => 
+          app.id === applicationId 
+            ? { ...app, status }
+            : app
+        )
+      );
+      
+      handleClose();
+    } catch (error) {
+      console.error('Failed to update application status:', error);
+      // You could show an error message here
+    }
+  };
   
   const handleClose = () => { 
     setModalType('none'); 
@@ -79,6 +113,26 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
     return date.toISOString().split('T')[0];
+  };
+
+  const getStatusDisplay = (status: 'pending' | 'accepted' | 'rejected') => {
+    switch (status) {
+      case 'accepted':
+        return {
+          text: 'Accepted',
+          className: 'px-3 py-1.5 bg-[#dcfce7] text-[#166534] rounded-full text-[10px] font-black uppercase tracking-widest'
+        };
+      case 'rejected':
+        return {
+          text: 'Rejected',
+          className: 'px-3 py-1.5 bg-[#fef2f2] text-[#dc2626] rounded-full text-[10px] font-black uppercase tracking-widest'
+        };
+      default:
+        return {
+          text: 'Pending',
+          className: 'px-3 py-1.5 bg-[#fef08a] text-[#854d0e] rounded-full text-[10px] font-black uppercase tracking-widest'
+        };
+    }
   };
 
   return (
@@ -153,8 +207,8 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
                     <div className="text-xs text-slate-400">{app.email}</div>
                   </td>
                   <td className="px-5 py-4 text-center">
-                    <span className="px-3 py-1.5 bg-[#fef08a] text-[#854d0e] rounded-full text-[10px] font-black uppercase tracking-widest">
-                      Pending
+                    <span className={getStatusDisplay(app.status).className}>
+                      {getStatusDisplay(app.status).text}
                     </span>
                   </td>
                   <td className="px-5 py-4 text-xs text-slate-500 font-semibold whitespace-nowrap">{formatDate(app.created_at)}</td>
@@ -174,14 +228,28 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
                     )}
                   </td>
                   <td className="px-5 py-4">
-                    <div className="flex justify-center gap-5">
-                      <button onClick={() => handleReject(app)} className="text-red-500 hover:scale-125 transition-transform duration-200">
-                        <X size={22} strokeWidth={4} />
-                      </button>
-                      <button onClick={() => handleAccept(app)} className="text-emerald-500 hover:scale-125 transition-transform duration-200">
-                        <Check size={22} strokeWidth={4} />
-                      </button>
-                    </div>
+                    {app.status === 'pending' ? (
+                      <div className="flex justify-center gap-5">
+                        <button 
+                          onClick={() => handleReject(app)} 
+                          className="text-red-500 hover:scale-125 transition-transform duration-200"
+                          title="Reject Application"
+                        >
+                          <X size={22} strokeWidth={4} />
+                        </button>
+                        <button 
+                          onClick={() => handleAccept(app)} 
+                          className="text-emerald-500 hover:scale-125 transition-transform duration-200"
+                          title="Accept Application"
+                        >
+                          <Check size={22} strokeWidth={4} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-center text-xs text-gray-400">
+                        {app.status === 'accepted' ? 'Accepted' : 'Rejected'}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -207,8 +275,8 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
                   <div className="font-bold text-slate-700 text-sm">{app.full_name}</div>
                   <div className="text-xs text-slate-400 mt-0.5">{app.email}</div>
                 </div>
-                <span className="px-2.5 py-1 bg-[#fef08a] text-[#854d0e] rounded-full text-[9px] font-black uppercase tracking-widest shrink-0">
-                  Pending
+                <span className={getStatusDisplay(app.status).className}>
+                  {getStatusDisplay(app.status).text}
                 </span>
               </div>
               <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
@@ -233,12 +301,26 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
                 </span>
               </div>
               <div className="flex gap-3">
-                <button onClick={() => handleReject(app)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-red-200 bg-red-50 text-red-500 font-semibold text-xs hover:bg-red-100">
-                  <X size={14} strokeWidth={3} /> Reject
-                </button>
-                <button onClick={() => handleAccept(app)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 font-semibold text-xs hover:bg-emerald-100">
-                  <Check size={14} strokeWidth={3} /> Accept
-                </button>
+                {app.status === 'pending' ? (
+                  <>
+                    <button 
+                      onClick={() => handleReject(app)} 
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-red-200 bg-red-50 text-red-500 font-semibold text-xs hover:bg-red-100"
+                    >
+                      <X size={14} strokeWidth={3} /> Reject
+                    </button>
+                    <button 
+                      onClick={() => handleAccept(app)} 
+                      className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 font-semibold text-xs hover:bg-emerald-100"
+                    >
+                      <Check size={14} strokeWidth={3} /> Accept
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex-1 text-center text-xs text-gray-400 py-2">
+                    {app.status === 'accepted' ? '✓ Accepted' : '✗ Rejected'}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -246,10 +328,13 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
       </div>
 
       {/* --- Modals --- */}
-      <InterviewModal
-        isOpen={modalType === 'accept'}
+      <ApplicationStatusModal
+        isOpen={modalType !== 'none'}
         onClose={handleClose}
+        onConfirm={confirmStatusUpdate}
+        action={modalType as 'accept' | 'reject'}
         applicantName={selectedApplicant?.name ?? ''}
+        isLoading={isUpdating}
         jobTitle={job?.title || 'Unknown Position'}
         onSchedule={async (interviewData: any) => {
           if (!selectedApplicant?.id) return;
