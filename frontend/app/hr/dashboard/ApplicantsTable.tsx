@@ -334,9 +334,7 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
         onConfirm={confirmStatusUpdate}
         action={modalType as 'accept' | 'reject'}
         applicantName={selectedApplicant?.name ?? ''}
-<<<<<<< HEAD:frontend/app/hr/dashboard/ApplicantsTable.tsx
         isLoading={isUpdating}
-=======
         jobTitle={job?.title || 'Unknown Position'}
         onSchedule={async (interviewData: any) => {
           if (!selectedApplicant?.id) return;
@@ -375,7 +373,6 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
 
           setApplicants((prev) => prev.filter((app) => app.id !== selectedApplicant.id));
         }}
->>>>>>> 4401c01dc02c7f0adc8ed159a9b2ad926579788a:frontend/app/hr-dashboard/ApplicantsTable.tsx
       />
     </div>
   );
