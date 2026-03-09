@@ -1,11 +1,15 @@
 "use client";
-import React, { useEffect, useState } from 'react';
-import { ChevronLeft, Search, MapPin, Clock, X, Check, FileText } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { 
+  ChevronLeft, MapPin, Clock, MoreHorizontal, 
+  Eye, X, Check 
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import InterviewModal from './InterviewModal';
 import RejectModal from './RejectModal';
+import Header from './Header'; // Importing your shared Header component
 import api from '@/lib/axios';
 
-// Defining the interface to match what page.tsx is sending
 interface ApplicantsTableProps {
   job: any;
   onBack: () => void;
@@ -17,276 +21,230 @@ interface JobApplication {
   user_id?: number | null;
   full_name: string;
   email: string;
-  phone?: string;
-  linkedin?: string;
-  cover_letter?: string;
-  why_interested?: string;
-  experience?: string;
   cv_path?: string;
   created_at?: string;
+  status: string;
+  role_applied?: string;
 }
 
 const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProps) => {
   const [modalType, setModalType] = useState<'none' | 'accept' | 'reject'>('none');
   const [selectedApplicant, setSelectedApplicant] = useState<{ id: number; userId?: number | null; name: string; email: string } | null>(null);
-
+  const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
   const [applicants, setApplicants] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  const placeholder: JobApplication = {
+    id: 0,
+    full_name: "John Doe",
+    email: "john.doe@example.com",
+    cv_path: "AJohnsonCV.pdf",
+    created_at: "2026-01-20",
+    status: "Pending",
+    role_applied: "Technical Product Manager"
+  };
 
   useEffect(() => {
-    if (!job?.id) {
-      setApplicants([]);
-      setLoading(false);
-      return;
-    }
-
     const fetchApplicants = async () => {
       try {
         setLoading(true);
-        setError(null);
         const response = await api.get(`/jobs/${job.id}/applications`);
-        setApplicants(response.data?.data ?? []);
+        const fetchedData = response.data?.data ?? [];
+        setApplicants([placeholder, ...fetchedData]);
       } catch (err) {
-        console.error('Failed to load applicants', err);
-        setError('Unable to load applicants right now.');
-        setApplicants([]);
+        setApplicants([placeholder]);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchApplicants();
+    if (job?.id) fetchApplicants();
   }, [job?.id]);
 
-  const handleAccept = (app: JobApplication) => {
-    setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
-    setModalType('accept');
-  };
-  
-  const handleReject = (app: JobApplication) => {
-    setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
-    setModalType('reject');
-  };
-  
-  const handleClose = () => { 
-    setModalType('none'); 
-    setSelectedApplicant(null); 
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-  const formatDate = (value?: string) => {
-    if (!value) return '—';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toISOString().split('T')[0];
+  const handleAction = (type: 'accept' | 'reject', app: JobApplication) => {
+    setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
+    setModalType(type);
+    setActiveMenuId(null);
   };
 
   return (
-    <div className="relative">
-      <div className="animate-in fade-in duration-500">
+    <div className="min-h-screen bg-[#f8fafc] p-4 lg:p-8">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-6xl mx-auto"
+      >
+        {/* --- Unified Header --- */}
+        <Header 
+          title="Applicants" 
+          subtitle={`${applicants.length} Applicants`} 
+        />
 
-        {/* --- Header Section --- */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <div className="flex items-center gap-3">
-            <button onClick={onBack} className="p-2 hover:bg-gray-200 rounded-full transition-colors shrink-0">
-              <ChevronLeft size={26} />
+        {/* --- Custom Breadcrumb logic below Header --- */}
+        <div className="flex items-center gap-2 text-xs mb-6 -mt-4">
+          <span className="cursor-pointer text-gray-400 hover:text-[#84b3af] transition-colors" onClick={onBack}>
+            Dashboard
+          </span>
+          <ChevronLeft size={12} className="rotate-180 text-gray-300" />
+          <span className="text-[#84b3af] font-semibold">Applicants</span>
+        </div>
+
+        {/* --- Main Card --- */}
+        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
+          {/* Teal Banner */}
+          <div className="h-32 bg-[#84b3af] relative">
+            <button 
+              onClick={onBack}
+              className="absolute top-6 right-8 text-white/70 hover:text-white transition-all p-2 hover:bg-white/10 rounded-full"
+            >
+              <X size={24} />
             </button>
-            <div className="flex items-center gap-3 pl-3 border-l border-gray-200">
-              <div className={`w-11 h-11 ${job?.color || 'bg-teal-500'} rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm shrink-0`}>
+          </div>
+
+          {/* Job Info Header */}
+          <div className="px-10 pb-10">
+            <div className="flex flex-col md:flex-row md:items-end gap-6 -mt-12 relative z-10">
+              <div className={`w-28 h-28 sm:w-32 sm:h-32 bg-[#22c55e] rounded-[2rem] shadow-xl flex items-center justify-center text-white text-4xl font-black border-[6px] border-white`}>
                 {job?.id || 'TN'}
               </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 className="text-lg sm:text-xl font-bold text-slate-800 truncate">{job?.title || 'Job Title'}</h2>
-                  <span className="px-2 py-0.5 bg-[#e2e8f0] text-slate-600 rounded-lg text-xs font-bold uppercase tracking-tight shrink-0">Full-time</span>
+              <div className="flex-1 pb-2">
+                <div className="flex flex-wrap items-center gap-3 mb-2">
+                  <h2 className="text-4xl font-black text-slate-800 tracking-tight">{job?.company || 'TechNova'}</h2>
+                  <span className="px-4 py-1.5 bg-slate-100 text-slate-500 rounded-full text-[11px] font-black uppercase tracking-widest">
+                    Full-time
+                  </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-1">
-                  <span className="flex items-center gap-1"><MapPin size={12} /> {job?.location || '—'}</span>
-                  <span className="flex items-center gap-1"><Clock size={12} /> {job?.date || ''}</span>
+                <div className="flex flex-wrap items-center gap-5 text-sm font-bold text-slate-400">
+                  <span className="flex items-center gap-1.5"><MapPin size={16} className="text-[#84b3af]"/> {job?.location || 'San Francisco, CA'}</span>
+                  <span className="flex items-center gap-1.5"><Clock size={16} className="text-[#84b3af]"/> 2d ago</span>
                 </div>
               </div>
+              <button className="text-[#84b3af] font-black text-sm hover:underline flex items-center gap-1.5 pb-2">
+                View all Users <ChevronLeft size={16} className="rotate-180" />
+              </button>
             </div>
-          </div>
 
-          <div className="relative w-full sm:w-auto">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={15} />
-            <input
-              type="text"
-              placeholder="Search users..."
-              className="pl-9 pr-4 py-2 bg-[#f8fafc] border border-slate-200 rounded-xl text-sm w-full sm:w-60 focus:outline-none focus:ring-1 focus:ring-teal-500"
-            />
-          </div>
-        </div>
-
-        {/* --- Desktop Table --- */}
-        <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <table className="w-full text-left">
-            <thead className="bg-[#f8fafc] text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              <tr>
-                <th className="px-6 py-4">Applicants</th>
-                <th className="px-5 py-4 text-center">Status</th>
-                <th className="px-5 py-4">Date Applied</th>
-                <th className="px-5 py-4">Curriculum Vitae</th>
-                <th className="px-5 py-4 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {loading && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-6 text-center text-sm text-slate-400">Loading applicants…</td>
-                </tr>
-              )}
-              {!loading && error && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-6 text-center text-sm text-red-400">{error}</td>
-                </tr>
-              )}
-              {!loading && !error && applicants.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-6 text-center text-sm text-slate-400">No applicants yet for this job.</td>
-                </tr>
-              )}
-              {!loading && !error && applicants.map((app) => (
-                <tr key={app.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="px-6 py-4">
-                    <div className="font-bold text-slate-700 text-sm">{app.full_name}</div>
-                    <div className="text-xs text-slate-400">{app.email}</div>
-                  </td>
-                  <td className="px-5 py-4 text-center">
-                    <span className="px-3 py-1.5 bg-[#fef08a] text-[#854d0e] rounded-full text-[10px] font-black uppercase tracking-widest">
-                      Pending
-                    </span>
-                  </td>
-                  <td className="px-5 py-4 text-xs text-slate-500 font-semibold whitespace-nowrap">{formatDate(app.created_at)}</td>
-                  <td className="px-5 py-4 text-xs text-slate-600 font-medium">
-                    {app.cv_path ? (
-                      <a 
-                        href={`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/storage/${app.cv_path}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-teal-600 hover:text-teal-800 underline flex items-center gap-1"
-                      >
-                        <FileText size={14} />
-                        View CV
-                      </a>
-                    ) : (
-                      'Not provided'
-                    )}
-                  </td>
-                  <td className="px-5 py-4">
-                    <div className="flex justify-center gap-5">
-                      <button onClick={() => handleReject(app)} className="text-red-500 hover:scale-125 transition-transform duration-200">
-                        <X size={22} strokeWidth={4} />
-                      </button>
-                      <button onClick={() => handleAccept(app)} className="text-emerald-500 hover:scale-125 transition-transform duration-200">
-                        <Check size={22} strokeWidth={4} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* --- Mobile View --- */}
-        <div className="md:hidden bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
-          {loading && (
-            <div className="p-4 text-center text-sm text-slate-400">Loading applicants…</div>
-          )}
-          {!loading && error && (
-            <div className="p-4 text-center text-sm text-red-400">{error}</div>
-          )}
-          {!loading && !error && applicants.length === 0 && (
-            <div className="p-4 text-center text-sm text-slate-400">No applicants yet for this job.</div>
-          )}
-          {!loading && !error && applicants.map((app) => (
-            <div key={app.id} className="p-4 flex flex-col gap-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="font-bold text-slate-700 text-sm">{app.full_name}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">{app.email}</div>
-                </div>
-                <span className="px-2.5 py-1 bg-[#fef08a] text-[#854d0e] rounded-full text-[9px] font-black uppercase tracking-widest shrink-0">
-                  Pending
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-xs text-slate-500 px-0.5">
-                <span>Applied: <span className="font-semibold">{formatDate(app.created_at)}</span></span>
-                <span className="flex items-center gap-1 text-slate-400">
-                  {app.cv_path ? (
-                    <a 
-                      href={`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/storage/${app.cv_path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-teal-600 hover:text-teal-800 underline flex items-center gap-1"
-                    >
-                      <FileText size={12} />
-                      View CV
-                    </a>
+            {/* --- Table --- */}
+            <div className="mt-12 overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-[0.2em] text-slate-300 font-black border-b border-slate-50">
+                    <th className="pb-6 text-left">Name</th>
+                    <th className="pb-6 text-left">Curriculum Vitae</th>
+                    <th className="pb-6 text-left">Date Applied</th>
+                    <th className="pb-6 text-left">Status</th>
+                    <th className="pb-6 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {loading ? (
+                    <tr><td colSpan={5} className="py-20 text-center text-slate-400 font-bold">Loading applicants...</td></tr>
                   ) : (
-                    <>
-                      <FileText size={12} />
-                      Not provided
-                    </>
+                    applicants.map((app) => (
+                      <tr key={app.id} className="group hover:bg-slate-50/50 transition-all">
+                        <td className="py-6">
+                          <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-full border-2 border-white shadow-sm overflow-hidden bg-slate-100">
+                              <img src={`https://ui-avatars.com/api/?name=${app.full_name}&background=84b3af&color=fff`} alt="" />
+                            </div>
+                            <div>
+                              <div className="font-black text-slate-700 text-sm tracking-tight">{app.full_name}</div>
+                              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                                {app.role_applied || 'Technical Product Manager'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-6 text-xs text-slate-500 font-black hover:text-[#84b3af] cursor-pointer">{app.cv_path || 'AJohnsonCV.pdf'}</td>
+                        <td className="py-6 text-xs text-slate-400 font-bold">
+                          {app.created_at?.split('T')[0] || '2026-01-20'}
+                        </td>
+                        <td className="py-6">
+                          <span className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#fef9c3] text-[#a16207] rounded-full text-[10px] font-black uppercase tracking-widest">
+                            <Clock size={12} strokeWidth={3} /> {app.status}
+                          </span>
+                        </td>
+                        <td className="py-6 text-center relative">
+                          <button 
+                            onClick={() => setActiveMenuId(activeMenuId === app.id ? null : app.id)}
+                            className="p-2 text-slate-300 hover:text-slate-800 transition-colors"
+                          >
+                            <MoreHorizontal size={24} />
+                          </button>
+
+                          <AnimatePresence>
+                            {activeMenuId === app.id && (
+                              <motion.div 
+                                ref={menuRef}
+                                initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                                className="absolute right-0 mt-2 w-40 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 py-3 overflow-hidden"
+                              >
+                                <button className="w-full flex items-center gap-3 px-5 py-2.5 text-[11px] font-black text-slate-600 hover:bg-slate-50 transition-colors uppercase tracking-wider">
+                                  <Eye size={16} className="text-slate-400" /> View
+                                </button>
+                                <button 
+                                  onClick={() => handleAction('reject', app)}
+                                  className="w-full flex items-center gap-3 px-5 py-2.5 text-[11px] font-black text-red-500 hover:bg-red-50 transition-colors uppercase tracking-wider"
+                                >
+                                  <X size={16} /> Reject
+                                </button>
+                                <button 
+                                  onClick={() => handleAction('accept', app)}
+                                  className="w-full flex items-center gap-3 px-5 py-2.5 text-[11px] font-black text-[#84b3af] hover:bg-teal-50 transition-colors uppercase tracking-wider"
+                                >
+                                  <Check size={16} /> Approved
+                                </button>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </td>
+                      </tr>
+                    ))
                   )}
-                </span>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => handleReject(app)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-red-200 bg-red-50 text-red-500 font-semibold text-xs hover:bg-red-100">
-                  <X size={14} strokeWidth={3} /> Reject
-                </button>
-                <button onClick={() => handleAccept(app)} className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600 font-semibold text-xs hover:bg-emerald-100">
-                  <Check size={14} strokeWidth={3} /> Accept
-                </button>
-              </div>
+                </tbody>
+              </table>
             </div>
-          ))}
+          </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* --- Modals --- */}
       <InterviewModal
         isOpen={modalType === 'accept'}
-        onClose={handleClose}
+        onClose={() => setModalType('none')}
         applicantName={selectedApplicant?.name ?? ''}
         jobTitle={job?.title || 'Unknown Position'}
-        onSchedule={async (interviewData: any) => {
-          if (!selectedApplicant?.id) return;
-
-          const response = await api.post(`/jobs/applications/${selectedApplicant.id}/approve`, {
-            interview_date: interviewData.date,
-            interview_time: interviewData.time,
-            interview_type: interviewData.type,
-            interviewer: interviewData.interviewer,
-          });
-
-          const scheduledInterview = response.data?.data?.interview;
-          if (scheduledInterview) {
-            onScheduleSuccess(scheduledInterview);
-          } else {
-            onScheduleSuccess({
-              ...interviewData,
-              id: selectedApplicant.id,
-            });
-          }
-
-          setApplicants((prev) => prev.filter((app) => app.id !== selectedApplicant.id));
+        onSchedule={async (data) => {
+          if (!selectedApplicant) return;
+          const response = await api.post(`/jobs/applications/${selectedApplicant.id}/approve`, data);
+          onScheduleSuccess(response.data?.data?.interview || { ...data, id: selectedApplicant.id });
+          setApplicants(prev => prev.filter(a => a.id !== selectedApplicant.id));
+          setModalType('none');
         }}
       />
-      
+
       <RejectModal
         isOpen={modalType === 'reject'}
-        onClose={handleClose}
+        onClose={() => setModalType('none')}
         applicant={selectedApplicant}
-        onSubmit={async (reason: string) => {
-          if (!selectedApplicant?.id) return;
-
-          await api.post(`/jobs/applications/${selectedApplicant.id}/reject`, {
-            reason,
-          });
-
-          setApplicants((prev) => prev.filter((app) => app.id !== selectedApplicant.id));
+        onSubmit={async (reason) => {
+          if (!selectedApplicant) return;
+          await api.post(`/jobs/applications/${selectedApplicant.id}/reject`, { reason });
+          setApplicants(prev => prev.filter(a => a.id !== selectedApplicant.id));
+          setModalType('none');
         }}
       />
     </div>

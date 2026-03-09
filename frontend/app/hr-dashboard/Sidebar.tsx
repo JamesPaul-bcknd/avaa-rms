@@ -1,110 +1,91 @@
 'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
+import { motion } from 'framer-motion';
 
-// Added "users" and "messages" to the allowed views
 interface SidebarProps {
-  setView: (view: "list" | "details" | "interviews" | "jobs" | "users" | "messages") => void;
-  currentView: "list" | "details" | "interviews" | "jobs" | "users" | "messages";
+  // Add "profile" to the list of allowed strings here
+  setView: (view: "list" | "details" | "interviews" | "jobs" | "users" | "messages" | "profile") => void;
+  currentView: "list" | "details" | "interviews" | "jobs" | "users" | "messages" | "profile";
 }
 
 const Sidebar = ({ setView, currentView }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { logout } = useAuth();
 
-  // Updated 'view' properties: Users and Messages now have their own views
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, view: 'list' as const },
-    { name: 'Users', icon: Users, view: 'users' as const }, 
+    { name: 'Users', icon: Users, view: 'users' as const },
     { name: 'Manage Jobs', icon: Briefcase, view: 'jobs' as const },
-    { name: 'Messages', icon: MessageSquare, view: 'messages' as const },
-    { name: 'Interviews', icon: Calendar, view: 'interviews' as const },
+    { name: 'Interview', icon: Calendar, view: 'interviews' as const },
   ];
 
-  const handleNav = (view: "list" | "details" | "interviews" | "jobs" | "users" | "messages") => {
+  const handleNav = (view: any) => {
     setView(view);
     setMobileOpen(false);
   };
 
   return (
     <>
-      {/* ── Mobile top bar ── */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-[#1e2632] text-white">
-        <div className="flex items-center gap-2 font-bold text-lg">
-          {/* LOGO REPLACEMENT */}
-          <img 
-            src="/icon.png" 
-            alt="Logo" 
-            className="w-8 h-8 object-contain" 
-          />
-          HR Panel
-        </div>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1 text-gray-400 hover:text-white">
+      {/* Mobile Top Bar */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100">
+        <img src="/icon.png" alt="AVAA" className="h-8" />
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 text-gray-500">
           {mobileOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* ── Mobile drawer overlay ── */}
-      {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-black/50" onClick={() => setMobileOpen(false)} />
-      )}
-
-      {/* ── Mobile drawer ── */}
-      <div className={`lg:hidden fixed top-0 left-0 z-40 h-full w-64 bg-[#1e2632] text-gray-400 flex flex-col p-6 pt-16 transform transition-transform duration-300 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <nav className="flex-1 space-y-2 mt-4">
-          {menuItems.map((item) => (
-            <div
-              key={item.name}
-              onClick={() => handleNav(item.view)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
-                currentView === item.view ? 'bg-slate-800 text-green-400' : 'hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <item.icon size={20} />
-              <span className="font-medium">{item.name}</span>
+      {/* Sidebar Container */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex flex-col h-full p-6">
+          {/* Logo Area - Removed background container and invert class */}
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-3">
+              <img src="/icon.png" alt="Logo" className="w-10 h-10 object-contain" />
+              <span className="font-bold text-2xl tracking-tight text-slate-800">AVAA</span>
             </div>
-          ))}
-        </nav>
-      </div>
+            <button className="hidden lg:block text-gray-400 hover:text-slate-600">
+              <ChevronLeft size={20} />
+            </button>
+          </div>
 
-      {/* ── Desktop sidebar ── */}
-      <div className="hidden lg:flex w-64 shrink-0 h-screen bg-[#1e2632] text-gray-400 flex-col p-6 sticky top-0">
-       <div className="flex items-center gap-2 mb-12 text-white font-bold text-xl">
-          {/* LOGO REPLACEMENT */}
-          <img 
-            src="/icon.png" 
-            alt="Logo" 
-            className="w-10 h-10 object-contain" 
-          />
-          HR Panel
-        </div>
+          {/* Navigation */}
+          <nav className="flex-1 space-y-1">
+            {menuItems.map((item) => {
+              const isActive = currentView === item.view || (item.view === 'list' && currentView === 'details');
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => handleNav(item.view)}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+                    isActive 
+                    ? 'bg-[#84b3af] text-white shadow-md shadow-teal-100' 
+                    : 'text-gray-500 hover:bg-gray-50 hover:text-slate-700'
+                  }`}
+                >
+                  <item.icon size={20} className={isActive ? 'text-white' : 'text-gray-400 group-hover:text-slate-600'} />
+                  <span className="font-medium text-sm">{item.name}</span>
+                </button>
+              );
+            })}
+          </nav>
 
-        <nav className="flex-1 space-y-2">
-          {menuItems.map((item) => (
-            <div
-              key={item.name}
-              onClick={() => handleNav(item.view)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer transition-colors ${
-                (currentView === item.view || (item.view === 'list' && currentView === 'details')) 
-                ? 'bg-slate-800 text-green-400' 
-                : 'hover:bg-slate-800 hover:text-white'
-              }`}
+          {/* Bottom Actions */}
+          <div className="pt-6 border-t border-gray-50">
+            <button 
+              onClick={() => logout('/')}
+              className="flex items-center gap-3 px-4 py-3 w-full text-gray-500 hover:text-red-500 transition-colors"
             >
-              <item.icon size={20} />
-              <span className="font-medium">{item.name}</span>
-            </div>
-          ))}
-        </nav>
-
-        <div
-          className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:text-white mt-auto"
-          onClick={() => logout('/')}
-        >
-          <LogOut size={20} />
-          <span>Sign Out</span>
+              <LogOut size={20} />
+              <span className="font-medium text-sm">Sign Out</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </aside>
     </>
   );
 };

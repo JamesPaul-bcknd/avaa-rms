@@ -1,5 +1,6 @@
 'use client';
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -9,11 +10,14 @@ import InterviewsPage from "./InterviewsPage";
 import ManageJobs from "./ManageJobs";
 import UserPage from "./UserPage";
 import HrMessages from "./HrMessages";
+import AccountProfile from "./AccountProfile"; // Import the new component
 import api from "@/lib/axios";
 
 export default function Home() {
   const searchParams = useSearchParams();
-  const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "messages">("list");
+  
+  // 1. Added "profile" to the view union type
+  const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "messages" | "profile">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [jobCount, setJobCount] = useState<number>(0);
 
@@ -23,8 +27,6 @@ export default function Home() {
   // Handle URL parameters on mount
   useEffect(() => {
     const viewParam = searchParams.get('view');
-    const userIdParam = searchParams.get('userId');
-    
     if (viewParam === 'messages') {
       setView('messages');
     }
@@ -69,7 +71,11 @@ export default function Home() {
         {/* 1. Dashboard View */}
         {view === "list" && (
           <>
-            <Header title="HR Dashboard" jobCount={jobCount} />
+            <Header 
+              title="HR Dashboard" 
+              jobCount={jobCount} 
+              onNavigateProfile={() => setView("profile")} // Connected the dropdown click
+            />
             <JobTable onView={handleViewJob} onJobCountChange={setJobCount} />
           </>
         )}
@@ -79,7 +85,7 @@ export default function Home() {
           <ManageJobs />
         )}
 
-        {/* 3. Users View - Now using the UserPage component */}
+        {/* 3. Users View */}
         {view === "users" && (
           <UserPage />
         )}
@@ -104,6 +110,11 @@ export default function Home() {
         {/* 6. Messages View */}
         {view === "messages" && (
           <HrMessages initialUserId={searchParams.get('userId')} />
+        )}
+
+        {/* 7. Account Profile View - Added rendering logic */}
+        {view === "profile" && (
+          <AccountProfile onBack={() => setView("list")} />
         )}
       </main>
     </div>
