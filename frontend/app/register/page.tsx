@@ -168,7 +168,7 @@ export default function RegistrationPage() {
         type: 'success',
         message: 'Your profile has been successfully updated!'
       });
-      router.replace(isJobSeeker ? '/user/dashboard' : '/hr-dashboard');
+      router.replace(isJobSeeker ? '/user/dashboard' : '/hr/dashboard');
     } catch (err: any) {
       const message = err.response?.data?.error || 'Unable to save your profile right now.';
       setModalConfig({
