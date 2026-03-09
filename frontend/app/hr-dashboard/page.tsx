@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import JobTable from "./JobTable";
@@ -9,27 +9,29 @@ import ApplicantsTable from "./ApplicantsTable";
 import InterviewsPage from "./InterviewsPage";
 import ManageJobs from "./ManageJobs";
 import UserPage from "./UserPage";
-import HrMessages from "./HrMessages";
 import AccountProfile from "./AccountProfile"; // Import the new component
 import api from "@/lib/axios";
 
 export default function Home() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   
   // 1. Added "profile" to the view union type
-  const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "messages" | "profile">("list");
+  const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "profile">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
   const [jobCount, setJobCount] = useState<number>(0);
 
   // State to store all scheduled interviews
   const [scheduledInterviews, setScheduledInterviews] = useState<any[]>([]);
 
-  // Handle URL parameters on mount
   useEffect(() => {
-    const viewParam = searchParams.get('view');
-    if (viewParam === 'messages') {
-      setView('messages');
-    }
+    const viewParam = searchParams.get("view");
+    if (!viewParam) return;
+    if (viewParam === "list") setView("list");
+    else if (viewParam === "users") setView("users");
+    else if (viewParam === "jobs") setView("jobs");
+    else if (viewParam === "interviews") setView("interviews");
+    else if (viewParam === "profile") setView("profile");
   }, [searchParams]);
 
   const handleViewJob = (job: any) => {
@@ -75,6 +77,7 @@ export default function Home() {
               title="HR Dashboard" 
               jobCount={jobCount} 
               onNavigateProfile={() => setView("profile")} // Connected the dropdown click
+              onNavigateMessages={() => router.push("/hr-dashboard/messages")}
             />
             <JobTable onView={handleViewJob} onJobCountChange={setJobCount} />
           </>
@@ -107,12 +110,7 @@ export default function Home() {
           />
         )}
 
-        {/* 6. Messages View */}
-        {view === "messages" && (
-          <HrMessages initialUserId={searchParams.get('userId')} />
-        )}
-
-        {/* 7. Account Profile View - Added rendering logic */}
+        {/* 6. Account Profile View - Added rendering logic */}
         {view === "profile" && (
           <AccountProfile onBack={() => setView("list")} />
         )}

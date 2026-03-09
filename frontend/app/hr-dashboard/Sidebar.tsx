@@ -1,18 +1,20 @@
 'use client';
 import { useState } from 'react';
-import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { LayoutDashboard, Users, Briefcase, Calendar, LogOut, Menu, X, ChevronLeft } from 'lucide-react';
 import { useAuth } from '@/lib/useAuth';
-import { motion } from 'framer-motion';
+
+type SidebarView = "list" | "details" | "interviews" | "jobs" | "users" | "profile";
 
 interface SidebarProps {
-  // Add "profile" to the list of allowed strings here
-  setView: (view: "list" | "details" | "interviews" | "jobs" | "users" | "messages" | "profile") => void;
-  currentView: "list" | "details" | "interviews" | "jobs" | "users" | "messages" | "profile";
+  setView?: (view: SidebarView) => void;
+  currentView?: SidebarView;
 }
 
 const Sidebar = ({ setView, currentView }: SidebarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { logout } = useAuth();
+  const router = useRouter();
 
   const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, view: 'list' as const },
@@ -21,8 +23,14 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
     { name: 'Interview', icon: Calendar, view: 'interviews' as const },
   ];
 
-  const handleNav = (view: any) => {
-    setView(view);
+  const handleNav = (view: SidebarView) => {
+    if (setView) {
+      setView(view);
+    } else {
+      const qs =
+        view === "list" ? "" : `?view=${encodeURIComponent(String(view))}`;
+      router.push(`/hr-dashboard${qs}`);
+    }
     setMobileOpen(false);
   };
 
@@ -56,7 +64,8 @@ const Sidebar = ({ setView, currentView }: SidebarProps) => {
           {/* Navigation */}
           <nav className="flex-1 space-y-1">
             {menuItems.map((item) => {
-              const isActive = currentView === item.view || (item.view === 'list' && currentView === 'details');
+              const active = currentView ?? "list";
+              const isActive = active === item.view || (item.view === 'list' && active === 'details');
               return (
                 <button
                   key={item.name}

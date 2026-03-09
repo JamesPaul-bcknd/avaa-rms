@@ -10,6 +10,7 @@ import {
 import CreateJobModal from './CreateJobModal';
 import api from '@/lib/axios';
 import JobMetricsModal from './JobMetricsModal';
+import JobViewEditModal, { type EditableJob } from './JobViewEditModal';
 
 interface Job {
   id: number;
@@ -20,6 +21,10 @@ interface Job {
   apps: number;
   date: string;
   type: string;
+  salary?: string;
+  timeAgo?: string;
+  projectTimeline?: string;
+  onboardingProcess?: string;
   techStack: string[];
   description: string;
   doList?: string[];
@@ -38,6 +43,7 @@ const ManageJobs = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [updateError, setUpdateError] = useState<string>('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [jobToDelete, setJobToDelete] = useState<number | null>(null);
@@ -76,6 +82,10 @@ const ManageJobs = () => {
           apps: job.active_applications_count ?? job.applications_count ?? 0,
           date: job.created_at ? job.created_at.substring(0, 10) : '',
           type: job.type || 'Full-time',
+          salary: job.salary,
+          timeAgo: job.time_ago,
+          projectTimeline: job.project_timeline,
+          onboardingProcess: job.onboarding_process,
           techStack: Array.isArray(job.tags) ? job.tags : [],
           description: job.description,
           doList: Array.isArray(job.what_youll_do) ? job.what_youll_do : [],
@@ -103,6 +113,7 @@ const ManageJobs = () => {
     setSelectedJob(job);
     setIsModalOpen(true);
     setIsEditing(false);
+    setUpdateError('');
     setOpenMenuId(null);
   };
 
@@ -114,19 +125,24 @@ const ManageJobs = () => {
   const handleUpdate = async () => {
     if (!selectedJob) return;
 
+    setUpdateError('');
+    const salaryDigits = String(selectedJob.salary ?? '').replace(/\D+/g, '').trim();
+
     const payload = {
       title: selectedJob.title,
       company: selectedJob.company,
       location: selectedJob.location,
       type: selectedJob.type || 'Full-time',
-      salary: '',
+      salary: salaryDigits ? salaryDigits : null,
       description: selectedJob.description,
       tags: selectedJob.techStack || [],
       what_youll_do: selectedJob.doList || [],
       why_company: selectedJob.whyList || [],
+      project_timeline: selectedJob.projectTimeline ?? '',
+      onboarding_process: selectedJob.onboardingProcess ?? '',
       initials: selectedJob.initials || selectedJob.company?.substring(0, 2)?.toUpperCase(),
       color: selectedJob.color || '#7EB0AB',
-      time_ago: 'Just now',
+      time_ago: selectedJob.timeAgo || 'Just now',
     };
 
     try {
@@ -142,12 +158,21 @@ const ManageJobs = () => {
         doList: Array.isArray(updatedJob.what_youll_do) ? updatedJob.what_youll_do : [],
         whyList: Array.isArray(updatedJob.why_company) ? updatedJob.why_company : [],
         type: updatedJob.type || j.type,
+        salary: updatedJob.salary ?? j.salary,
+        timeAgo: updatedJob.time_ago ?? j.timeAgo,
+        projectTimeline: updatedJob.project_timeline ?? j.projectTimeline,
+        onboardingProcess: updatedJob.onboarding_process ?? j.onboardingProcess,
       } : j)));
       setIsModalOpen(false);
       setIsEditing(false);
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 3000);
-    } catch (error) {
+    } catch (error: any) {
+      const message = error?.response?.data?.message
+        || error?.response?.data?.error
+        || error?.message
+        || 'Failed to update job.';
+      setUpdateError(message);
       console.error('Failed to update job', error);
     }
   };
@@ -192,6 +217,8 @@ const ManageJobs = () => {
       tags: formData.skills || [],
       what_youll_do: [],
       why_company: [],
+      project_timeline: String(formData.timeline ?? ''),
+      onboarding_process: String(formData.onboarding ?? ''),
       initials: (formData.company || 'NJ').substring(0, 2).toUpperCase(),
       color: '#7EB0AB',
       time_ago: 'Just now',
@@ -209,6 +236,10 @@ const ManageJobs = () => {
         apps: 0,
         date: job.created_at ? job.created_at.substring(0, 10) : new Date().toISOString().split('T')[0],
         type: job.type || 'Full-time',
+        salary: job.salary,
+        timeAgo: job.time_ago,
+        projectTimeline: job.project_timeline,
+        onboardingProcess: job.onboarding_process,
         techStack: Array.isArray(job.tags) ? job.tags : [],
         description: job.description,
         doList: Array.isArray(job.what_youll_do) ? job.what_youll_do : [],
@@ -499,95 +530,19 @@ const ManageJobs = () => {
 
       {/* VIEW / EDIT MODAL */}
       {isModalOpen && selectedJob && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in duration-200">
-            <button onClick={() => setIsModalOpen(false)} className="absolute right-6 top-6 p-1.5 rounded-full border border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all">
-              <X size={20} />
-            </button>
-
-            <div className="p-8 pb-4">
-              <div className="flex items-start gap-4">
-                <div className="w-14 h-14 bg-emerald-400 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-sm">
-                  {selectedJob.id}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-4xl font-extrabold text-slate-800 tracking-tight">{selectedJob.company}</h2>
-                    {!isEditing && (
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="px-6 py-1.5 bg-[#4ade80] text-white rounded-full text-sm font-bold shadow-md hover:bg-emerald-500 transition-all mr-12"
-                      >
-                        Edit
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-4 mt-2 text-slate-400 text-sm font-medium">
-                    <span>📍 {selectedJob.location}</span>
-                    <span>🕒 Posted {selectedJob.date}</span>
-                    <span className="bg-slate-100 px-3 py-0.5 rounded-full text-[10px] uppercase font-bold text-slate-500">{selectedJob.type}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-8 pt-2 max-h-[70vh] overflow-y-auto">
-              <div className="border border-slate-200 rounded-[24px] p-8 space-y-8 relative">
-
-                {/* Tech Stack */}
-                <div className="text-center border-b border-slate-100 pb-6">
-                  <h3 className="text-sm font-bold text-slate-700 mb-4">Tech Stack Requirements</h3>
-                  <div className="flex justify-center flex-wrap gap-2 items-center">
-                    {selectedJob.techStack?.map((tech: string, index: number) => (
-                      <span key={index} className="px-4 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold border border-emerald-100 flex items-center gap-2">
-                        {tech}
-                        {isEditing && <X size={12} className="cursor-pointer hover:text-red-500" />}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="font-bold text-slate-800">Position</h4>
-                  {isEditing ? (
-                    <input
-                      className="w-full p-2 text-sm border rounded-lg bg-slate-50 focus:ring-1 focus:ring-emerald-400 outline-none font-medium"
-                      value={selectedJob.title}
-                      onChange={(e) => setSelectedJob({ ...selectedJob, title: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-slate-500 text-sm font-medium italic">*{selectedJob.title}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-bold text-slate-800">Description</h4>
-                  {isEditing ? (
-                    <textarea
-                      rows={4}
-                      className="w-full p-3 text-sm border rounded-xl bg-slate-50 focus:ring-1 focus:ring-emerald-400 outline-none resize-none leading-relaxed"
-                      value={selectedJob.description}
-                      onChange={(e) => setSelectedJob({ ...selectedJob, description: e.target.value })}
-                    />
-                  ) : (
-                    <p className="text-slate-500 text-sm leading-relaxed">{selectedJob.description}</p>
-                  )}
-                </div>
-
-                {isEditing && (
-                  <div className="flex justify-end pt-4">
-                    <button
-                      onClick={handleUpdate}
-                      className="px-8 py-2 bg-[#4ade80] text-white rounded-full text-sm font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-500 transition-all hover:scale-105 active:scale-95"
-                    >
-                      Submit
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        <JobViewEditModal
+          job={selectedJob as EditableJob}
+          isEditing={isEditing}
+          onRequestEdit={() => setIsEditing(true)}
+          onClose={() => {
+            setIsModalOpen(false);
+            setIsEditing(false);
+            setUpdateError('');
+          }}
+          onChange={(next) => setSelectedJob(next as Job)}
+          onSubmit={handleUpdate}
+          errorMessage={updateError}
+        />
       )}
 
       {/* Success Feedback Modal */}

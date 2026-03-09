@@ -10,13 +10,15 @@ interface HeaderProps {
   // Added jobCount to fix the TypeScript error in page.tsx
   jobCount?: number; 
   onNavigateProfile?: () => void;
+  onNavigateMessages?: () => void;
 }
 
 const Header = ({ 
   title = "Dashboard", 
   subtitle, // Removed default here to handle it dynamically
   jobCount = 0,
-  onNavigateProfile 
+  onNavigateProfile,
+  onNavigateMessages,
 }: HeaderProps) => {
   const { user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -63,7 +65,10 @@ const Header = ({
         </div>
 
         {/* Action Icons */}
-        <button className="relative p-2.5 bg-white border border-gray-100 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors flex items-center gap-2">
+        <button
+          onClick={() => onNavigateMessages?.()}
+          className="relative p-2.5 bg-white border border-gray-100 rounded-xl text-gray-500 hover:bg-gray-50 transition-colors flex items-center gap-2"
+        >
           <MessageSquare size={20} />
           <span className="text-sm font-semibold pr-1">Messages</span>
         </button>
