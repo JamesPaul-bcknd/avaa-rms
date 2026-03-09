@@ -11,6 +11,7 @@ class HrProfileController extends Controller
 {
     /**
      * Get all users that HR can view profiles for
+     * SECURITY: Only show users who have applied to recruiter's jobs and been accepted
      */
     public function index(): JsonResponse
     {
@@ -24,10 +25,13 @@ class HrProfileController extends Controller
             ], 403);
         }
 
-        // Show only users who were approved after interviews.
+// Get only users who applied to this recruiter's jobs and were accepted
         $users = User::where('role', 'user')
-            ->whereHas('jobApplications', function ($query) {
-                $query->where('status', 'hired');
+            ->whereHas('jobApplications', function($query) use ($hrUser) {
+                $query->where('status', 'hired')
+                      ->whereHas('jobPosting', function($jobQuery) use ($hrUser) {
+                          $jobQuery->where('user_id', $hrUser->id);
+                      });
             })
             ->select(['id', 'name', 'email', 'phone', 'location', 'bio', 'profile_image', 'skills', 'position', 'created_at', 'updated_at'])
             ->orderBy('created_at', 'desc')
@@ -41,6 +45,7 @@ class HrProfileController extends Controller
 
     /**
      * Get specific user profile details
+     * SECURITY: Only allow viewing users who applied to recruiter's jobs and were accepted
      */
     public function show($userId): JsonResponse
     {
@@ -54,10 +59,14 @@ class HrProfileController extends Controller
             ], 403);
         }
 
+        // Only allow viewing users who applied to this recruiter's jobs and were accepted
         $user = User::where('id', $userId)
             ->where('role', 'user')
-            ->whereHas('jobApplications', function ($query) {
-                $query->where('status', 'hired');
+            ->whereHas('jobApplications', function($query) use ($hrUser) {
+                $query->where('status', 'hired')
+                      ->whereHas('jobPosting', function($jobQuery) use ($hrUser) {
+                          $jobQuery->where('user_id', $hrUser->id);
+                      });
             })
             ->select(['id', 'name', 'email', 'phone', 'location', 'bio', 'profile_image', 'skills', 'position', 'created_at', 'updated_at'])
             ->firstOrFail();
@@ -70,6 +79,7 @@ class HrProfileController extends Controller
 
     /**
      * Get users that HR has conversations with
+     * SECURITY: Only show accepted applicants from recruiter's jobs
      */
     public function getConversableUsers(): JsonResponse
     {
@@ -83,18 +93,23 @@ class HrProfileController extends Controller
             ], 403);
         }
 
-        // Get users that HR has messaged with or can message
+        // Get only accepted applicants from this recruiter's jobs
         $users = User::where('role', 'user')
+            ->whereHas('jobApplications', function($query) use ($hrUser) {
+                $query->where('status', 'accepted')
+                      ->whereHas('jobPosting', function($jobQuery) use ($hrUser) {
+                          $jobQuery->where('user_id', $hrUser->id);
+                      });
+            })
             ->where(function($query) use ($hrUser) {
-                // Users HR has messaged with
+                // Users HR has messaged with or can message (accepted applicants only)
                 $query->whereHas('receivedMessages', function($q) use ($hrUser) {
                     $q->where('sender_id', $hrUser->id);
                 })
-                // Or users who have messaged HR
                 ->orWhereHas('messages', function($q) use ($hrUser) {
                     $q->where('receiver_id', $hrUser->id);
                 })
-                // Or all users (for testing - remove this in production)
+                // Or all accepted applicants (for messaging)
                 ->orWhereRaw('1 = 1');
             })
             ->select(['id', 'name', 'email', 'phone', 'location', 'bio', 'profile_image', 'skills', 'position'])
@@ -109,6 +124,7 @@ class HrProfileController extends Controller
 
     /**
      * Search users by name or email
+     * SECURITY: Only search within accepted applicants from recruiter's jobs
      */
     public function search(Request $request): JsonResponse
     {
@@ -128,9 +144,13 @@ class HrProfileController extends Controller
 
         $query = $request->input('query');
 
+        // Search only within accepted applicants from this recruiter's jobs
         $users = User::where('role', 'user')
-            ->whereHas('jobApplications', function ($hiredQuery) {
-                $hiredQuery->where('status', 'hired');
+            ->whereHas('jobApplications', function($query) use ($hrUser) {
+                $query->where('status', 'hired')
+                      ->whereHas('jobPosting', function($jobQuery) use ($hrUser) {
+                          $jobQuery->where('user_id', $hrUser->id);
+                      });
             })
             ->where(function($q) use ($query) {
                 $q->where('name', 'like', "%{$query}%")

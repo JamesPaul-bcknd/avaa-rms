@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import InterviewModal from './InterviewModal';
 import RejectModal from './RejectModal';
+import ApplicationStatusModal from './ApplicationStatusModal';
 import Header from './Header'; // Importing your shared Header component
 import api from '@/lib/axios';
 
@@ -31,6 +32,7 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
   const [modalType, setModalType] = useState<'none' | 'accept' | 'reject'>('none');
   const [selectedApplicant, setSelectedApplicant] = useState<{ id: number; userId?: number | null; name: string; email: string } | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<number | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [applicants, setApplicants] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -71,6 +73,51 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleAccept = (app: JobApplication) => {
+    setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
+    setModalType('accept');
+  };
+
+  const handleReject = (app: JobApplication) => {
+    setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
+    setModalType('reject');
+  };
+
+  const confirmStatusUpdate = async () => {
+    if (!selectedApplicant || modalType === 'none') return;
+    
+    setIsUpdating(true);
+    try {
+      await updateApplicationStatus(selectedApplicant.id, modalType as 'accepted' | 'rejected');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const updateApplicationStatus = async (applicationId: number, status: 'accepted' | 'rejected') => {
+    try {
+      await api.put(`/jobs/applications/${applicationId}/status`, { status });
+      
+      // Update local state
+      setApplicants(prev => 
+        prev.map(app => 
+          app.id === applicationId 
+            ? { ...app, status }
+            : app
+        )
+      );
+      
+      handleClose();
+    } catch (error) {
+      console.error('Failed to update application status:', error);
+    }
+  };
+  
+  const handleClose = () => { 
+    setModalType('none'); 
+    setSelectedApplicant(null); 
+  };
 
   const handleAction = (type: 'accept' | 'reject', app: JobApplication) => {
     setSelectedApplicant({ id: app.id, userId: app.user_id, name: app.full_name, email: app.email });
@@ -222,6 +269,15 @@ const ApplicantsTable = ({ job, onBack, onScheduleSuccess }: ApplicantsTableProp
       </motion.div>
 
       {/* --- Modals --- */}
+      <ApplicationStatusModal
+        isOpen={modalType !== 'none'}
+        onClose={handleClose}
+        onConfirm={confirmStatusUpdate}
+        action={modalType as 'accept' | 'reject'}
+        applicantName={selectedApplicant?.name ?? ''}
+        isLoading={isUpdating}
+      />
+
       <InterviewModal
         isOpen={modalType === 'accept'}
         onClose={() => setModalType('none')}

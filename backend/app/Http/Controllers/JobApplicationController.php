@@ -229,11 +229,45 @@ class JobApplicationController extends Controller
         return response()->json(['success' => true, 'data' => $application], 201);
     }
 
+    /**
+     * Update application status (accept/reject)
+     */
+    public function updateStatus(Request $request, JobApplication $application): JsonResponse
+    {
+        $this->authorizeRecruiter();
+        $this->authorizeApplicationOwnership($application);
+
+        $request->validate([
+            'status' => 'required|in:accepted,rejected',
+        ]);
+
+        $application->update(['status' => $request->status]);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Application {$request->status} successfully",
+            'data' => $application,
+        ]);
+    }
+
     private function authorizeRecruiter(): void
     {
         $user = Auth::guard('api')->user();
         if (!$user || !in_array($user->role, ['recruiter', 'hr', 'admin'], true)) {
             abort(403, 'Only HR users can manage applications.');
+        }
+    }
+
+    /**
+     * Ensure recruiter can only manage applications for their own job postings
+     */
+    private function authorizeApplicationOwnership(JobApplication $application): void
+    {
+        $user = Auth::guard('api')->user();
+        
+        // Check if this application belongs to a job posting owned by this recruiter
+        if ($application->jobPosting->user_id !== $user->id) {
+            abort(403, 'You can only manage applications for your own job postings.');
         }
     }
 }
