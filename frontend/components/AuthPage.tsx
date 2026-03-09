@@ -54,7 +54,7 @@ export default function AuthPage({ initialMode = 'signin' }: AuthPageProps) {
                 if (user.role === 'admin') {
                     router.replace('/admin/dashboard');
                 } else if (user.role === 'recruiter') {
-                    router.replace('/hr-dashboard');
+                    router.replace('/hr/dashboard');
                 } else {
                     router.replace('/user/dashboard');
                 }
@@ -96,7 +96,7 @@ const handleSignIn = async (e: React.FormEvent) => {
         if (user && user.role === 'admin') {
             router.replace('/admin/dashboard');
         } else if (user && user.role === 'recruiter') {
-            router.replace('/hr-dashboard');
+            router.replace('/hr/dashboard');
         } else {
             router.replace('/user/dashboard');
         }

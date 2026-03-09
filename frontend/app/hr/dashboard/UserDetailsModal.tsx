@@ -19,7 +19,7 @@ const UserDetailsModal = ({ isOpen, onClose, user }: UserDetailsModalProps) => {
 
   const handleMessageUser = () => {
     // Navigate to messages with the specific user
-    router.push('/hr-dashboard?view=messages&userId=' + user.id);
+    router.push('/hr/dashboard?view=messages&userId=' + user.id);
   };
 
   return (

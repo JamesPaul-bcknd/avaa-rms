@@ -82,6 +82,7 @@ Route::group([
         Route::post('/interviews/{jobApplication}/approve', [JobApplicationController::class, 'approveInterview']);
         Route::post('/interviews/{jobApplication}/reject', [JobApplicationController::class, 'rejectInterview']);
         Route::post('/{jobPosting}/apply', [JobApplicationController::class, 'store']);
+        Route::put('/applications/{application}/status', [JobApplicationController::class, 'updateStatus']);
     });
 
     // Protected: Bookmark a specific job

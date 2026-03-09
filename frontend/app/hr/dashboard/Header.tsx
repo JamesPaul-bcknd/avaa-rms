@@ -37,7 +37,7 @@ const Header = ({ title = "Job Applicants", jobCount }: HeaderProps) => {
 
   const handleProfileClick = () => {
     setShowProfileMenu(false);
-    router.push('/hr-dashboard/profile');
+    router.push('/hr/dashboard/profile');
   };
 
   return (

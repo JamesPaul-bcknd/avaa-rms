@@ -81,7 +81,7 @@ const UserPage = () => {
   // Handle messaging a user
   const handleMessageUser = (user: HrUser) => {
     // Navigate to messages with the user ID
-    router.push('/hr-dashboard?view=messages&userId=' + user.id);
+    router.push('/hr/dashboard?view=messages&userId=' + user.id);
   };
 
   // Generate user initials and color

@@ -34,13 +34,19 @@ class JobApplication extends Model
         'interview_date' => 'date',
     ];
 
-    public function jobPosting(): BelongsTo
-    {
-        return $this->belongsTo(JobPosting::class, 'job_posting_id');
-    }
-
+    /**
+     * Get the user that applied.
+     */
     public function applicant(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Get the job posting that was applied to.
+     */
+    public function jobPosting(): BelongsTo
+    {
+        return $this->belongsTo(JobPosting::class, 'job_posting_id');
     }
 }

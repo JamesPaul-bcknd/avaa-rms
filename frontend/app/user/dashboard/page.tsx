@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/useAuth";
 import AuthPromptModal from "@/components/AuthPromptModal";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { messagesApi } from "@/lib/messages";
 import api from "@/lib/axios";
 import MessageModal from '@/components/messaging/MessageModal';
@@ -933,6 +934,30 @@ export default function UserDashboardPage() {
   const { isLoading, isAuthenticated, logout, user } = useAuth({
     redirect: false,
   });
+
+  return (
+    <ProtectedRoute requiredRole="user">
+      <UserDashboardContent 
+        isLoading={isLoading} 
+        isAuthenticated={isAuthenticated} 
+        logout={logout} 
+        user={user} 
+      />
+    </ProtectedRoute>
+  );
+}
+
+function UserDashboardContent({ 
+  isLoading, 
+  isAuthenticated, 
+  logout, 
+  user 
+}: {
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  logout: () => void;
+  user: any;
+}) {
   // 1. ALL STATE DEFINITIONS FIRST
   const [jobs, setJobs] = useState<Job[]>([]); // Define jobs before using it below
   const [searchQuery, setSearchQuery] = useState("");
