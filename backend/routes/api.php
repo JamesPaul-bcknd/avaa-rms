@@ -10,6 +10,7 @@ use App\Http\Controllers\JobPostingController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\HrProfileController;
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -69,7 +70,10 @@ Route::group([
     // Public: View all jobs
     Route::get('/', [DashboardController::class, 'index']); 
 
-    // Recruiter: Manage jobs
+    // Public search route (GET)
+    Route::get('/search', [JobPostingController::class, 'search']);
+
+    // Recruiter: Manage jobs (requires auth)
     Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/my-jobs', [JobPostingController::class, 'index']);
         Route::get('/interviews', [JobApplicationController::class, 'interviews']);
@@ -82,19 +86,14 @@ Route::group([
         Route::post('/interviews/{jobApplication}/approve', [JobApplicationController::class, 'approveInterview']);
         Route::post('/interviews/{jobApplication}/reject', [JobApplicationController::class, 'rejectInterview']);
         Route::post('/{jobPosting}/apply', [JobApplicationController::class, 'store']);
+        Route::post('/{jobId}/bookmark', [BookmarkController::class, 'toggleBookmark']);
     });
-
-    // Protected: Bookmark a specific job
-    // URL: POST /api/jobs/{jobId}/bookmark
-    Route::post('/{jobId}/bookmark', [BookmarkController::class, 'toggleBookmark'])
-        ->middleware('auth:api');
 });
 
 // --- User Bookmarks Management (Prefix: /api/bookmarks) ---
 Route::group([
     'middleware' => 'auth:api',
 ], function () {
-    // URL: GET /api/bookmarks
    Route::get('/bookmarks', [BookmarkController::class, 'index']);
    Route::get('/bookmarks/jobs', [BookmarkController::class, 'getSavedJobs']);
 });

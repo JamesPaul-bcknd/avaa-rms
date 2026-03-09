@@ -63,6 +63,27 @@ class JobPostingController extends Controller
         return response()->json(['success' => true], 200);
     }
 
+    // ---------- NEW SEARCH FUNCTION ----------
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->query('query', '');
+
+        if (!$query) {
+            return response()->json([]);
+        }
+
+        $jobs = JobPosting::query()
+            ->where('title', 'like', "%{$query}%")
+            ->orWhere('company', 'like', "%{$query}%")
+            ->orWhere('location', 'like', "%{$query}%")
+            ->orderBy('created_at', 'desc')
+            ->take(10) // limit to 10 results
+            ->get(['title', 'company', 'location']); // only return necessary fields
+
+        return response()->json($jobs, 200);
+    }
+
+    // ---------- HELPER FUNCTIONS ----------
     private function authorizeRecruiter(): void
     {
         $user = Auth::guard('api')->user();

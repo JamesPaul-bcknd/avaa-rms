@@ -231,18 +231,22 @@ const PARTNER_LOGOS = ["Google", "Microsoft", "Amazon", "Meta", "Apple"];
 
 export default function LandingPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [heroVisible, setHeroVisible] = useState(false);
   const sectionsRef = useRef<HTMLDivElement>(null);
 
+  // Set page title
   useEffect(() => {
     document.title = "AVAA – Find Your Ideal Job";
   }, []);
+
+  // Hero animation
   useEffect(() => {
     const t = setTimeout(() => setHeroVisible(true), 100);
     return () => clearTimeout(t);
   }, []);
 
-  // Scroll-triggered section animations
+  // Scroll-triggered animations
   useEffect(() => {
     const container = sectionsRef.current;
     if (!container) return;
@@ -256,57 +260,44 @@ export default function LandingPage() {
           }
         });
       },
-      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0.1, rootMargin: "0px 0px -40px 0px" }
     );
     sections.forEach((s) => observer.observe(s));
     return () => observer.disconnect();
   }, []);
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Handle search
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      window.location.href = `/user/dashboard`;
+    if (!searchQuery.trim()) return;
+
+    try {
+      // Make sure this matches your Laravel API route
+      const res = await fetch(
+        `http://localhost:8000/api/jobs/search?query=${encodeURIComponent(searchQuery)}`
+      );
+      const data = await res.json();
+      setSearchResults(data);
+    } catch (err) {
+      console.error("Failed to fetch jobs:", err);
+      setSearchResults([]);
     }
   };
 
   return (
-    <div
-      ref={sectionsRef}
-      className="min-h-screen bg-white overflow-x-hidden page-enter"
-    >
-      {/* ═══════════════════════════════════
-                NAVBAR
-               ═══════════════════════════════════ */}
+    <div ref={sectionsRef} className="min-h-screen bg-white overflow-x-hidden page-enter">
+      {/* NAVBAR */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#e5e7eb]">
         <div className="max-w-[1370px] mx-auto px-6 lg:px-10 flex items-center justify-between h-16">
           <Link href="/user/landing" className="flex items-center gap-2.5">
             <Image src="/avaa_logo.png" alt="AVAA" width={32} height={32} />
-            <span className="text-xl font-bold text-[#1e3a4f] tracking-wide">
-              AVAA
-            </span>
+            <span className="text-xl font-bold text-[#1e3a4f] tracking-wide">AVAA</span>
           </Link>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-[#5a6a75]">
-            <a
-              href="#how-it-works"
-              className="hover:text-[#1e3a4f] transition-colors"
-            >
-              How It Works
-            </a>
-            <a
-              href="#categories"
-              className="hover:text-[#1e3a4f] transition-colors"
-            >
-              Categories
-            </a>
-            <a href="#jobs" className="hover:text-[#1e3a4f] transition-colors">
-              Jobs
-            </a>
-            <a
-              href="#testimonials"
-              className="hover:text-[#1e3a4f] transition-colors"
-            >
-              Reviews
-            </a>
+            <a href="#how-it-works" className="hover:text-[#1e3a4f] transition-colors">How It Works</a>
+            <a href="#categories" className="hover:text-[#1e3a4f] transition-colors">Categories</a>
+            <a href="#jobs" className="hover:text-[#1e3a4f] transition-colors">Jobs</a>
+            <a href="#testimonials" className="hover:text-[#1e3a4f] transition-colors">Reviews</a>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -326,34 +317,12 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* ═══════════════════════════════════
-                HERO SECTION
-               ═══════════════════════════════════ */}
+      {/* HERO SECTION */}
       <section className="relative bg-gradient-to-br from-[#f0fdf7] via-white to-[#ecfdf5] overflow-hidden">
-        {/* Decorative dots */}
-        <div
-          className="absolute top-0 right-0 w-72 h-72 opacity-20"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #3CD894 1.5px, transparent 1.5px)",
-            backgroundSize: "24px 24px",
-          }}
-        />
-        <div
-          className="absolute bottom-0 left-0 w-48 h-48 opacity-10"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle, #1e3a4f 1.5px, transparent 1.5px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
-
         <div className="max-w-[1370px] mx-auto px-6 lg:px-10 py-16 md:py-24">
           <div className="grid md:grid-cols-2 gap-20 items-center">
             {/* Left */}
-            <div
-              className={`transition-all duration-700 ${heroVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}
-            >
+            <div className={`transition-all duration-700 ${heroVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`}>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#e6faf0] text-[#2bb87a] text-xs font-semibold mb-6">
                 <span className="w-2 h-2 rounded-full bg-[#3CD894] animate-pulse" />
                 #1 Job Recruitment Platform
@@ -364,26 +333,13 @@ export default function LandingPage() {
                 <span className="text-[#3CD894]">Ideal Job</span>
               </h1>
               <p className="text-base md:text-lg text-[#5a6a75] mb-8 max-w-md leading-relaxed">
-                Explore thousands of job opportunities from top companies. Your
-                next career move starts here.
+                Explore thousands of job opportunities from top companies. Your next career move starts here.
               </p>
 
               {/* Search Bar */}
-              <form
-                onSubmit={handleSearch}
-                className="flex items-center bg-white rounded-2xl shadow-lg shadow-[#3CD894]/10 border border-[#e5e7eb] p-2 mb-8 max-w-lg"
-              >
+              <form onSubmit={handleSearch} className="relative flex flex-col bg-white rounded-2xl shadow-lg shadow-[#3CD894]/10 border border-[#e5e7eb] p-2 mb-8 max-w-lg">
                 <div className="flex items-center gap-2 flex-1 px-3">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#9ca3af"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="11" cy="11" r="8" />
                     <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   </svg>
@@ -394,15 +350,32 @@ export default function LandingPage() {
                     placeholder="Search job titles, companies..."
                     className="flex-1 py-2 text-sm text-[#1a1a1a] placeholder-[#9ca3af] bg-transparent focus:outline-none"
                   />
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
+                    style={{ background: "#3CD894" }}
+                  >
+                    Search
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  className="px-6 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-                  style={{ background: "#3CD894" }}
-                >
-                  Search
-                </button>
+
+                {/* Floating search results card */}
+                {searchResults.length > 0 && (
+                  <div className="absolute left-0 top-full mt-2 w-full bg-white rounded-xl shadow-lg border border-[#e5e7eb] z-10">
+                    {searchResults.map((job, index) => (
+                      <div
+                        key={index}
+                        className="px-4 py-3 hover:bg-[#f0fdf7] cursor-pointer rounded-lg border-b last:border-b-0"
+                      >
+                        <p className="text-sm font-semibold text-[#1e3a4f]">{job.title}</p>
+                        <p className="text-xs text-[#5a6a75]">{job.company} – {job.location}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </form>
+
+
 
               {/* Stats */}
               <div className="flex items-center gap-6 md:gap-10">
