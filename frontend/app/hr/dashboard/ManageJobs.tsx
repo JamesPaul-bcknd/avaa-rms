@@ -63,15 +63,17 @@ const ManageJobs = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await api.get('/jobs/my-jobs');
+        const response = await api.get('/jobs');
         const apiJobs = response.data?.data ?? [];
         const mapped: Job[] = apiJobs.map((job: any) => ({
           id: job.id,
           title: job.title,
           location: job.location,
           company: job.company,
-          status: 'Active',
-          apps: job.applications_count ?? 0,
+          status: typeof job.status === 'string'
+            ? `${job.status.charAt(0).toUpperCase()}${job.status.slice(1).toLowerCase()}`
+            : 'Active',
+          apps: job.active_applications_count ?? job.applications_count ?? 0,
           date: job.created_at ? job.created_at.substring(0, 10) : '',
           type: job.type || 'Full-time',
           techStack: Array.isArray(job.tags) ? job.tags : [],
@@ -175,12 +177,17 @@ const ManageJobs = () => {
   };
 
   const handleCreateJob = async (formData: any) => {
+    const salaryValue = String(formData.salary ?? '').trim();
+    if (salaryValue && !/^\d+$/.test(salaryValue)) {
+      throw new Error('Salary range must contain numbers only.');
+    }
+
     const payload = {
       title: formData.title || 'Untitled Role',
       company: formData.company || 'New Company',
       location: formData.location || 'Remote',
       type: 'Full-time',
-      salary: formData.salary || '',
+      salary: salaryValue,
       description: formData.description || '',
       tags: formData.skills || [],
       what_youll_do: [],
@@ -211,12 +218,17 @@ const ManageJobs = () => {
         recruiter_name: job.recruiter_name,
         recruiter_role: job.recruiter_role,
       };
-      setJobs([newJob, ...jobs]);
+      setJobs((prev) => [newJob, ...prev]);
       setIsCreateModalOpen(false);
       setShowSuccessModal(true);
       setTimeout(() => setShowSuccessModal(false), 3000);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create job', error);
+      const message = error?.response?.data?.message
+        || error?.response?.data?.error
+        || error?.message
+        || 'Unable to create job right now.';
+      throw new Error(message);
     }
   };
 

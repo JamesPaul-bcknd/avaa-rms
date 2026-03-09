@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BookmarkController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\JobPostingController;
+use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\HrProfileController;
 /*
@@ -71,10 +72,15 @@ Route::group([
     // Recruiter: Manage jobs
     Route::group(['middleware' => 'auth:api'], function () {
         Route::get('/my-jobs', [JobPostingController::class, 'index']);
+        Route::get('/interviews', [JobApplicationController::class, 'interviews']);
         Route::post('/', [JobPostingController::class, 'store']);
         Route::put('/{jobPosting}', [JobPostingController::class, 'update']);
         Route::delete('/{jobPosting}', [JobPostingController::class, 'destroy']);
         Route::get('/{jobPosting}/applications', [JobApplicationController::class, 'index']);
+        Route::post('/applications/{jobApplication}/approve', [JobApplicationController::class, 'approve']);
+        Route::post('/applications/{jobApplication}/reject', [JobApplicationController::class, 'reject']);
+        Route::post('/interviews/{jobApplication}/approve', [JobApplicationController::class, 'approveInterview']);
+        Route::post('/interviews/{jobApplication}/reject', [JobApplicationController::class, 'rejectInterview']);
         Route::post('/{jobPosting}/apply', [JobApplicationController::class, 'store']);
         Route::put('/applications/{application}/status', [JobApplicationController::class, 'updateStatus']);
     });

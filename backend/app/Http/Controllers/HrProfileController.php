@@ -25,10 +25,10 @@ class HrProfileController extends Controller
             ], 403);
         }
 
-        // Get only users who applied to this recruiter's jobs and were accepted
+// Get only users who applied to this recruiter's jobs and were accepted
         $users = User::where('role', 'user')
             ->whereHas('jobApplications', function($query) use ($hrUser) {
-                $query->where('status', 'accepted')
+                $query->where('status', 'hired')
                       ->whereHas('jobPosting', function($jobQuery) use ($hrUser) {
                           $jobQuery->where('user_id', $hrUser->id);
                       });
@@ -63,7 +63,7 @@ class HrProfileController extends Controller
         $user = User::where('id', $userId)
             ->where('role', 'user')
             ->whereHas('jobApplications', function($query) use ($hrUser) {
-                $query->where('status', 'accepted')
+                $query->where('status', 'hired')
                       ->whereHas('jobPosting', function($jobQuery) use ($hrUser) {
                           $jobQuery->where('user_id', $hrUser->id);
                       });
@@ -147,7 +147,7 @@ class HrProfileController extends Controller
         // Search only within accepted applicants from this recruiter's jobs
         $users = User::where('role', 'user')
             ->whereHas('jobApplications', function($query) use ($hrUser) {
-                $query->where('status', 'accepted')
+                $query->where('status', 'hired')
                       ->whereHas('jobPosting', function($jobQuery) use ($hrUser) {
                           $jobQuery->where('user_id', $hrUser->id);
                       });
@@ -204,6 +204,7 @@ class HrProfileController extends Controller
      */
     public function updateProfile(Request $request): JsonResponse
     {
+        /** @var \App\Models\User $user */
         $user = Auth::guard('api')->user();
         
         if (!$user) {

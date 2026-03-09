@@ -6,13 +6,16 @@ import { X, Upload, Plus, ChevronDown, DollarSign, Calendar, Users, MapPin } fro
 
 interface CreateJobModalProps {
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
 }
 
 const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isPreview, setIsPreview] = useState(false); // Controls which view is shown
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [salaryError, setSalaryError] = useState('');
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form States to capture data for the preview
   const [formData, setFormData] = useState({
@@ -28,7 +31,61 @@ const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+
+    if (name === 'salary') {
+      // Keep salary numeric-only in the UI.
+      const numericValue = value.replace(/\D/g, '');
+      setFormData((prev) => ({ ...prev, [name]: numericValue }));
+      setSalaryError('');
+      setSubmitError('');
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [name]: value }));
+    setSubmitError('');
+  };
+
+  const validateSalary = (): boolean => {
+    if (!formData.salary) {
+      setSalaryError('');
+      return true;
+    }
+
+    const isNumeric = /^\d+$/.test(formData.salary);
+    if (!isNumeric) {
+      setSalaryError('Salary range must contain numbers only.');
+      return false;
+    }
+
+    setSalaryError('');
+    return true;
+  };
+
+  const handlePreview = () => {
+    if (!validateSalary()) {
+      return;
+    }
+
+    setIsPreview(true);
+  };
+
+  const handleSubmit = async () => {
+    if (!validateSalary()) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError('');
+      await onSubmit(formData);
+    } catch (error: any) {
+      const message = error?.response?.data?.message
+        || error?.response?.data?.error
+        || 'Unable to post job right now. Please try again.';
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -109,7 +166,20 @@ const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-700">Salary Range</label>
-                    <input type="text" name="salary" value={formData.salary} onChange={handleInputChange} placeholder="Salary Range" className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2]" />
+                    <input
+                      type="text"
+                      name="salary"
+                      value={formData.salary}
+                      onChange={handleInputChange}
+                      onBlur={validateSalary}
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="Salary Range"
+                      className={`w-full px-4 py-2.5 bg-slate-50/50 border rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2] ${salaryError ? 'border-red-300' : 'border-slate-200'}`}
+                    />
+                    {salaryError && (
+                      <p className="text-xs text-red-500 mt-1">{salaryError}</p>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-bold text-slate-700">Skills Required</label>
@@ -148,7 +218,7 @@ const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
                 </div>
 
                 <div className="flex justify-end pt-4">
-                  <button onClick={() => setIsPreview(true)} className="px-8 py-2.5 bg-[#8abeb2] text-white rounded-xl font-bold text-sm hover:bg-[#79a89d] transition-all shadow-md">
+                  <button onClick={handlePreview} className="px-8 py-2.5 bg-[#8abeb2] text-white rounded-xl font-bold text-sm hover:bg-[#79a89d] transition-all shadow-md">
                     Create Job
                   </button>
                 </div>
@@ -238,10 +308,17 @@ const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
                 <button onClick={() => setIsPreview(false)} className="px-6 py-2.5 border border-slate-300 text-slate-500 rounded-xl font-bold text-sm hover:bg-slate-50">
                   Edit
                 </button>
-                <button onClick={() => onSubmit(formData)} className="px-10 py-2.5 bg-[#8abeb2] text-white rounded-xl font-bold text-sm hover:bg-[#79a89d] transition-all shadow-md">
-                  Post Job
+                <button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  className="px-10 py-2.5 bg-[#8abeb2] text-white rounded-xl font-bold text-sm hover:bg-[#79a89d] transition-all shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Posting...' : 'Post Job'}
                 </button>
               </div>
+              {submitError && (
+                <p className="text-sm text-red-500 text-right mt-3">{submitError}</p>
+              )}
             </div>
           )}
         </div>
