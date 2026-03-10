@@ -64,7 +64,17 @@ export default function Home() {
   };
 
   const handleScheduleSuccess = (newInterview: any) => {
-    setScheduledInterviews((prev) => [...prev, newInterview]);
+    setScheduledInterviews((prev) => [...prev, {
+      id: newInterview.id || Date.now(),
+      candidateName: newInterview.candidateName,
+      role: newInterview.role,
+      date: newInterview.date,
+      time: newInterview.time,
+      interviewer: newInterview.interviewer,
+      type: newInterview.type,
+      googleMeetLink: newInterview.googleMeetLink,  // ← this is the key one
+      status: "Active"
+    }]);
   };
 
   const returnToChat = () => {

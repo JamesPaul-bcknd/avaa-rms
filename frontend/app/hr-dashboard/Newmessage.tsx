@@ -558,7 +558,7 @@ export default function Home() {
         <Header
           title={view === "list" ? "Dashboard" : view === "details" ? "Job Details" : view}
           jobCount={jobCount}
-          onMessagesClick={() => setView("messages")}
+          
         />
 
         <div className="p-6 lg:p-10 flex-1">
