@@ -1,11 +1,13 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useState, useRef, useEffect } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import api from '@/lib/axios';
 
-export default function VerifyOtpPage() {
+function VerifyOtpPageContent() {
     const [otp, setOtp] = useState<string[]>(Array(6).fill(''));
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
@@ -14,7 +16,7 @@ export default function VerifyOtpPage() {
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
     const router = useRouter();
     const searchParams = useSearchParams();
-    const email = searchParams.get('email') || '';
+    const email = searchParams?.get('email') || '';
 
     useEffect(() => { document.title = 'Verify Email | AVAA'; }, []);
 
@@ -188,5 +190,13 @@ export default function VerifyOtpPage() {
                 </p>
             </div>
         </div>
+    );
+}
+
+export default function VerifyOtpPage() {
+    return (
+        <Suspense fallback={null}>
+            <VerifyOtpPageContent />
+        </Suspense>
     );
 }

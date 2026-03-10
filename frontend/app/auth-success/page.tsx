@@ -9,7 +9,7 @@ function AuthSuccessHandler() {
 
     useEffect(() => {
         // 1. Get the token from the URL (e.g., ?token=ey...)
-        const token = searchParams.get('token');
+        const token = searchParams?.get('token');
 
         if (token) {
             // 2. Store the token in localStorage
