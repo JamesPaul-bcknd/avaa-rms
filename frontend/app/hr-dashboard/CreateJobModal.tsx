@@ -1,251 +1,348 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
-import Image from "next/image";
-import { X, Upload, Plus, ChevronDown, DollarSign, Calendar, Users, MapPin } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Upload, Plus, XCircle } from 'lucide-react';
 
 interface CreateJobModalProps {
   onClose: () => void;
   onSubmit: (data: any) => void;
 }
 
+const PRESET_SKILLS = ['React', 'TypeScript', 'Node.js', 'Python', 'AWS', 'Vue', 'GraphQL', 'Docker', 'Kubernetes', 'PostgreSQL', 'Figma', 'Go', 'Rust', 'Swift'];
+const PRESET_TAGS = ['Full-time', 'Part-time', 'Remote', 'Hybrid', 'On-site', 'Contract', 'Internship', 'Senior', 'Junior', 'Mid-level'];
+
+function ComboBox({
+  label,
+  placeholder,
+  items,
+  selected,
+  onAdd,
+  onRemove,
+}: {
+  label: string;
+  placeholder: string;
+  items: string[];
+  selected: string[];
+  onAdd: (val: string) => void;
+  onRemove: (val: string) => void;
+}) {
+  const [input, setInput] = useState('');
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const filtered = items.filter(
+    s => s.toLowerCase().includes(input.toLowerCase()) && !selected.includes(s)
+  );
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const add = (val: string) => {
+    const t = val.trim();
+    if (t && !selected.includes(t)) onAdd(t);
+    setInput('');
+    setOpen(false);
+  };
+
+  return (
+    <div>
+      {label && <label className="block text-sm font-semibold text-slate-700 mb-1.5">{label}</label>}
+      <div
+        ref={wrapRef}
+        className="relative border border-slate-200 rounded-lg bg-white focus-within:border-[#4c8479] focus-within:ring-1 focus-within:ring-[#4c8479]/30 transition-all"
+      >
+        <div className="flex flex-wrap gap-1.5 px-3 pt-2.5 pb-0">
+          {selected.map(s => (
+            <span key={s} className="inline-flex items-center gap-1 bg-[#4c8479]/10 text-[#4c8479] text-xs font-semibold px-2.5 py-1 rounded-full">
+              {s}
+              <button type="button" onClick={() => onRemove(s)} className="hover:text-red-400 transition-colors">
+                <XCircle size={12} />
+              </button>
+            </span>
+          ))}
+        </div>
+        <div className="flex items-center px-3 py-2 gap-2">
+          <input
+            type="text"
+            value={input}
+            onChange={e => { setInput(e.target.value); setOpen(true); }}
+            onFocus={() => setOpen(true)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' && input.trim()) { e.preventDefault(); add(input); }
+              if (e.key === 'Escape') setOpen(false);
+            }}
+            placeholder={placeholder}
+            className="flex-1 text-sm text-slate-700 placeholder-slate-300 outline-none bg-transparent min-w-0"
+          />
+          {input.trim() && (
+            <button type="button" onClick={() => add(input)}
+              className="shrink-0 flex items-center gap-0.5 text-xs text-[#4c8479] font-bold hover:underline whitespace-nowrap">
+              <Plus size={12} /> Add
+            </button>
+          )}
+        </div>
+        {open && filtered.length > 0 && (
+          <div className="absolute left-0 right-0 top-full z-50 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg overflow-y-auto max-h-44">
+            {filtered.map(s => (
+              <button key={s} type="button" onMouseDown={() => add(s)}
+                className="w-full text-left px-4 py-2 text-sm text-slate-700 hover:bg-[#4c8479]/5 hover:text-[#4c8479] transition-colors">
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 const CreateJobModal = ({ onClose, onSubmit }: CreateJobModalProps) => {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [isPreview, setIsPreview] = useState(false); // Controls which view is shown
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form States to capture data for the preview
   const [formData, setFormData] = useState({
     title: '',
     company: '',
     location: '',
     salary: '',
-    skills: ['React', 'Node.JS', 'AWS (EC2, Lambda)'], // Placeholder skills
+    skills: [] as string[],
+    tags: [] as string[],
     description: '',
+    keyResponsibility: '',
+    idealQualifications: '',
+    projectTimeline: '',
+    onboardingProcess: '',
     limit: '1',
-    status: 'Active'
+    status: 'Active',
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleSalary = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setFormData(prev => ({ ...prev, salary: e.target.value.replace(/[^0-9\-]/g, '') }));
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setLogoPreview(reader.result as string);
-      };
+      reader.onloadend = () => setLogoPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
+  const handleSubmit = () => {
+    if (!formData.title.trim() || !formData.company.trim()) return;
+    onSubmit(formData);
+  };
+
+  const inputCls = 'w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm text-slate-700 placeholder-slate-300 focus:outline-none focus:border-[#4c8479] focus:ring-1 focus:ring-[#4c8479]/30 transition-all bg-white';
+  const labelCls = 'block text-sm font-semibold text-slate-700 mb-1.5';
+  const textareaCls = `${inputCls} resize-none`;
+
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-5xl rounded-[24px] shadow-2xl overflow-hidden relative animate-in fade-in zoom-in duration-200">
-        
-        {/* Dynamic Header based on state */}
-        <div className="px-10 pt-8 pb-2 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">
-              {isPreview ? `Job Details: ${formData.title || 'Untitled Position'}` : 'Create New Job Posting'}
-            </h2>
-            {isPreview && formData.location && (
-              <div className="flex items-center gap-1 text-slate-500 text-sm mt-0.5">
-                <MapPin size={14} /> {formData.location}
-              </div>
-            )}
+    <div className="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+      <div
+        className="bg-white w-full rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ maxWidth: '820px', maxHeight: '90vh', animation: 'modalIn 0.18s ease' }}
+      >
+        {/* ── Solid teal header ── */}
+        <div className="relative shrink-0" style={{ backgroundColor: '#4c8479', height: '108px' }}>
+          {/* Logo */}
+          <div className="absolute left-8" style={{ bottom: '-36px' }}>
+            <input type="file" ref={fileInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center overflow-hidden transition-all group"
+              style={{
+                width: '72px',
+                height: '72px',
+                borderRadius: '14px',
+                border: '4px solid white',
+                background: 'white',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+              }}
+            >
+              {logoPreview ? (
+                <img src={logoPreview} alt="logo" className="w-full h-full object-cover" />
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-slate-300 group-hover:text-[#4c8479] transition-colors">
+                  <Upload size={16} />
+                  <span style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.04em' }}>LOGO</span>
+                </div>
+              )}
+            </button>
           </div>
-          <button 
-            onClick={onClose} 
-            className="group p-1.5 rounded-full border border-slate-300 text-slate-500 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all duration-200 ease-in-out"
+
+          {/* Title in header */}
+          <div className="absolute" style={{ bottom: '16px', left: '108px' }}>
+            <p className="font-bold text-white" style={{ fontSize: '16px' }}>Post a New Job</p>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginTop: '2px' }}>Fill in the details to publish a listing</p>
+          </div>
+
+          {/* Close */}
+          <button
+            onClick={onClose}
+            className="absolute flex items-center justify-center transition-colors"
+            style={{
+              top: '14px', right: '14px',
+              width: '32px', height: '32px',
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.18)',
+            }}
+            onMouseOver={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.28)')}
+            onMouseOut={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.18)')}
           >
-            <X size={20} className="transition-transform duration-200 group-hover:rotate-90" />
+            <X size={15} className="text-white" />
           </button>
         </div>
-        
-        <div className="mx-10 border-b border-slate-200 mb-6"></div>
 
-        <div className="px-10 pb-10 max-h-[80vh] overflow-y-auto">
-          {!isPreview ? (
-            /* --- STEP 1: CREATE JOB FORM (Your original code) --- */
-            <div className="flex flex-col md:flex-row gap-12">
-              <div className="flex flex-col items-center pt-4">
-                <input type="file" ref={fileInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
-                <div onClick={() => fileInputRef.current?.click()} className="w-36 h-36 border-2 border-dashed border-slate-300 rounded-full flex flex-col items-center justify-center overflow-hidden bg-slate-50 hover:bg-slate-100 cursor-pointer transition-all group mb-4 relative">
-                  {logoPreview ? (
-                    <Image src={logoPreview} alt="Company logo preview" fill className="object-cover" unoptimized sizes="144px" />
-                  ) : (
-                    <>
-                      <Upload size={28} className="mb-1 text-slate-400 group-hover:text-[#8abeb2]" />
-                      <span className="text-[11px] font-medium text-slate-400">Upload Logo</span>
-                    </>
-                  )}
-                </div>
-                <button className="flex items-center gap-1.5 px-4 py-1.5 bg-white border border-slate-200 text-slate-500 rounded-full text-xs font-bold hover:shadow-sm transition-all">
-                  <Plus size={14} /> Add tags
-                </button>
+        {/* ── Scrollable body ── */}
+        <div className="overflow-y-auto flex-1 px-8 pb-7" style={{ paddingTop: '56px' }}>
+          <div className="space-y-4">
+
+            {/* Tags */}
+            <ComboBox
+              label="Tags"
+              placeholder="Add tags (e.g. Remote, Full-time, Senior…)"
+              items={PRESET_TAGS}
+              selected={formData.tags}
+              onAdd={v => setFormData(p => ({ ...p, tags: [...p.tags, v] }))}
+              onRemove={v => setFormData(p => ({ ...p, tags: p.tags.filter(t => t !== v) }))}
+            />
+
+            <div className="border-t border-slate-100" />
+
+            {/* Job Title */}
+            <div>
+              <label className={labelCls}>Job Title</label>
+              <input type="text" name="title" value={formData.title} onChange={handleChange}
+                placeholder="e.g. Senior Frontend Developer" className={inputCls} />
+            </div>
+
+            {/* Company + Location */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Company</label>
+                <input type="text" name="company" value={formData.company} onChange={handleChange}
+                  placeholder="Company name" className={inputCls} />
               </div>
+              <div>
+                <label className={labelCls}>Location</label>
+                <input type="text" name="location" value={formData.location} onChange={handleChange}
+                  placeholder="e.g. Remote · New York" className={inputCls} />
+              </div>
+            </div>
 
-              <div className="flex-1 space-y-5">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-slate-700">Job Title</label>
-                  <input type="text" name="title" value={formData.title} onChange={handleInputChange} placeholder="Job Title" className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2] transition-all placeholder:text-slate-400" />
-                </div>
+            {/* Salary + Skills */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Salary Range</label>
+                <input type="text" name="salary" value={formData.salary} onChange={handleSalary}
+                  placeholder="e.g. 80000-120000" className={inputCls} />
+              </div>
+              <ComboBox
+                label="Skills Required"
+                placeholder="Select or type a skill…"
+                items={PRESET_SKILLS}
+                selected={formData.skills}
+                onAdd={v => setFormData(p => ({ ...p, skills: [...p.skills, v] }))}
+                onRemove={v => setFormData(p => ({ ...p, skills: p.skills.filter(s => s !== v) }))}
+              />
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Company</label>
-                    <input type="text" name="company" value={formData.company} onChange={handleInputChange} placeholder="Company" className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2]" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Location</label>
-                    <input type="text" name="location" value={formData.location} onChange={handleInputChange} placeholder="Location" className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2]" />
-                  </div>
-                </div>
+            <div className="border-t border-slate-100" />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Salary Range</label>
-                    <input type="text" name="salary" value={formData.salary} onChange={handleInputChange} placeholder="Salary Range" className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2]" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Skills Required</label>
-                    <div className="relative">
-                      <select className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2] appearance-none">
-                        <option value="" disabled selected>Select Skills</option>
-                        <option>React</option>
-                        <option>TypeScript</option>
-                        <option>Tailwind CSS</option>
-                      </select>
-                      <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
+            {/* Description */}
+            <div>
+              <label className={labelCls}>Job Description</label>
+              <textarea name="description" value={formData.description} onChange={handleChange}
+                placeholder="Briefly describe the role and its goals…" rows={2} className={textareaCls} />
+            </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-bold text-slate-700">Job Description</label>
-                  <textarea rows={3} name="description" value={formData.description} onChange={handleInputChange} placeholder="Describe the role..." className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2] resize-none" />
-                </div>
+            {/* Key Responsibility + Ideal Qualifications */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Key Responsibility</label>
+                <textarea name="keyResponsibility" value={formData.keyResponsibility} onChange={handleChange}
+                  placeholder="Main day-to-day responsibilities…" rows={3} className={textareaCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Ideal Qualifications</label>
+                <textarea name="idealQualifications" value={formData.idealQualifications} onChange={handleChange}
+                  placeholder="Required skills, experience…" rows={3} className={textareaCls} />
+              </div>
+            </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Application Limit</label>
-                    <input type="number" name="limit" value={formData.limit} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2]" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-slate-700">Status</label>
-                    <div className="relative">
-                      <select name="status" value={formData.status} onChange={handleInputChange} className="w-full px-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-lg text-sm text-slate-700 outline-none focus:ring-2 focus:ring-[#8abeb2]/20 focus:border-[#8abeb2] appearance-none">
-                        <option>Active</option>
-                        <option>Inactive</option>
-                      </select>
-                      <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                    </div>
-                  </div>
-                </div>
+            {/* Timeline + Onboarding */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Project Timeline</label>
+                <textarea name="projectTimeline" value={formData.projectTimeline} onChange={handleChange}
+                  placeholder="Expected duration or milestones…" rows={3} className={textareaCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Application & Onboarding Process</label>
+                <textarea name="onboardingProcess" value={formData.onboardingProcess} onChange={handleChange}
+                  placeholder="Hiring funnel and onboarding steps…" rows={3} className={textareaCls} />
+              </div>
+            </div>
 
-                <div className="flex justify-end pt-4">
-                  <button onClick={() => setIsPreview(true)} className="px-8 py-2.5 bg-[#8abeb2] text-white rounded-xl font-bold text-sm hover:bg-[#79a89d] transition-all shadow-md">
-                    Create Job
-                  </button>
+            <div className="border-t border-slate-100" />
+
+            {/* Limit + Status */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Application Limit</label>
+                <input type="number" name="limit" value={formData.limit} onChange={handleChange} min={1}
+                  className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Status</label>
+                <div className="relative">
+                  <select name="status" value={formData.status} onChange={handleChange}
+                    className={`${inputCls} appearance-none cursor-pointer`}>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                  <svg className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none w-4 h-4"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
               </div>
             </div>
-          ) : (
-            /* --- STEP 2: PREVIEW / VIEW DETAILS MODAL (Matching image_384878.png) --- */
-            <div className="animate-in slide-in-from-bottom-4 duration-300">
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-8">
-                
-                {/* Logo and Tags Section */}
-                <div className="md:col-span-3 flex flex-col items-center gap-4">
-                  <div className="w-40 h-40 rounded-full bg-[#1e454e] flex items-center justify-center text-white text-4xl font-bold overflow-hidden relative">
-                    {logoPreview ? (
-                      <Image src={logoPreview} alt="Company logo" fill className="object-cover" unoptimized sizes="160px" />
-                    ) : (
-                      formData.company?.substring(0, 2).toUpperCase() || "TN"
-                    )}
-                  </div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {['React', 'API Design', 'TechStack', 'Leadership'].map(tag => (
-                      <span key={tag} className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[10px] font-bold border border-slate-200">
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+          </div>
+        </div>
 
-                {/* Info Cards Grid */}
-                <div className="md:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Job Overview Card */}
-                  <div className="p-6 border border-slate-100 rounded-[20px] shadow-sm bg-white flex flex-col items-center">
-                    <h3 className="text-slate-800 font-bold tracking-[0.2em] mb-6 uppercase">Job Overview</h3>
-                    <div className="w-full space-y-4">
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <div className="p-1.5 border border-slate-900 rounded-md"><DollarSign size={16} /></div>
-                        <span className="text-sm font-semibold">Salary Range: {formData.salary || "$120k - $160k"}</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <div className="p-1.5 border border-slate-900 rounded-md"><Calendar size={16} /></div>
-                        <span className="text-sm font-semibold">Posted Date: 2026-02-07</span>
-                      </div>
-                      <div className="flex items-center gap-3 text-slate-600">
-                        <div className="p-1.5 border border-slate-900 rounded-md"><Users size={16} /></div>
-                        <span className="text-sm font-semibold">Application Limit: {formData.limit}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tech Stack Card */}
-                  <div className="p-6 border border-slate-100 rounded-[20px] shadow-sm bg-white flex flex-col items-center">
-                    <h3 className="text-slate-800 font-bold tracking-[0.2em] mb-6 uppercase">Technical Requirements</h3>
-                    <div className="w-full space-y-4">
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">*Must-Have Skills:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {['React', 'Node.JS', 'AWS (EC2, Lambda)'].map(skill => (
-                            <span key={skill} className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-[10px] font-bold border border-slate-200">{skill}</span>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">*Preferred Skills:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {['Docker', 'UI/UX Principles'].map(skill => (
-                            <span key={skill} className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md text-[10px] font-bold border border-slate-200">{skill}</span>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Job Description Section */}
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold text-slate-800">JOB DESCRIPTION</h3>
-                <div className="p-6 border border-slate-200 rounded-[20px] bg-white">
-                  <p className="text-slate-600 text-sm leading-relaxed">
-                    {formData.description || "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat..."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Final Submit Button */}
-              <div className="flex justify-end pt-8 gap-4">
-                <button onClick={() => setIsPreview(false)} className="px-6 py-2.5 border border-slate-300 text-slate-500 rounded-xl font-bold text-sm hover:bg-slate-50">
-                  Edit
-                </button>
-                <button onClick={() => onSubmit(formData)} className="px-10 py-2.5 bg-[#8abeb2] text-white rounded-xl font-bold text-sm hover:bg-[#79a89d] transition-all shadow-md">
-                  Post Job
-                </button>
-              </div>
-            </div>
-          )}
+        {/* ── Footer ── */}
+        <div className="px-8 py-4 border-t border-slate-100 bg-white flex justify-end gap-3 shrink-0 rounded-b-2xl">
+          <button onClick={onClose}
+            className="px-5 py-2.5 border border-slate-200 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-50 transition-all">
+            Cancel
+          </button>
+          <button onClick={handleSubmit}
+            className="px-7 py-2.5 text-white rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
+            style={{ backgroundColor: '#4c8479' }}
+            onMouseOver={e => (e.currentTarget.style.backgroundColor = '#3d6e64')}
+            onMouseOut={e => (e.currentTarget.style.backgroundColor = '#4c8479')}
+          >
+            Create Job
+          </button>
         </div>
       </div>
+
+      <style>{`
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.98) translateY(6px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
+        }
+      `}</style>
     </div>
   );
 };
