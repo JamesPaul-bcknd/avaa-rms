@@ -9,7 +9,7 @@ import api from "@/lib/axios";
 import MessageModal from "@/components/messaging/MessageModal";
 
 import { Job } from "./types";
-import DashboardNavbar from "./components/DashboardNavbar";
+import DashboardNavbar from "./components/TopBar";
 import FilterSidebar from "./components/FilterSidebar";
 import JobCard from "./components/JobCard";
 import JobDetailPanel from "./components/JobDetailPanel";

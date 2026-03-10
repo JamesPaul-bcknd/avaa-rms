@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useState, useRef } from "react";
 import { Job, ApplyFormData, APPLY_STEPS } from "../types";
 import api from "@/lib/axios";

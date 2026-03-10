@@ -1,8 +1,6 @@
 'use client';
 
 import {
-  Search,
-  MessageSquare,
   Bell,
   Settings,
   LogOut
@@ -14,19 +12,17 @@ import { useRouter } from 'next/navigation';
 interface HeaderProps {
   title?: string;
   jobCount?: number;
-  onMessagesClick?: () => void;
-  onSettingsClick?: () => void; 
+  onSettingsClick?: () => void;
   onNotificationsClick?: () => void;
 }
 
-const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClick, onNotificationsClick }: HeaderProps) => {
+const Header = ({ title = "Dashboard", jobCount, onSettingsClick, onNotificationsClick }: HeaderProps) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, logout } = useAuth();
   const router = useRouter();
 
-  // Using the name from your screenshot for the default
   const userName = user?.name || 'Catherine';
   const userInitials = userName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'C';
 
@@ -47,17 +43,9 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
   const handleSettingsClick = () => {
     setShowProfileMenu(false);
     if (onSettingsClick) {
-      onSettingsClick(); 
+      onSettingsClick();
     } else {
       router.push('/hr-dashboard/profile');
-    }
-  };
-
-  const handleMessagesClick = () => {
-    if (onMessagesClick) {
-      onMessagesClick();
-    } else {
-      router.push('/hr-dashboard?view=messages');
     }
   };
 
@@ -74,36 +62,17 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
         ) : null}
       </div>
 
-      {/* Right Side: Actions Cluster */}
+      {/* Right Side: Bell + Profile */}
       <div className="flex items-center gap-4">
 
-        {/* Search Bar */}
-        <div className="relative hidden sm:block">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={15} />
-          <input
-            type="text"
-            placeholder="Search jobs..."
-            className="pl-9 pr-4 py-2 bg-slate-50/50 border border-slate-200 rounded-xl w-64 text-sm focus:outline-none focus:ring-1 focus:ring-[#53968b] focus:border-[#53968b] text-slate-700 placeholder-slate-400 transition-all"
-          />
-        </div>
-
-        {/* Messages Button */}
-        <button
-          onClick={handleMessagesClick}
-          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-sm"
-        >
-          <MessageSquare size={16} className="text-slate-500" />
-          Messages
-        </button>
-
         {/* Notification Bell */}
-<button 
-  onClick={onNotificationsClick}
-  className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full focus:outline-none transition-colors"
->
-  <Bell size={20} />
-  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-</button>
+        <button
+          onClick={onNotificationsClick}
+          className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-full focus:outline-none transition-colors"
+        >
+          <Bell size={20} />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+        </button>
 
         {/* Vertical Divider */}
         <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block"></div>
@@ -119,7 +88,6 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
             </div>
           </button>
 
-          {/* Profile Dropdown Menu */}
           {showProfileMenu && (
             <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="p-4 border-b border-slate-50 flex items-center gap-3 bg-slate-50/50">
@@ -133,8 +101,6 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
               </div>
 
               <div className="py-2">
-                
-                {/* Account Settings Link */}
                 <button
                   onClick={handleSettingsClick}
                   className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-slate-600 hover:bg-slate-50 hover:text-[#53968b] transition-colors"
@@ -144,8 +110,7 @@ const Header = ({ title = "Dashboard", jobCount, onMessagesClick, onSettingsClic
                 </button>
 
                 <div className="border-t border-slate-50 my-1 mx-4"></div>
-                
-                {/* Sign Out */}
+
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center gap-3 px-5 py-2.5 text-[13px] font-bold text-red-500 hover:bg-red-50 transition-colors"
