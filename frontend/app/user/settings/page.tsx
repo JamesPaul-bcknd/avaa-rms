@@ -46,7 +46,7 @@ export default function SettingsPage() {
     const [showRatings, setShowRatings] = useState(true);
     const [hideProfile, setHideProfile] = useState(false);
     
-
+const [uploadedFiles, setUploadedFiles] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState('Account');
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
@@ -583,6 +583,281 @@ export default function SettingsPage() {
                     </div>
                 ))}
             </div>
+        </section>
+
+
+    </div>
+)}
+
+{/* 2. JOB PREFERENCES TAB CONTENT */}
+{activeTab === 'Job Preferences' && (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="mb-2">
+            <h2 className="text-xl font-bold text-gray-900">Job Preferences</h2>
+            <p className="text-sm text-gray-400">Refine your matching criteria to find the perfect VA roles.</p>
+        </div>
+
+        {/* --- Preferred Roles --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-4">
+            <div>
+                <h3 className="text-sm font-bold text-gray-900">Preferred Roles</h3>
+                <p className="text-xs text-gray-500">Select the roles that best describe your professional expertise.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {['Executive Assistant', 'Project Manager', 'Operations Lead'].map((role) => (
+                    <span key={role} className="flex items-center gap-2 px-4 py-2 bg-[#F9FBFB] border border-[#7EB0AB]/30 text-[#4A726E] text-sm font-medium rounded-full">
+                        {role}
+                        <button className="hover:text-red-500 text-lg">×</button>
+                    </span>
+                ))}
+                <button className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 text-gray-400 text-sm rounded-full hover:bg-gray-50">
+                    + Add Role
+                </button>
+            </div>
+        </section>
+
+        {/* --- Core Skills --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-4">
+            <div>
+                <h3 className="text-sm font-bold text-gray-900">Core Skills</h3>
+                <p className="text-xs text-gray-500">Choose skills that represent your core strengths to improve job matching.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+                {['Executive Support', 'Calendar Management', 'Project Coordination', 'CRM (Salesforce)', 'Expense Tracking', 'Technical Writing', 'Notion & Slack'].map((skill) => (
+                    <span key={skill} className="flex items-center gap-2 px-4 py-2 bg-[#F9FBFB] border border-[#7EB0AB]/30 text-[#4A726E] text-sm font-medium rounded-full">
+                        {skill}
+                        <button className="hover:text-red-500 text-lg">×</button>
+                    </span>
+                ))}
+                <button className="flex items-center gap-2 px-4 py-2 border border-dashed border-gray-300 text-gray-400 text-sm rounded-full hover:bg-gray-50">
+                    + Add Skill
+                </button>
+            </div>
+        </section>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* --- Employment Type --- */}
+            <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-4">
+                <div>
+                    <h3 className="text-sm font-bold text-gray-900">Employment Type</h3>
+                    <p className="text-xs text-gray-500">Choose your ideal weekly commitment and project load.</p>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="p-4 border-2 border-[#7EB0AB] bg-[#F9FBFB] rounded-xl text-center">
+                        <div className="text-xl mb-1">📅</div>
+                        <p className="text-sm font-bold text-[#4A726E]">Full-time</p>
+                        <p className="text-[10px] text-gray-400">40h/week, primary focus</p>
+                    </div>
+                    <div className="p-4 border border-gray-100 rounded-xl text-center hover:bg-gray-50 cursor-pointer">
+                        <div className="text-xl mb-1">⏱️</div>
+                        <p className="text-sm font-bold text-gray-900">Part-time</p>
+                        <p className="text-[10px] text-gray-400">20h/week, flexible focus</p>
+                    </div>
+                    <div className="p-4 border border-gray-100 rounded-xl text-center hover:bg-gray-50 cursor-pointer">
+                        <div className="text-xl mb-1">📋</div>
+                        <p className="text-sm font-bold text-gray-900">Contract</p>
+                        <p className="text-[10px] text-gray-400">Project-based, varied focus</p>
+                    </div>
+                </div>
+            </section>
+
+            {/* --- Target Industries --- */}
+            <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-4">
+                <div>
+                    <h3 className="text-sm font-bold text-gray-900">Target Industries</h3>
+                    <p className="text-xs text-gray-500 text-balance">Pick the sectors you have experience in or are most interested in joining.</p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {['Technology', 'SaaS'].map((industry) => (
+                        <span key={industry} className="flex items-center gap-2 px-4 py-2 bg-[#F9FBFB] border border-[#7EB0AB]/30 text-[#4A726E] text-sm font-medium rounded-full">
+                            {industry} <button>×</button>
+                        </span>
+                    ))}
+                    <button className="px-4 py-2 bg-gray-50 text-gray-400 text-sm rounded-full">+ Add More</button>
+                </div>
+            </section>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* --- Weekly Hours --- */}
+            <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-6">
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h3 className="text-sm font-bold text-gray-900">Weekly Hours</h3>
+                        <p className="text-xs text-gray-500">Specify your ideal number of working hours.</p>
+                    </div>
+                    <span className="bg-[#F1F7F6] text-[#4A726E] font-bold text-sm px-3 py-1 rounded-md border border-[#7EB0AB]/20">40hrs/week</span>
+                </div>
+                <div className="relative pt-1">
+                    <input type="range" className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-[#7EB0AB]" />
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-2 px-1">
+                        <span>5H</span><span>10H</span><span>20H</span><span>30H</span><span className="text-[#4A726E] font-bold">40H</span><span>50H+</span>
+                    </div>
+                </div>
+            </section>
+
+            {/* --- Preferred Time Zone --- */}
+            <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-4">
+                <div>
+                    <h3 className="text-sm font-bold text-gray-900">Preferred Time Zone</h3>
+                    <p className="text-xs text-gray-500">Set your primary working time zone.</p>
+                </div>
+                <select className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl text-sm text-gray-700 outline-none focus:border-[#7EB0AB]">
+                    <option>Pacific Standard Time (PST) - UTC</option>
+                </select>
+                <p className="text-[10px] text-gray-400 italic">Recommended: PST/EST for higher paying opportunities.</p>
+            </section>
+        </div>
+
+        {/* --- Notice Period --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm space-y-4">
+            <div>
+                <h3 className="text-sm font-bold text-gray-900">Notice Period</h3>
+                <p className="text-xs text-gray-500">Indicate how soon you can start your next assignment once an offer is made.</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                    { label: 'Immediate', sub: 'Ready to start now', active: true, icon: '⚡' },
+                    { label: '1 Week', sub: 'Standard transition', active: false, icon: '📅' },
+                    { label: '2 Weeks', sub: 'Professional transition', active: false, icon: '📅' },
+                    { label: '1 Month+', sub: 'Extended transition', active: false, icon: '📅' },
+                ].map((period) => (
+                    <div key={period.label} className={`p-4 border rounded-xl cursor-pointer ${period.active ? 'border-[#7EB0AB] bg-[#F9FBFB]' : 'border-gray-100 hover:bg-gray-50'}`}>
+                        <div className="text-lg mb-1">{period.icon}</div>
+                        <p className={`text-sm font-bold ${period.active ? 'text-gray-900' : 'text-gray-900'}`}>{period.label}</p>
+                        <p className="text-[10px] text-gray-400">{period.sub}</p>
+                    </div>
+                ))}
+            </div>
+        </section>
+    </div>
+)}
+
+{/* 2. NOTIFICATIONS TAB CONTENT */}
+{/* Change 'Notification Preferences' to 'Notifications' to match your sidebar */}
+{activeTab === 'Notifications' && (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="mb-2">
+            <h2 className="text-xl font-bold text-gray-900">Notification Preferences</h2>
+            <p className="text-sm text-gray-400">Choose how and when you want to be notified about job matches, messages, and platform updates.</p>
+        </div>
+
+        {/* Reusable Notification Section Component */}
+        {[
+            { 
+                title: "Email Notifications", 
+                items: [
+                    { label: "New Job Matches", desc: "Get notified when a job matches your specific skills and experience." },
+                    { label: "Application Status Updates", desc: "Stay updated on your application progress from submission to hire." },
+                    { label: "Interview Invites", desc: "Receive instant alerts for scheduled interviews and meeting links." },
+                    { label: "Messages from Employers", desc: "Get an email when a potential employer sends you a direct message." }
+                ]
+            },
+            { 
+                title: "In-App Notifications", 
+                items: [
+                    { label: "New Job Matches", desc: "Get notified when a job matches your specific skills and experience." },
+                    { label: "Application Status Updates", desc: "Stay updated on your application progress from submission to hire." },
+                    { label: "Interview Invites", desc: "Receive instant alerts for scheduled interviews and meeting links." },
+                    { label: "Messages from Employers", desc: "Get an email when a potential employer sends you a direct message." }
+                ]
+            }
+        ].map((section, idx) => (
+            <section key={idx} className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-900 mb-6">{section.title}</h3>
+                <div className="divide-y divide-gray-50">
+                    {section.items.map((item, itemIdx) => (
+                        <div key={itemIdx} className="flex items-start gap-4 py-6 first:pt-0 last:pb-0">
+                            <label className="relative inline-flex items-center cursor-pointer mt-1">
+                                <input type="checkbox" className="sr-only peer" defaultChecked />
+                                {/* Matches the muted teal color from your sidebar */}
+                                <div className="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#7EB0AB]"></div>
+                            </label>
+                            <div>
+                                <p className="text-sm font-bold text-gray-900">{item.label}</p>
+                                <p className="text-xs text-gray-500">{item.desc}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </section>
+        ))}
+    </div>
+)}
+
+{/* 5. DOCUMENTS TAB CONTENT */}
+{activeTab === 'Documents' && (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
+        <div className="mb-2">
+            <h2 className="text-xl font-bold text-gray-900">Resume & Documents</h2>
+            <p className="text-sm text-gray-400">Manage your primary resume and supporting certifications for client matching.</p>
+        </div>
+
+        {/* --- Resume Upload Section --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 mb-4">Resume Upload</h3>
+            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-10 flex flex-col items-center justify-center bg-gray-50/30">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4 border border-gray-100 text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <p className="text-sm font-bold text-gray-900 mb-1">Click or drag files here to upload</p>
+                <p className="text-xs text-gray-400 mb-6">PDF up to 25 MB</p>
+                <button className="px-8 py-2.5 bg-[#7EB0AB] text-white rounded-xl text-sm font-bold hover:bg-[#6A9A95] transition-all shadow-sm">
+                    Select File
+                </button>
+            </div>
+        </section>
+
+        {/* --- Active Documents Section --- */}
+        <section className="bg-white rounded-2xl border border-gray-100 p-8 shadow-sm">
+            <h3 className="text-sm font-bold text-gray-900 mb-6">Active Documents</h3>
+            
+            {/* Using optional chaining (?.) to prevent crashes if uploadedFiles is undefined */}
+            {uploadedFiles?.length > 0 ? (
+                <div className="overflow-x-auto">
+                    <table className="w-full">
+                        <thead>
+                            <tr className="text-left text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-50">
+                                <th className="pb-4 font-bold">File Name</th>
+                                <th className="pb-4 font-bold">Type</th>
+                                <th className="pb-4 font-bold">Size</th>
+                                <th className="pb-4 font-bold">Date</th>
+                                <th className="pb-4 font-bold text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-50">
+                            {uploadedFiles.map((doc, idx) => (
+                                <tr key={idx} className="group">
+                                    <td className="py-5">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-[#F4F9F8] rounded-lg flex items-center justify-center text-[#7EB0AB]">
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14.5 2 14.5 7.5 20 7.5"/></svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-xs font-bold text-gray-900">{doc.name}</p>
+                                                <p className="text-[10px] text-gray-400">{doc.category || 'Document'}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="py-5 text-xs text-gray-500">{doc.type}</td>
+                                    <td className="py-5 text-xs text-gray-500">{doc.size}</td>
+                                    <td className="py-5 text-xs text-gray-500">{doc.date}</td>
+                                    <td className="py-5 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button className="p-2 border border-gray-100 rounded-lg hover:bg-gray-50 text-gray-400 transition-colors">✎</button>
+                                            <button className="p-2 border border-gray-100 rounded-lg hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors">🗑</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            ) : (
+                <div className="py-12 text-center border border-dashed border-gray-100 rounded-xl bg-gray-50/20">
+                    <p className="text-sm text-gray-400">No uploaded files found.</p>
+                </div>
+            )}
         </section>
     </div>
 )}
