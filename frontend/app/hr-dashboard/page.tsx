@@ -9,20 +9,48 @@ import ApplicantsTable from "./ApplicantsTable";
 import InterviewsPage from "./InterviewsPage";
 import ManageJobs from "./ManageJobs";
 import UserPage from "./UserPage";
-import AccountProfile from "./AccountProfile"; // Import the new component
+import AccountProfile from "./AccountProfile";
 import api from "@/lib/axios";
 
 export default function Home() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  
-  // 1. Added "profile" to the view union type
+
   const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "profile">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [jobs, setJobs] = useState<any[]>([]);
   const [jobCount, setJobCount] = useState<number>(0);
 
-  // State to store all scheduled interviews
   const [scheduledInterviews, setScheduledInterviews] = useState<any[]>([]);
+  const [loadingInterviews, setLoadingInterviews] = useState(false);
+
+  // Load jobs from DB
+  const loadJobs = async () => {
+    try {
+      const res = await api.get("/job-postings"); // Make sure your Laravel route returns job_postings
+      setJobs(res.data.data || []);
+      setJobCount(res.data.data?.length || 0);
+    } catch (err) {
+      console.error("Failed to load jobs", err);
+    }
+  };
+
+  // Load interviews from DB
+  const loadInterviews = async () => {
+    try {
+      setLoadingInterviews(true);
+      const response = await api.get("/jobs/interviews"); // Laravel route returns scheduled interviews
+      setScheduledInterviews(response.data?.data ?? []);
+    } catch (error) {
+      console.error("Failed to load interviews", error);
+    } finally {
+      setLoadingInterviews(false);
+    }
+  };
+
+  useEffect(() => {
+    loadJobs();
+  }, []);
 
   useEffect(() => {
     const viewParam = searchParams.get("view");
@@ -33,6 +61,10 @@ export default function Home() {
     else if (viewParam === "interviews") setView("interviews");
     else if (viewParam === "profile") setView("profile");
   }, [searchParams]);
+
+  useEffect(() => {
+    if (view === "interviews") loadInterviews();
+  }, [view]);
 
   const handleViewJob = (job: any) => {
     setSelectedJob(job);
@@ -50,51 +82,28 @@ export default function Home() {
     setScheduledInterviews((prev) => prev.filter((item) => item.id !== interviewId));
   };
 
-  useEffect(() => {
-    const loadInterviews = async () => {
-      try {
-        const response = await api.get('/jobs/interviews');
-        setScheduledInterviews(response.data?.data ?? []);
-      } catch (error) {
-        console.error('Failed to load interviews', error);
-      }
-    };
-
-    if (view === 'interviews') {
-      loadInterviews();
-    }
-  }, [view]);
-
   return (
     <div className="flex bg-[#f1f5f9] min-h-screen">
       <Sidebar setView={setView} currentView={view} />
 
       <main className="flex-1 p-4 md:p-8 pt-16 lg:pt-8">
-        {/* 1. Dashboard View */}
         {view === "list" && (
           <>
-            <Header 
-              title="HR Dashboard" 
-              jobCount={jobCount} 
-              onNavigateProfile={() => setView("profile")} // Connected the dropdown click
+            <Header
+              title="HR Dashboard"
+              jobCount={jobCount}
+              onNavigateProfile={() => setView("profile")}
               onNavigateMessages={() => router.push("/hr-dashboard/messages")}
             />
-            <JobTable onView={handleViewJob} onJobCountChange={setJobCount} />
+            <JobTable onView={handleViewJob} jobs={jobs} onJobCountChange={setJobCount} />
           </>
         )}
 
-        {/* 2. Manage Jobs View */}
-        {view === "jobs" && (
-          <ManageJobs />
-        )}
+        {view === "jobs" && <ManageJobs jobs={jobs} />}
 
-        {/* 3. Users View */}
-        {view === "users" && (
-          <UserPage />
-        )}
+        {view === "users" && <UserPage />}
 
-        {/* 4. Job Details View */}
-        {view === "details" && (
+        {view === "details" && selectedJob && (
           <ApplicantsTable
             job={selectedJob}
             onBack={() => setView("list")}
@@ -102,18 +111,15 @@ export default function Home() {
           />
         )}
 
-        {/* 5. Interviews View */}
         {view === "interviews" && (
           <InterviewsPage
             interviews={scheduledInterviews}
+            loading={loadingInterviews}
             onDecision={handleInterviewDecision}
           />
         )}
 
-        {/* 6. Account Profile View - Added rendering logic */}
-        {view === "profile" && (
-          <AccountProfile onBack={() => setView("list")} />
-        )}
+        {view === "profile" && <AccountProfile onBack={() => setView("list")} />}
       </main>
     </div>
   );

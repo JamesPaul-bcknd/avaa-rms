@@ -16,13 +16,13 @@ export interface HrUser {
 }
 
 export const hrProfilesApi = {
-  // Get all users that HR can view
+  // Get all users HR can view
   getUsers: async (): Promise<{ success: boolean; data: HrUser[] }> => {
-    const response = await api.get('/hr/users');
+    const response = await api.get('/hr/hr-users'); // matches your Laravel route /api/hr/hr-users
     return response.data;
   },
 
-  // Get specific user profile
+  // Get a specific user profile
   getUserProfile: async (userId: number): Promise<{ success: boolean; data: HrUser }> => {
     const response = await api.get(`/hr/users/${userId}`);
     return response.data;
@@ -36,7 +36,14 @@ export const hrProfilesApi = {
 
   // Search users
   searchUsers: async (query: string): Promise<{ success: boolean; data: HrUser[] }> => {
-    const response = await api.get(`/hr/search?query=${encodeURIComponent(query)}`);
+    // Use ?search= instead of ?query= to match your Laravel route
+    const response = await api.get(`/hr/search`, { params: { search: query } });
+    return response.data;
+  },
+
+  // Block / End contract for a user
+  blockUser: async (userId: number): Promise<{ success: boolean; message: string }> => {
+    const response = await api.post(`/hr/users/${userId}/block`);
     return response.data;
   },
 };

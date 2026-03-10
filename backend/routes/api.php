@@ -10,6 +10,7 @@ use App\Http\Controllers\JobPostingController;
 use App\Http\Controllers\JobApplicationController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\HrProfileController;
+use App\Http\Controllers\HrUserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,6 +110,7 @@ Route::group([
     Route::get('/search', [HrProfileController::class, 'search']);
     Route::get('/profile', [HrProfileController::class, 'profile']);
     Route::put('/profile', [HrProfileController::class, 'updateProfile']);
+    Route::get('/hr-users', [HrUserController::class, 'index']);
 });
 
 // --- Messaging Routes (Prefix: /api/messages) ---
