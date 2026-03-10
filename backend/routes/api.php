@@ -54,7 +54,11 @@ Route::group([
     Route::group(['middleware' => ['auth:api', 'admin']], function () {
         Route::post('me', [AdminController::class, 'me']);
         Route::post('logout', [AdminController::class, 'logout']);
+        Route::put('profile', [AdminController::class, 'updateProfile']);
         Route::get('dashboard', [AdminController::class, 'dashboard']);
+        Route::get('jobs/{id}', [AdminController::class, 'showJob']);
+        Route::get('jobs/{id}/applicants', [AdminController::class, 'jobApplicants']);
+        Route::get('jobs/{id}/applicants/{applicationId}', [AdminController::class, 'jobApplicantDetails']);
         Route::get('users', [AdminController::class, 'users']);
         Route::get('users/{id}', [AdminController::class, 'showUser']);
         Route::put('users/{id}', [AdminController::class, 'updateUser']);

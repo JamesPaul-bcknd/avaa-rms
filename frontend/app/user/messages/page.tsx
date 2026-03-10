@@ -1,6 +1,9 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useRef, useState } from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useAuth } from "@/lib/useAuth";
@@ -8,7 +11,7 @@ import { messagesApi, Message, Conversation } from "@/lib/messages";
 import { formatDistanceToNow } from "date-fns";
 import Header from "@/components/userComponents/Header/header";
 
-export default function MessagesPage() {
+function MessagesPageContent() {
   const searchParams = useSearchParams();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
@@ -46,7 +49,12 @@ export default function MessagesPage() {
 
   // Handle URL parameter for auto-selecting conversation
   useEffect(() => {
-    const userIdParam = searchParams.get('userId');
+    const userIdParam = searchParams?.get('userId');
+    console.log('Messages page - userIdParam:', userIdParam);
+    console.log('Messages page - conversations.length:', conversations.length);
+    console.log('Messages page - loading:', loading);
+    console.log('Messages page - conversations:', conversations);
+    
     if (userIdParam) {
       if (!loading) { 
         const targetConversation = conversations.find(conv => conv.user.id === parseInt(userIdParam));
@@ -355,5 +363,13 @@ export default function MessagesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={null}>
+      <MessagesPageContent />
+    </Suspense>
   );
 }

@@ -144,7 +144,17 @@ const handleSignIn = async (e: React.FormEvent) => {
                 sessionStorage.setItem('selectedRole', selectedRole);
             }
             const roleToSend = selectedRole === 'job-seeker' ? 'user' : 'recruiter';
-            const registrationData = { 
+            const registrationData: {
+                name: string;
+                email: string;
+                phone: string;
+                location: string;
+                password: string;
+                role: string;
+                company_name?: string;
+                company_number?: string;
+                position?: string;
+            } = {
                 name, 
                 email: regEmail, 
                 phone: digits, 

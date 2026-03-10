@@ -1037,7 +1037,7 @@ function UserDashboardContent({
 
   // Handle URL parameters for auto-navigation to messages
   useEffect(() => {
-    const recruiterId = searchParams.get('recruiterId');
+    const recruiterId = searchParams?.get('recruiterId');
     if (recruiterId && isAuthenticated) {
       // Navigate to messages with specific recruiter ID
       router.push(`/user/messages?userId=${recruiterId}`);
@@ -1404,7 +1404,7 @@ function UserDashboardContent({
           No jobs found
         </h3>
         <p className="text-[#5a6a75] mb-6">
-          We couldn't find any job listings in the database right now.
+          We couldn&apos;t find any job listings in the database right now.
         </p>
         {(searchQuery || selectedSkills.length > 0 || selectedCompanies.length > 0) && (
           <button

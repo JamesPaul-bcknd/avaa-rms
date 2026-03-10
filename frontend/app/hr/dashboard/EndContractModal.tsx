@@ -28,7 +28,7 @@ const EndContractModal = ({ isOpen, onClose, onConfirm, userName }: EndContractM
         <div className="space-y-2">
           <h2 className="text-xl font-bold text-slate-800">End Employee Contract</h2>
           <p className="text-slate-500 text-sm leading-relaxed px-4">
-            Are you sure you want to end <span className="font-bold text-slate-700">{userName}</span>'s contract? 
+            Are you sure you want to end <span className="font-bold text-slate-700">{userName}</span>&apos;s contract?
             This action will deactivate their account and remove their access.
           </p>
         </div>

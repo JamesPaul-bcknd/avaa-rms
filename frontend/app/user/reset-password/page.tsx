@@ -1,12 +1,14 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useMemo } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import api from '@/lib/axios';
 
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
     const [password, setPassword] = useState('');
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -16,8 +18,8 @@ export default function ResetPasswordPage() {
     const [success, setSuccess] = useState('');
     const router = useRouter();
     const searchParams = useSearchParams();
-    const token = searchParams.get('token') || '';
-    const email = searchParams.get('email') || '';
+    const token = searchParams?.get('token') || '';
+    const email = searchParams?.get('email') || '';
 
     useEffect(() => { document.title = 'Create New Password | AVAA'; }, []);
 
@@ -232,5 +234,13 @@ export default function ResetPasswordPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function ResetPasswordPage() {
+    return (
+        <Suspense fallback={null}>
+            <ResetPasswordPageContent />
+        </Suspense>
     );
 }

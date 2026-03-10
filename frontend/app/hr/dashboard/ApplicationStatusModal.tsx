@@ -9,6 +9,8 @@ interface ApplicationStatusModalProps {
   action: 'accept' | 'reject';
   applicantName: string;
   isLoading?: boolean;
+  jobTitle?: string;
+  onSchedule?: (interviewData: any) => Promise<void>;
 }
 
 export default function ApplicationStatusModal({ 

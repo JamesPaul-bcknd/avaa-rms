@@ -219,7 +219,7 @@ export default function HRProfilePage() {
           </button>
           <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
           <p className="text-gray-600 mt-2">
-            This information will be displayed to job seekers in the "Meet the Recruiter" section
+            This information will be displayed to job seekers in the &quot;Meet the Recruiter&quot; section
           </p>
         </div>
 

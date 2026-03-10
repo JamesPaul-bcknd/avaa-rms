@@ -1,5 +1,9 @@
 'use client';
+
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect } from "react";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -11,7 +15,7 @@ import UserPage from "./UserPage";
 import HrMessages from "./HrMessages";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function Home() {
+function HomeContent() {
   const searchParams = useSearchParams();
   const [view, setView] = useState<"list" | "details" | "interviews" | "jobs" | "users" | "messages">("list");
   const [selectedJob, setSelectedJob] = useState<any>(null);
@@ -22,8 +26,8 @@ export default function Home() {
 
   // Handle URL parameters on mount
   useEffect(() => {
-    const viewParam = searchParams.get('view');
-    const userIdParam = searchParams.get('userId');
+    const viewParam = searchParams?.get('view');
+    const userIdParam = searchParams?.get('userId');
     
     if (viewParam === 'messages') {
       setView('messages');
@@ -79,10 +83,18 @@ export default function Home() {
 
           {/* 6. Messages View */}
           {view === "messages" && (
-            <HrMessages initialUserId={searchParams.get('userId')} />
+            <HrMessages initialUserId={searchParams?.get('userId')} />
           )}
         </main>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
   );
 }

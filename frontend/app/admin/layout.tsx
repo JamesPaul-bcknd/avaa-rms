@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     LayoutDashboard,
     Users,
@@ -11,7 +11,8 @@ import {
     Loader2,
     Search,
     Bell,
-    CircleUser,
+    UserCircle2,
+    Moon,
     PanelLeftClose,
     PanelLeftOpen,
 } from 'lucide-react';
@@ -45,11 +46,12 @@ export default function AdminLayout({
     const pathname = usePathname();
     const router = useRouter();
     const [authChecked, setAuthChecked] = useState(false);
-    const [adminUser, setAdminUser] = useState<{ name: string; email: string } | null>(null);
-    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [adminUser, setAdminUser] = useState<{ name: string; email: string; role?: string; profile_image_url?: string | null } | null>(null);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [logoutLoading, setLogoutLoading] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
     const profileMenuRef = useRef<HTMLDivElement>(null);
 
     const sidebarWidth = sidebarCollapsed ? 68 : 220;
@@ -78,7 +80,12 @@ export default function AdminLayout({
                     localStorage.removeItem('token');
                     router.replace('/signin');
                 } else {
-                    setAdminUser({ name: res.data.name || 'Admin', email: res.data.email || '' });
+                    setAdminUser({
+                        name: res.data.name || 'Admin',
+                        email: res.data.email || '',
+                        role: res.data.role || 'admin',
+                        profile_image_url: res.data.profile_image_url || null,
+                    });
                     setAuthChecked(true);
                 }
             })
@@ -88,15 +95,35 @@ export default function AdminLayout({
             });
     }, [isLoginPage, router]);
 
-    // Close profile menu on outside click
     useEffect(() => {
-        const handler = (e: MouseEvent) => {
-            if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        const storedTheme = localStorage.getItem('admin-theme');
+        if (storedTheme === 'dark') {
+            setIsDarkMode(true);
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('admin-theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('admin-theme', 'light');
+        }
+    }, [isDarkMode]);
+
+    useEffect(() => {
+        const handleOutside = (event: MouseEvent) => {
+            if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
                 setShowProfileMenu(false);
             }
         };
-        document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
+
+        document.addEventListener('mousedown', handleOutside);
+        return () => document.removeEventListener('mousedown', handleOutside);
     }, []);
 
     if (isLoginPage) {
@@ -129,13 +156,13 @@ export default function AdminLayout({
         }
     };
 
-    const currentPage = pageTitles[pathname] || { title: 'Admin', subtitle: '' };
+    const currentPage = (pathname ? pageTitles[pathname] : undefined) || { title: 'Admin', subtitle: '' };
 
     return (
-        <div className="flex min-h-screen bg-[#f5f7fa]">
+        <div className={`flex min-h-screen ${isDarkMode ? 'bg-[#111827]' : 'bg-[#f5f7fa]'}`}>
             {/* ─── Sidebar ─── */}
             <aside
-                className="fixed left-0 top-0 h-full bg-white border-r border-gray-200 flex flex-col z-30 transition-all duration-300 ease-in-out overflow-hidden"
+                className={`fixed left-0 top-0 h-full border-r flex flex-col z-30 transition-all duration-300 ease-in-out overflow-hidden ${isDarkMode ? 'bg-[#0f172a] border-slate-700' : 'bg-white border-gray-200'}`}
                 style={{ width: sidebarWidth }}
             >
                 {/* Logo */}
@@ -148,14 +175,14 @@ export default function AdminLayout({
                         className="rounded-lg flex-shrink-0"
                     />
                     {!sidebarCollapsed && (
-                        <span className="text-lg font-bold text-gray-900 tracking-tight whitespace-nowrap">AVAA</span>
+                        <span className={`text-lg font-bold tracking-tight whitespace-nowrap ${isDarkMode ? 'text-slate-100' : 'text-gray-900'}`}>AVAA</span>
                     )}
                     <button
                         onClick={() => setSidebarCollapsed((v) => !v)}
-                        className={`p-1.5 rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors flex-shrink-0 ${sidebarCollapsed ? '' : 'ml-auto'}`}
+                        className={`p-1.5 rounded-md border cursor-pointer transition-colors flex-shrink-0 ${sidebarCollapsed ? '' : 'ml-auto'} ${isDarkMode ? 'border-slate-600 hover:bg-slate-800' : 'border-gray-200 hover:bg-gray-50'}`}
                         title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
                     >
-                        {sidebarCollapsed ? <PanelLeftOpen size={16} className="text-gray-400" /> : <PanelLeftClose size={16} className="text-gray-400" />}
+                        {sidebarCollapsed ? <PanelLeftOpen size={16} className={isDarkMode ? 'text-slate-300' : 'text-gray-400'} /> : <PanelLeftClose size={16} className={isDarkMode ? 'text-slate-300' : 'text-gray-400'} />}
                     </button>
                 </div>
 
@@ -171,8 +198,8 @@ export default function AdminLayout({
                                     href={item.href}
                                     title={sidebarCollapsed ? item.name : undefined}
                                     className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 ${sidebarCollapsed
-                                            ? `w-10 h-10 justify-center ${isActive ? 'bg-[#7EB0AB]/15 text-[#7EB0AB]' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`
-                                            : `px-3 py-2.5 ${isActive ? 'bg-[#7EB0AB] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`
+                                            ? `w-10 h-10 justify-center ${isActive ? 'bg-[#7EB0AB]/15 text-[#7EB0AB]' : `${isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-slate-100' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}`
+                                            : `px-3 py-2.5 ${isActive ? 'bg-[#7EB0AB] text-white shadow-sm' : `${isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-slate-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}`
                                         }`}
                                 >
                                     <Icon size={sidebarCollapsed ? 20 : 18} className="flex-shrink-0" />
@@ -184,7 +211,7 @@ export default function AdminLayout({
 
                     {/* System Section */}
                     <div className={sidebarCollapsed ? 'mt-6 flex flex-col items-center' : 'mt-8'}>
-                        <p className={`font-semibold text-gray-400 uppercase tracking-wider ${sidebarCollapsed ? 'text-[9px] mb-2' : 'text-[11px] px-3 mb-2'}`}>System</p>
+                        <p className={`font-semibold uppercase tracking-wider ${sidebarCollapsed ? 'text-[9px] mb-2' : 'text-[11px] px-3 mb-2'} ${isDarkMode ? 'text-slate-500' : 'text-gray-400'}`}>System</p>
                         <div className={sidebarCollapsed ? 'flex flex-col items-center gap-2' : 'space-y-1'}>
                             {systemNavItems.map((item) => {
                                 const isActive = pathname === item.href;
@@ -195,8 +222,8 @@ export default function AdminLayout({
                                         href={item.href}
                                         title={sidebarCollapsed ? item.name : undefined}
                                         className={`flex items-center gap-3 rounded-xl text-sm font-medium transition-all duration-200 ${sidebarCollapsed
-                                                ? `w-10 h-10 justify-center ${isActive ? 'bg-[#7EB0AB]/15 text-[#7EB0AB]' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`
-                                                : `px-3 py-2.5 ${isActive ? 'bg-[#7EB0AB] text-white shadow-sm' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`
+                                                ? `w-10 h-10 justify-center ${isActive ? 'bg-[#7EB0AB]/15 text-[#7EB0AB]' : `${isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-slate-100' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}`
+                                                : `px-3 py-2.5 ${isActive ? 'bg-[#7EB0AB] text-white shadow-sm' : `${isDarkMode ? 'text-slate-300 hover:bg-slate-800 hover:text-slate-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}`
                                             }`}
                                     >
                                         <Icon size={sidebarCollapsed ? 20 : 18} className="flex-shrink-0" />
@@ -208,26 +235,114 @@ export default function AdminLayout({
                     </div>
                 </nav>
 
-                {/* Sign Out */}
+                {/* Bottom Profile */}
                 <div className={`pb-5 transition-all duration-300 ${sidebarCollapsed ? 'px-2' : 'px-3'}`}>
-                    <button
-                        onClick={() => setShowLogoutModal(true)}
-                        title={sidebarCollapsed ? 'Sign Out' : undefined}
-                        className={`flex items-center gap-3 py-2.5 rounded-lg w-full text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200 ${sidebarCollapsed ? 'justify-center px-0' : 'px-3'}`}
-                    >
-                        <LogOut size={18} className="flex-shrink-0" />
-                        {!sidebarCollapsed && <span className="whitespace-nowrap">Sign Out</span>}
-                    </button>
+                    {sidebarCollapsed ? (
+                        <div className="flex flex-col items-center gap-2">
+                            {adminUser?.profile_image_url ? (
+                                <Image src={adminUser.profile_image_url} alt={adminUser.name} width={40} height={40} className="h-10 w-10 rounded-full object-cover" />
+                            ) : (
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#7EB0AB]/25 text-xs font-bold text-[#2f5f5a]">
+                                    {adminUser?.name?.charAt(0)?.toUpperCase() || 'A'}
+                                </div>
+                            )}
+                            <button
+                                onClick={() => setShowLogoutModal(true)}
+                                className={`rounded-md p-2 ${isDarkMode ? 'text-slate-300 hover:bg-red-900/20 hover:text-red-300' : 'text-gray-500 hover:bg-red-50 hover:text-red-600'}`}
+                                title="Sign Out"
+                            >
+                                <LogOut size={16} />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="relative" ref={profileMenuRef}>
+                            {showProfileMenu && (
+                                <div className={`mb-3 rounded-2xl border shadow-xl ${isDarkMode ? 'border-slate-700 bg-slate-900' : 'border-slate-200 bg-white'}`}>
+                                    <div className="flex items-center gap-3 p-4">
+                                        {adminUser?.profile_image_url ? (
+                                            <Image src={adminUser.profile_image_url} alt={adminUser.name || 'Admin'} width={52} height={52} className="h-13 w-13 rounded-full object-cover" />
+                                        ) : (
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#7EB0AB]/25 text-sm font-bold text-[#2f5f5a]">
+                                                {adminUser?.name?.charAt(0)?.toUpperCase() || 'A'}
+                                            </div>
+                                        )}
+                                        <div className="min-w-0">
+                                            <p className={`truncate text-base font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{adminUser?.name || 'Admin'}</p>
+                                            <p className={`truncate text-sm ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Chief Systems Administrator</p>
+                                        </div>
+                                    </div>
+
+                                    <div className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} py-1`}>
+                                        <button
+                                            onClick={() => { setShowProfileMenu(false); router.push('/admin/settings#profile'); }}
+                                            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-base font-medium ${isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}
+                                        >
+                                            <UserCircle2 size={18} />
+                                            View Profile
+                                        </button>
+                                        <button
+                                            onClick={() => { setShowProfileMenu(false); router.push('/admin/settings#account'); }}
+                                            className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-base font-medium ${isDarkMode ? 'text-slate-200 hover:bg-slate-800' : 'text-slate-700 hover:bg-slate-50'}`}
+                                        >
+                                            <Settings size={18} />
+                                            Account Settings
+                                        </button>
+                                        <div className={`flex items-center justify-between px-4 py-2.5 ${isDarkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                                            <span className="flex items-center gap-3 text-base font-medium">
+                                                <Moon size={18} />
+                                                Dark Mode
+                                            </span>
+                                            <button
+                                                onClick={() => setIsDarkMode((value) => !value)}
+                                                className={`h-6 w-11 rounded-full p-0.5 transition-colors ${isDarkMode ? 'bg-[#7EB0AB]' : 'bg-slate-300'}`}
+                                            >
+                                                <span className={`block h-5 w-5 rounded-full bg-white transition-transform ${isDarkMode ? 'translate-x-5' : 'translate-x-0'}`} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className={`border-t ${isDarkMode ? 'border-slate-700' : 'border-slate-200'} p-3`}>
+                                        <button
+                                            onClick={() => { setShowProfileMenu(false); setShowLogoutModal(true); }}
+                                            className={`flex w-full items-center gap-3 rounded-lg border px-4 py-2.5 text-base font-semibold ${isDarkMode ? 'border-red-900/40 bg-red-900/20 text-red-300' : 'border-red-100 bg-red-50 text-red-600'}`}
+                                        >
+                                            <LogOut size={18} />
+                                            Logout
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <button
+                                onClick={() => setShowProfileMenu((value) => !value)}
+                                className={`w-full rounded-xl border px-3 py-2.5 shadow-sm ${isDarkMode ? 'border-slate-700 bg-slate-900 hover:bg-slate-800' : 'border-slate-200 bg-white hover:bg-slate-50'}`}
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    {adminUser?.profile_image_url ? (
+                                        <Image src={adminUser.profile_image_url} alt={adminUser.name || 'Admin'} width={36} height={36} className="h-9 w-9 rounded-full object-cover" />
+                                    ) : (
+                                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#7EB0AB]/25 text-xs font-bold text-[#2f5f5a]">
+                                            {adminUser?.name?.charAt(0)?.toUpperCase() || 'A'}
+                                        </div>
+                                    )}
+                                    <div className="min-w-0 flex-1 text-left">
+                                        <p className={`truncate text-base font-semibold ${isDarkMode ? 'text-slate-100' : 'text-slate-800'}`}>{adminUser?.name || 'Admin'}</p>
+                                        <p className={`truncate text-[12px] ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Chief Systems Administrator</p>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </aside>
 
             {/* ─── Main Content Area ─── */}
             <div className="flex-1 flex flex-col transition-all duration-300 ease-in-out" style={{ marginLeft: sidebarWidth }}>
                 {/* Top Header Bar */}
-                <header className="sticky top-0 z-20 bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+                <header className={`sticky top-0 z-20 border-b px-8 py-4 flex items-center justify-between ${isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-gray-200'}`}>
                     <div>
-                        <h1 className="text-xl font-bold text-gray-900">{currentPage.title}</h1>
-                        <p className="text-sm text-gray-500 mt-0.5">{currentPage.subtitle}</p>
+                        <h1 className={`text-xl font-bold ${isDarkMode ? 'text-slate-100' : 'text-gray-900'}`}>{currentPage.title}</h1>
+                        <p className={`text-sm mt-0.5 ${isDarkMode ? 'text-slate-400' : 'text-gray-500'}`}>{currentPage.subtitle}</p>
                     </div>
 
                     <div className="flex items-center gap-4">
@@ -237,79 +352,15 @@ export default function AdminLayout({
                             <input
                                 type="text"
                                 placeholder="Search..."
-                                className="pl-9 pr-4 py-2 w-56 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3CD894]/40 focus:border-[#3CD894] transition-all duration-200"
+                                className={`pl-9 pr-4 py-2 w-56 rounded-lg border text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3CD894]/40 focus:border-[#3CD894] transition-all duration-200 ${isDarkMode ? 'border-slate-600 bg-slate-800 text-slate-100' : 'border-gray-200 bg-gray-50 text-gray-900'}`}
                             />
                         </div>
 
                         {/* Notification Bell */}
-                        <button className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors">
+                        <button className={`relative p-2 rounded-lg transition-colors ${isDarkMode ? 'text-slate-300 hover:bg-slate-800' : 'text-gray-500 hover:bg-gray-100'}`}>
                             <Bell size={20} />
                             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#3CD894] rounded-full"></span>
                         </button>
-
-                        {/* Avatar + Profile Menu */}
-                        <div className="relative" ref={profileMenuRef}>
-                            <button
-                                onClick={() => setShowProfileMenu((v) => !v)}
-                                className="w-9 h-9 rounded-full bg-gray-300 overflow-hidden cursor-pointer ring-2 ring-gray-100 focus:outline-none focus:ring-[#3CD894]/40"
-                            >
-                                <div className="w-full h-full bg-gradient-to-br from-gray-400 to-gray-500 flex items-center justify-center">
-                                    <span className="text-white text-sm font-semibold">
-                                        {adminUser?.name?.charAt(0)?.toUpperCase() || 'A'}
-                                    </span>
-                                </div>
-                            </button>
-
-                            {/* Profile Popout */}
-                            {showProfileMenu && (
-                                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {/* User Info */}
-                                    <div className="p-5 flex items-center gap-3">
-                                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center flex-shrink-0 ring-2 ring-gray-100">
-                                            <span className="text-white text-xl font-bold">
-                                                {adminUser?.name?.charAt(0)?.toUpperCase() || 'A'}
-                                            </span>
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">{adminUser?.name || 'Admin'}</p>
-                                            <p className="text-xs text-gray-500 truncate">{adminUser?.email || ''}</p>
-                                            <span className="inline-block mt-1 px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-semibold rounded-full">Admin</span>
-                                        </div>
-                                    </div>
-
-                                    {/* Menu Items */}
-                                    <div className="border-t border-gray-100">
-                                        <a
-                                            href="/admin/settings"
-                                            onClick={() => setShowProfileMenu(false)}
-                                            className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <CircleUser size={18} className="text-gray-400" />
-                                            Account
-                                        </a>
-                                        <a
-                                            href="/admin/settings"
-                                            onClick={() => setShowProfileMenu(false)}
-                                            className="flex items-center gap-3 px-5 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                                        >
-                                            <Settings size={18} className="text-gray-400" />
-                                            Settings
-                                        </a>
-                                    </div>
-
-                                    {/* Logout */}
-                                    <div className="border-t border-gray-100">
-                                        <button
-                                            onClick={() => { setShowProfileMenu(false); setShowLogoutModal(true); }}
-                                            className="flex items-center gap-3 px-5 py-3 w-full text-sm text-red-500 hover:bg-red-50 transition-colors"
-                                        >
-                                            <LogOut size={18} />
-                                            Logout
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
                     </div>
                 </header>
 

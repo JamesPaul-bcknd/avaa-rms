@@ -94,6 +94,8 @@ class JobPostingController extends Controller
             'what_youll_do.*' => 'string|max:500',
             'why_company' => 'nullable|array',
             'why_company.*' => 'string|max:500',
+            'project_timeline' => 'nullable|string',
+            'onboarding_process' => 'nullable|string',
             'initials' => 'nullable|string|max:5',
             'color' => 'nullable|string|max:7',
             'time_ago' => 'nullable|string|max:50',
