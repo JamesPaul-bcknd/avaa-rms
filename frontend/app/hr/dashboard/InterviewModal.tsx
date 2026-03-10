@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, X, User, ChevronDown } from 'lucide-react'; // Added ChevronDown
+import { Calendar, Clock, CheckCircle, X, User, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface InterviewModalProps {
   applicantName: string;
@@ -21,10 +22,14 @@ const InterviewModal = ({
   const [interviewType, setInterviewType] = useState("Online Interview");
   const [date, setDate] = useState("2025-02-19");
   const [time, setTime] = useState("10:00 AM");
-  const [interviewer, setInterviewer] = useState("John Smith");
+  const [interviewer, setInterviewer] = useState("John Doe");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) setIsSuccess(false);
+    if (!isOpen) {
+      setIsSuccess(false);
+      setIsSubmitting(false);
+    }
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -35,138 +40,196 @@ const InterviewModal = ({
   };
 
   const handleSchedule = async () => {
-    await onSchedule({
-      id: Date.now(),
-      candidateName: applicantName,
-      role: jobTitle,
-      date,
-      time,
-      type: interviewType,
-      interviewer,
-      status: "Active"
-    });
-    setIsSuccess(true);
+    setIsSubmitting(true);
+    try {
+      await onSchedule({
+        id: Date.now(),
+        candidateName: applicantName,
+        role: jobTitle,
+        date,
+        time,
+        type: interviewType,
+        interviewer,
+        status: "Active"
+      });
+      setIsSuccess(true);
+    } catch (error) {
+      console.error("Scheduling failed", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden relative border border-gray-100">
+  const initials = applicantName
+    ? applicantName.split(' ').map(n => n[0]).join('').toUpperCase()
+    : 'AJ';
 
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+      />
+
+      {/* Modal Container */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden relative z-10"
+      >
         {!isSuccess ? (
-          <div className="animate-in fade-in zoom-in duration-200">
-            {/* Header Area */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-[#2d3748]">Accept Application</h2>
-              <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                <X size={24} className="text-gray-800" />
+          <div className="flex flex-col">
+            {/* Design Header: Teal Banner */}
+            <div className="h-32 bg-[#84b3af] relative">
+              <button 
+                onClick={onClose} 
+                className="absolute top-6 right-8 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+              >
+                <X size={24} />
               </button>
             </div>
 
-            <div className="p-8 space-y-8">
-              {/* Applicant Profile Section */}
-              <div className="flex items-center gap-5">
-                <div className="w-20 h-20 bg-[#6ee7b7] rounded-2xl flex items-center justify-center text-white shadow-sm">
-                  <User size={40} />
+            {/* Content Area */}
+            <div className="px-10 pb-10 relative">
+              {/* Profile Section */}
+              <div className="relative mb-8">
+                {/* Avatar Overlap */}
+                <div className="absolute -top-16 left-0 w-32 h-32 rounded-full border-[6px] border-white bg-[#84b3af] flex items-center justify-center shadow-xl z-20 overflow-hidden">
+                   <span className="text-white text-4xl font-black tracking-tighter">
+                    {initials}
+                   </span>
                 </div>
-                <div>
-                  <h3 className="text-2xl sm:text-4xl font-semibold text-[#2d3748] tracking-tight">{applicantName}</h3>
-                  <p className="text-gray-400 text-lg font-medium">alice@example.com</p>
+                
+                {/* Name & Email */}
+                <div className="pl-36 pt-4">
+                  <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-tight">
+                    {applicantName}
+                  </h2>
+                  <p className="text-[#84b3af] text-lg font-bold">
+                    alice@example.com
+                  </p>
                 </div>
               </div>
 
               {/* Form Grid */}
-              <div className="space-y-6">
-                {/* Date & Time Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <label className="sm:w-1/3 text-base sm:text-lg font-bold text-[#2d3748]">Interview Date:</label>
+              <div className="space-y-6 mt-10">
+                {/* Interview Date & Time */}
+                <div className="flex items-center gap-4">
+                  <label className="w-1/3 text-lg font-black text-slate-700">Interview Date & Time:</label>
                   <div className="flex-1 flex gap-3">
                     <div className="flex-1 relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                       <input
                         type="text"
                         value={date}
                         onChange={(e) => setDate(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-[#f8fafc] rounded-2xl text-slate-600 font-bold border border-slate-50 focus:ring-4 focus:ring-[#84b3af]/10 outline-none transition-all"
                       />
                     </div>
                     <div className="flex-1 relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
+                      <Clock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                       <input
                         type="text"
                         value={time}
                         onChange={(e) => setTime(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center outline-none focus:ring-2 focus:ring-emerald-100 transition-all"
+                        className="w-full pl-12 pr-4 py-3 bg-[#f8fafc] rounded-2xl text-slate-600 font-bold border border-slate-50 focus:ring-4 focus:ring-[#84b3af]/10 outline-none transition-all"
                       />
                     </div>
                   </div>
                 </div>
 
-                {/* Interview Type Row with "v" icon */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <label className="sm:w-1/3 text-base sm:text-lg font-bold text-[#2d3748]">Interview Type:</label>
+                {/* Interview Type */}
+                <div className="flex items-center gap-4">
+                  <label className="w-1/3 text-lg font-black text-slate-700">Interview Type:</label>
                   <div className="flex-1 relative">
                     <select
                       value={interviewType}
                       onChange={(e) => setInterviewType(e.target.value)}
-                      className="w-full px-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center appearance-none outline-none cursor-pointer focus:ring-2 focus:ring-emerald-100 transition-all pr-10"
+                      className="w-full px-6 py-3 bg-[#f8fafc] rounded-2xl text-slate-600 font-bold border border-slate-50 appearance-none focus:ring-4 focus:ring-[#84b3af]/10 outline-none cursor-pointer"
                     >
                       <option value="Online Interview">Online Interview</option>
                       <option value="Face to Face">Face to Face</option>
                     </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                    <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={20} />
                   </div>
                 </div>
 
-                {/* Interviewer Row with "v" icon */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                  <label className="sm:w-1/3 text-base sm:text-lg font-bold text-[#2d3748]">Interviewer:</label>
-                  <div className="flex-1 relative">
-                    <select
+                {/* Interviewer */}
+                <div className="flex items-center gap-4">
+                  <label className="w-1/3 text-lg font-black text-slate-700">Interviewer:</label>
+                  <div className="flex-1">
+                    <input
+                      type="text"
                       value={interviewer}
                       onChange={(e) => setInterviewer(e.target.value)}
-                      className="w-full px-4 py-2 bg-[#edf2f7] rounded-xl text-gray-600 font-semibold text-center appearance-none outline-none cursor-pointer focus:ring-2 focus:ring-emerald-100 transition-all pr-10"
-                    >
-                      <option value="John Smith">John Smith</option>
-                      <option value="Emily Davis">Emily Davis</option>
-                      <option value="Sarah Wilson">Sarah Wilson</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+                      className="w-full px-6 py-3 bg-[#f8fafc] rounded-2xl text-slate-600 font-bold border border-slate-50 focus:ring-4 focus:ring-[#84b3af]/10 outline-none transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Google Meet Link (Visual placeholder matching your screenshot) */}
+                <div className="flex items-center gap-4">
+                  <label className="w-1/3 text-lg font-black text-slate-700">Google Meet Link:</label>
+                  <div className="flex-1">
+                    <input
+                      disabled
+                      type="text"
+                      placeholder="https://meet.google.com/..."
+                      className="w-full px-6 py-3 bg-[#f8fafc] rounded-2xl text-slate-300 font-bold border border-slate-50 outline-none"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Footer Button */}
-              <div className="flex justify-end pt-4">
+              {/* Action Buttons */}
+              <div className="flex justify-end items-center gap-6 mt-10">
+                <button
+                  onClick={onClose}
+                  className="text-slate-500 font-black text-lg hover:text-slate-800 transition-all"
+                >
+                  Close
+                </button>
                 <button
                   onClick={handleSchedule}
-                  className="px-8 py-3 bg-[#a7f3d0] text-[#065f46] rounded-2xl font-extrabold text-lg hover:bg-[#6ee7b7] transition-all shadow-sm active:scale-95"
+                  disabled={isSubmitting}
+                  className="px-12 py-4 bg-[#84b3af] hover:bg-[#729e9a] text-white rounded-[1.25rem] font-black text-lg shadow-lg shadow-teal-100 disabled:opacity-50 transition-all active:scale-95"
                 >
-                  Schedule Interview
+                  {isSubmitting ? "Scheduling..." : "Schedule Interview"}
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          /* Success Message State */
-          <div className="text-center p-12 animate-in fade-in scale-in duration-300">
-            <div className="flex justify-center mb-6">
-              <div className="bg-emerald-100 p-6 rounded-full">
-                <CheckCircle size={80} className="text-emerald-500" />
+          /* SUCCESS STATE */
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center p-16 flex flex-col items-center"
+          >
+            <div className="mb-8 relative">
+              <div className="absolute inset-0 bg-emerald-100 blur-3xl rounded-full opacity-40" />
+              <div className="relative bg-emerald-50 p-8 rounded-full">
+                <CheckCircle size={100} className="text-[#84b3af]" strokeWidth={1.5} />
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-slate-800 mb-2">Success!</h2>
-            <p className="text-slate-500 mb-8 text-lg">
-              Interview scheduled for <span className="font-bold text-slate-700">{applicantName}</span>.
+            <h2 className="text-4xl font-black text-slate-800 mb-3 tracking-tight">Interview Scheduled</h2>
+            <p className="text-slate-400 mb-12 text-xl font-bold max-w-sm mx-auto">
+              The invitation for <span className="text-slate-700">{applicantName}</span> has been sent.
             </p>
             <button
               onClick={handleFullClose}
-              className="w-full py-4 bg-[#6ee7b7] text-[#065f46] rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-md"
+              className="w-full py-5 bg-slate-800 text-white rounded-[1.5rem] font-black text-xl hover:bg-slate-900 transition-all shadow-2xl active:scale-95"
             >
               Back to Dashboard
             </button>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

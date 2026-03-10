@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { X, User, XCircle } from 'lucide-react';
+import { X, XCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RejectModalProps {
   applicant: { name: string; email: string } | null;
@@ -12,11 +13,13 @@ interface RejectModalProps {
 const RejectModal = ({ applicant, isOpen, onClose, onSubmit }: RejectModalProps) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
       setIsSuccess(false);
       setMessage('');
+      setIsSubmitting(false);
     }
   }, [isOpen]);
 
@@ -24,8 +27,15 @@ const RejectModal = ({ applicant, isOpen, onClose, onSubmit }: RejectModalProps)
 
   const handleSend = async () => {
     if (!message.trim()) return;
-    await onSubmit(message.trim());
-    setIsSuccess(true);
+    setIsSubmitting(true);
+    try {
+      await onSubmit(message.trim());
+      setIsSuccess(true);
+    } catch (error) {
+      console.error("Rejection failed", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleFullClose = () => {
@@ -33,83 +43,121 @@ const RejectModal = ({ applicant, isOpen, onClose, onSubmit }: RejectModalProps)
     onClose();
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
-      <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-lg overflow-hidden relative border border-gray-100">
+  // Extract initials for the fallback avatar
+  const initials = applicant?.name
+    ? applicant.name.split(' ').map(n => n[0]).join('').toUpperCase()
+    : 'JD';
 
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+      />
+
+      {/* Modal Container */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden relative z-10"
+      >
         {!isSuccess ? (
-          /* --- STEP 1: REJECTION FORM --- */
-          <div className="animate-in fade-in zoom-in duration-200">
-            {/* Header Area matching screenshot */}
-            <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100">
-              <h2 className="text-2xl font-bold text-[#2d3748]">Reject Application</h2>
-              <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                <X size={24} className="text-gray-800" />
+          <div className="flex flex-col">
+            {/* Design Header: Teal Banner */}
+            <div className="h-32 bg-[#84b3af] relative">
+              <button 
+                onClick={onClose} 
+                className="absolute top-6 right-8 p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-all"
+              >
+                <X size={24} />
               </button>
             </div>
 
-            <div className="p-8 space-y-6">
-              {/* Applicant Profile Section matching screenshot */}
-              <div className="flex items-center gap-4 sm:gap-5">
-                <div className="w-14 h-14 sm:w-20 sm:h-20 bg-[#6ee7b7] rounded-2xl flex items-center justify-center text-white shadow-sm shrink-0">
-                  <User size={32} />
+            {/* Content Area */}
+            <div className="px-10 pb-10 relative">
+              {/* Profile Section */}
+              <div className="relative mb-6">
+                {/* Avatar: Floating overlap */}
+                <div className="absolute -top-16 left-0 w-32 h-32 rounded-full border-[6px] border-white bg-[#84b3af] flex items-center justify-center shadow-xl z-20 overflow-hidden">
+                   <span className="text-white text-4xl font-black tracking-tighter">
+                    {initials}
+                   </span>
                 </div>
-                <div>
-                  <h3 className="text-2xl sm:text-4xl font-semibold text-[#2d3748] tracking-tight">
-                    {applicant?.name || "Alice Johnson"}
-                  </h3>
-                  <p className="text-gray-400 text-lg font-medium">
-                    {applicant?.email || "alice@example.com"}
+                
+                {/* Name & Email: Offset to the right of the avatar */}
+                <div className="pl-36 pt-4">
+                  <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-tight">
+                    {applicant?.name || "John Doe"}
+                  </h2>
+                  <p className="text-[#84b3af] text-lg font-bold">
+                    {applicant?.email || "john.doe@example.com"}
                   </p>
                 </div>
               </div>
 
-              {/* Message Input matching screenshot design */}
-              <div className="space-y-2">
-                <label className="block text-lg font-bold text-[#2d3748] ml-1">Message</label>
+              {/* Message Input */}
+              <div className="space-y-3 mt-12">
+                <label className="block text-sm font-black text-slate-400 ml-1 uppercase tracking-[0.15em]">
+                  Message
+                </label>
                 <textarea
                   rows={5}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  className="w-full px-4 py-4 bg-[#edf2f7] rounded-2xl text-slate-600 font-medium border-none focus:ring-2 focus:ring-red-100 outline-none resize-none transition-all"
-                  placeholder="Enter rejection message here..."
+                  className="w-full px-8 py-8 bg-[#f8fafc] rounded-[2.5rem] text-slate-600 font-bold border border-slate-50 focus:ring-4 focus:ring-[#84b3af]/10 focus:border-[#84b3af]/30 outline-none resize-none transition-all placeholder:text-slate-200"
+                  placeholder="Enter the reason for rejection here..."
                 />
               </div>
 
-              {/* Footer Button matching screenshot */}
-              <div className="flex justify-end pt-2">
+              {/* Action Buttons */}
+              <div className="flex justify-end items-center gap-6 mt-10">
+                <button
+                  onClick={onClose}
+                  className="text-slate-500 font-black text-lg hover:text-slate-800 transition-all"
+                >
+                  Close
+                </button>
                 <button
                   onClick={handleSend}
-                  disabled={!message.trim()}
-                  className="px-8 py-3 bg-[#ff5c5c] text-white rounded-2xl font-bold text-lg hover:bg-red-600 transition-all shadow-sm active:scale-95"
+                  disabled={!message.trim() || isSubmitting}
+                  className="px-12 py-4 bg-[#f8a09a] hover:bg-[#f68b83] text-white rounded-[1.25rem] font-black text-lg shadow-lg shadow-red-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
                 >
-                  Send Rejection
+                  {isSubmitting ? "Sending..." : "Send Rejection"}
                 </button>
               </div>
             </div>
           </div>
         ) : (
-          /* --- STEP 2: SUCCESS MESSAGE --- */
-          <div className="text-center p-12 animate-in fade-in scale-in duration-300">
-            <div className="flex justify-center mb-6">
-              <div className="bg-red-50 p-6 rounded-full">
-                <XCircle size={80} className="text-red-500" />
+          /* SUCCESS STATE */
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center p-16 flex flex-col items-center"
+          >
+            <div className="mb-8 relative">
+              <div className="absolute inset-0 bg-red-100 blur-3xl rounded-full opacity-40" />
+              <div className="relative bg-red-50 p-8 rounded-full">
+                <XCircle size={100} className="text-[#f8a09a]" strokeWidth={1.5} />
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-slate-800 mb-2">Rejection Sent</h2>
-            <p className="text-slate-500 mb-8 text-lg">
-              The status has been updated for <br />
-              <span className="font-bold text-slate-700">{applicant?.name}</span>.
+            <h2 className="text-4xl font-black text-slate-800 mb-3 tracking-tight">Rejection Sent</h2>
+            <p className="text-slate-400 mb-12 text-xl font-bold max-w-sm mx-auto">
+              The application for <span className="text-slate-700">{applicant?.name}</span> has been updated.
             </p>
             <button
               onClick={handleFullClose}
-              className="w-full py-4 bg-[#ff5c5c] text-white rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-md"
+              className="w-full py-5 bg-slate-800 text-white rounded-[1.5rem] font-black text-xl hover:bg-slate-900 transition-all shadow-2xl active:scale-95"
             >
               Back to Dashboard
             </button>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

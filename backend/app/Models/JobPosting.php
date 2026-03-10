@@ -29,6 +29,8 @@ class JobPosting extends Model
         'description',
         'what_youll_do',
         'why_company',
+        'project_timeline',
+        'onboarding_process',
         'user_id',
         'recruiter_name',
         'recruiter_role',
